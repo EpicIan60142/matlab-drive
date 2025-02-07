@@ -1,0 +1,1331 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>ASEN 2012 Project 2 - Group Portion varied Cd and initial launch angle simulation</title><meta name="generator" content="MATLAB 9.10"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2021-12-09"><meta name="DC.source" content="VariedCdAngleSimulation.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>ASEN 2012 Project 2 - Group Portion varied Cd and initial launch angle simulation</h1><!--introduction--><pre class="language-matlab">By: Ian Faber <span class="string">and</span> <span class="string">Jack</span> <span class="string">Walsh</span>
+SID: 108577813, 10040714
+Started: 12/5/21, 13:30
+Finished: 12/7/21, 16:38
+</pre><pre class="language-matlab">Runs <span class="string">a</span> <span class="string">varied</span> <span class="string">bottle</span> <span class="string">rocket</span> <span class="string">simulation</span> <span class="string">subject</span> <span class="string">to</span> <span class="string">a</span> <span class="string">set</span> <span class="string">of</span> <span class="string">initial</span>
+parameters <span class="string">through</span> <span class="string">3</span> <span class="string">different</span> <span class="string">phases</span> <span class="string">of</span> <span class="string">flight:</span> <span class="string">water</span> <span class="string">thrust</span>, air
+thrust, and <span class="string">ballistic</span> <span class="string">flight.</span> <span class="string">This</span> <span class="string">specific</span> <span class="string">script</span> <span class="string">utilizes</span> <span class="string">a</span> <span class="string">custom</span>
+ODE45 <span class="string">EOM</span> <span class="string">function</span> <span class="string">and</span> <span class="string">varies</span> <span class="string">the</span> <span class="untermstring">rocket's coefficient of drag and</span>
+intial <span class="string">launch</span> <span class="string">angle</span>, then <span class="string">plots</span> <span class="string">them</span> <span class="string">all</span> <span class="string">together</span> <span class="string">to</span> <span class="string">see</span> <span class="string">trends</span> <span class="string">in</span>
+trajectory <span class="string">and</span> <span class="string">thrust.</span>
+</pre><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Setup</a></li><li><a href="#2">Vary Cd</a></li><li><a href="#4">Simulation</a></li><li><a href="#5">Extraction</a></li><li><a href="#7">Vary initial heading</a></li><li><a href="#9">Simulation</a></li><li><a href="#10">Extraction</a></li><li><a href="#12">Plotting</a></li><li><a href="#13">Plot the trajectory/thrust with varied Cd</a></li><li><a href="#14">Plot the trajectory/thrust with varied initial heading</a></li></ul></div><h2 id="1">Setup</h2><pre class="codeinput"><span class="comment">% Housekeeping</span>
+clc; clear; close <span class="string">all</span>;
+
+<span class="comment">% Get all constants from the const structure</span>
+const = getConst();
+
+target = 85;
+
+cDragSim = struct(<span class="string">'Cdrag'</span>,0,<span class="string">'rocketX'</span>,[],<span class="string">'rocketZ'</span>,[]);
+initialAngleSim = struct(<span class="string">'initialAngle'</span>,0,<span class="string">'rocketX'</span>,[],<span class="string">'rocketZ'</span>,[]);
+</pre><h2 id="2">Vary Cd</h2><pre class="codeinput">Cds = 0.2:0.1:0.8;
+
+<span class="keyword">for</span> k = 1:length(Cds)
+</pre><pre class="codeinput">    const.Cdrag = Cds(k);
+
+    <span class="comment">% Store simulated Cd</span>
+    cDragSim(k).Cdrag = const.Cdrag;
+
+    <span class="comment">% Difference of Bottle and initial water volumes</span>
+    VAirInit = const.Vbottle - const.VWaterInit;
+
+    <span class="comment">% Need absolute pressure of air, also convert psi to Pa</span>
+    PAirInit = (const.PGageInit+const.PAmb)*6894.76;
+
+    <span class="comment">% Calculate rho w/ Ideal Gas EOS</span>
+    rhoAirInit = (PAirInit)/(const.R*const.TAirInit);
+
+    <span class="comment">% Calculate initial masses</span>
+    mAirInit = rhoAirInit*VAirInit;
+    mWaterInit = const.rhoWater*const.VWaterInit;
+    mRocketInit = const.mBottle + mAirInit + mWaterInit;
+
+    <span class="comment">% Calculate initial x and z velocities</span>
+    vx0 = const.vInit*cosd(const.thetaInit);
+    vz0 = const.vInit*sind(const.thetaInit);
+
+    <span class="comment">% Format the initial conditions vector, and by extension variables to</span>
+    <span class="comment">% integrate</span>
+    X0 = [const.xInit; const.zInit; vx0; vz0; mRocketInit; mAirInit; VAirInit];
+
+    <span class="comment">% Define events worthy of stopping integration</span>
+    options = odeset(<span class="string">'Events'</span>,@phase);
+</pre><h2 id="4">Simulation</h2><pre class="codeinput">    <span class="comment">% Integrate! Solves for the trajectory of the rocket by integrating the</span>
+    <span class="comment">% variables in X0 over tspan according to the derivative information</span>
+    <span class="comment">% contained in rocketEOM. Also stops integration according to "options," a</span>
+    <span class="comment">% predefined set of stopping conditions</span>
+    [time, state, timePhases, ~, ~] = ode45(@(t,state)rocketEOM(t,state,const), const.tspan, X0, options);
+
+    <span class="comment">% Extract intermediate variables from rocketEOM for debugging, particularly</span>
+    <span class="comment">% weight, drag, thrust, and air pressure. Found this approach on the MATLAB</span>
+    <span class="comment">% forums.</span>
+    [~,gravCell, dragCell, thrustCell, PairCell] = cellfun(@(t,state)rocketEOM(t,state.',const), num2cell(time), num2cell(state,2), <span class="string">'uni'</span>, 0);
+
+    <span class="comment">%Allocate space for intermediate variables</span>
+    gravity = zeros(length(time),1);
+    drag = zeros(length(time),1);
+    thrust = zeros(length(time),1);
+    Pair = zeros(length(time),1);
+
+    <span class="comment">% Extract intermediate variables from their cells</span>
+    <span class="keyword">for</span> i = 1:length(time)
+        gravity(i) = norm(gravCell{i});
+        drag(i) = norm(dragCell{i});
+        thrust(i) = norm(thrustCell{i});
+        Pair(i) = norm(PairCell{i});
+    <span class="keyword">end</span>
+</pre><h2 id="5">Extraction</h2><pre class="codeinput">    <span class="comment">% Extract variables of interest</span>
+    rocketX = state(:,1);
+    rocketZ = state(:,2);
+    rocketVx = state(:,3);
+    rocketVz = state(:,4);
+    rocketM = state(:,5);
+    rocketMair = state(:,6);
+    rocketV = state(:,7);
+
+    <span class="comment">% Find maximum values of interest</span>
+    maxRange = max(rocketX)
+    maxHeight = max(rocketZ)
+    maxVx = max(rocketVx)
+    maxVy = max(rocketVz)
+    maxThrust = max(thrust)
+
+    timePhases
+
+    <span class="comment">% Update structure entry</span>
+    cDragSim(k).time = time;
+    cDragSim(k).timePhases = timePhases;
+    cDragSim(k).rocketX = rocketX;
+    cDragSim(k).rocketZ = rocketZ;
+    cDragSim(k).thrust = thrust;
+</pre><pre class="codeoutput">
+maxRange =
+
+   84.5941
+
+
+maxHeight =
+
+   21.2554
+
+
+maxVx =
+
+   26.2184
+
+
+maxVy =
+
+   21.0934
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2053
+    0.2223
+    4.2635
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   74.2976
+
+
+maxHeight =
+
+   19.6761
+
+
+maxVx =
+
+   26.0314
+
+
+maxVy =
+
+   20.9326
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2053
+    0.2224
+    4.0993
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   66.4193
+
+
+maxHeight =
+
+   18.3493
+
+
+maxVx =
+
+   25.8125
+
+
+maxVy =
+
+   20.7559
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2052
+    0.2225
+    3.9551
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   60.2658
+
+
+maxHeight =
+
+   17.2294
+
+
+maxVx =
+
+   25.6057
+
+
+maxVy =
+
+   20.5830
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2052
+    0.2225
+    3.8307
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   55.2425
+
+
+maxHeight =
+
+   16.2586
+
+
+maxVx =
+
+   25.3982
+
+
+maxVy =
+
+   20.4139
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2052
+    0.2226
+    3.7191
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   51.1411
+
+
+maxHeight =
+
+   15.4329
+
+
+maxVx =
+
+   25.1953
+
+
+maxVy =
+
+   20.2484
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2052
+    0.2226
+    3.6223
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   47.6927
+
+
+maxHeight =
+
+   14.7077
+
+
+maxVx =
+
+   24.9970
+
+
+maxVy =
+
+   20.0866
+
+
+maxThrust =
+
+  191.0459
+
+
+timePhases =
+
+    0.2052
+    0.2226
+    3.5358
+
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><h2 id="7">Vary initial heading</h2><pre class="codeinput">headings = 5:5:85;
+
+const.Cdrag = 0.5; <span class="comment">% Reset Cd</span>
+
+<span class="keyword">for</span> k = 1:length(headings)
+</pre><pre class="codeinput">    const.thetaInit = headings(k);
+
+    <span class="comment">% Store simulated initial angle</span>
+    initialAngleSim(k).initialAngle = const.thetaInit;
+
+    <span class="comment">% Difference of Bottle and initial water volumes</span>
+    VAirInit = const.Vbottle - const.VWaterInit;
+
+    <span class="comment">% Need absolute pressure of air, also convert psi to Pa</span>
+    PAirInit = (const.PGageInit+const.PAmb)*6894.76;
+
+    <span class="comment">% Calculate rho w/ Ideal Gas EOS</span>
+    rhoAirInit = (PAirInit)/(const.R*const.TAirInit);
+
+    <span class="comment">% Calculate initial masses</span>
+    mAirInit = rhoAirInit*VAirInit;
+    mWaterInit = const.rhoWater*const.VWaterInit;
+    mRocketInit = const.mBottle + mAirInit + mWaterInit;
+
+    <span class="comment">% Calculate initial x and z velocities</span>
+    vx0 = const.vInit*cosd(const.thetaInit);
+    vz0 = const.vInit*sind(const.thetaInit);
+
+    <span class="comment">% Format the initial conditions vector, and by extension variables to</span>
+    <span class="comment">% integrate</span>
+    X0 = [const.xInit; const.zInit; vx0; vz0; mRocketInit; mAirInit; VAirInit];
+
+    <span class="comment">% Define events worthy of stopping integration</span>
+    options = odeset(<span class="string">'Events'</span>,@phase);
+</pre><h2 id="9">Simulation</h2><pre class="codeinput">    <span class="comment">% Integrate! Solves for the trajectory of the rocket by integrating the</span>
+    <span class="comment">% variables in X0 over tspan according to the derivative information</span>
+    <span class="comment">% contained in rocketEOM. Also stops integration according to "options," a</span>
+    <span class="comment">% predefined set of stopping conditions</span>
+    [time, state, timePhases, ~, ~] = ode45(@(t,state)rocketEOM(t,state,const), const.tspan, X0, options);
+
+    <span class="comment">% Extract intermediate variables from rocketEOM for debugging, particularly</span>
+    <span class="comment">% weight, drag, thrust, and air pressure. Found this approach on the MATLAB</span>
+    <span class="comment">% forums.</span>
+    [~,gravCell, dragCell, thrustCell, PairCell] = cellfun(@(t,state)rocketEOM(t,state.',const), num2cell(time), num2cell(state,2), <span class="string">'uni'</span>, 0);
+
+    <span class="comment">%Allocate space for intermediate variables</span>
+    gravity = zeros(length(time),1);
+    drag = zeros(length(time),1);
+    thrust = zeros(length(time),1);
+    Pair = zeros(length(time),1);
+
+    <span class="comment">% Extract intermediate variables from their cells</span>
+    <span class="keyword">for</span> i = 1:length(time)
+        gravity(i) = norm(gravCell{i});
+        drag(i) = norm(dragCell{i});
+        thrust(i) = norm(thrustCell{i});
+        Pair(i) = norm(PairCell{i});
+    <span class="keyword">end</span>
+</pre><h2 id="10">Extraction</h2><pre class="codeinput">    <span class="comment">% Extract variables of interest</span>
+    rocketX = state(:,1);
+    rocketZ = state(:,2);
+    rocketVx = state(:,3);
+    rocketVz = state(:,4);
+    rocketM = state(:,5);
+    rocketMair = state(:,6);
+    rocketV = state(:,7);
+
+    <span class="comment">% Find maximum values of interest</span>
+    maxRange = max(rocketX)
+    maxHeight = max(rocketZ)
+    maxVx = max(rocketVx)
+    maxVy = max(rocketVz)
+    maxThrust = max(thrust)
+
+    <span class="comment">% Update structure entry</span>
+    initialAngleSim(k).time = time;
+    initialAngleSim(k).timePhases = timePhases;
+    initialAngleSim(k).rocketX = rocketX;
+    initialAngleSim(k).rocketZ = rocketZ;
+    initialAngleSim(k).thrust = thrust;
+</pre><pre class="codeoutput">
+maxRange =
+
+    6.1186
+
+
+maxHeight =
+
+    0.2619
+
+
+maxVx =
+
+   33.9884
+
+
+maxVy =
+
+    0.1930
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   17.6459
+
+
+maxHeight =
+
+    0.5513
+
+
+maxVx =
+
+   33.5487
+
+
+maxVy =
+
+    1.2978
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   31.2750
+
+
+maxHeight =
+
+    1.6150
+
+
+maxVx =
+
+   33.8271
+
+
+maxVy =
+
+    4.2108
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   40.9733
+
+
+maxHeight =
+
+    3.2757
+
+
+maxVx =
+
+   32.6997
+
+
+maxVy =
+
+    7.1240
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   48.1205
+
+
+maxHeight =
+
+    5.4599
+
+
+maxVx =
+
+   31.5515
+
+
+maxVy =
+
+    9.9878
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   53.5534
+
+
+maxHeight =
+
+    8.0438
+
+
+maxVx =
+
+   30.3145
+
+
+maxVy =
+
+   12.8211
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   57.2735
+
+
+maxHeight =
+
+   10.9839
+
+
+maxVx =
+
+   28.8933
+
+
+maxVy =
+
+   15.6005
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   60.2915
+
+
+maxHeight =
+
+   14.3567
+
+
+maxVx =
+
+   27.5405
+
+
+maxVy =
+
+   18.4191
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   60.2658
+
+
+maxHeight =
+
+   17.2294
+
+
+maxVx =
+
+   25.6057
+
+
+maxVy =
+
+   20.5830
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   59.2442
+
+
+maxHeight =
+
+   20.5144
+
+
+maxVx =
+
+   23.4752
+
+
+maxVy =
+
+   22.9134
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   56.3814
+
+
+maxHeight =
+
+   23.9165
+
+
+maxVx =
+
+   20.9219
+
+
+maxVy =
+
+   25.1361
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   51.0232
+
+
+maxHeight =
+
+   26.2558
+
+
+maxVx =
+
+   18.0698
+
+
+maxVy =
+
+   26.5881
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   46.6467
+
+
+maxHeight =
+
+   29.7155
+
+
+maxVx =
+
+   15.6246
+
+
+maxVy =
+
+   28.6024
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   38.4524
+
+
+maxHeight =
+
+   31.6699
+
+
+maxVx =
+
+   12.5615
+
+
+maxVy =
+
+   29.5976
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   29.7251
+
+
+maxHeight =
+
+   33.4412
+
+
+maxVx =
+
+    9.4984
+
+
+maxVy =
+
+   30.5030
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   20.6852
+
+
+maxHeight =
+
+   35.9347
+
+
+maxVx =
+
+    6.5330
+
+
+maxVy =
+
+   31.9262
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeoutput">
+maxRange =
+
+   10.3505
+
+
+maxHeight =
+
+   35.5280
+
+
+maxVx =
+
+    3.1916
+
+
+maxVy =
+
+   31.5049
+
+
+maxThrust =
+
+  191.0459
+
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><h2 id="12">Plotting</h2><h2 id="13">Plot the trajectory/thrust with varied Cd</h2><pre class="codeinput">f = figure();
+f.Position = [100 100 740 740]; <span class="comment">% Start at (100, 100), end at (100 + 740, 100 + 740)</span>
+sgtitle(<span class="string">"Simulation with varied Cd"</span>);
+
+<span class="comment">% Thrust</span>
+subplot(1,2,1);
+
+hold <span class="string">on</span>
+
+title(<span class="string">"Bottle Rocket Thrust Curve"</span>)
+label = strings(1,length(cDragSim) + 1);
+label(length(cDragSim) + 1) = sprintf(<span class="string">"Target distance of %.2f m"</span>, target);
+plots = zeros(1,length(cDragSim));
+
+<span class="keyword">for</span> k = 1:length(cDragSim)
+    plots(k) = plot(cDragSim(k).time, cDragSim(k).thrust);
+    label(k) = sprintf(<span class="string">"Cd = %.3f, max thrust = %.3f N"</span>, cDragSim(k).Cdrag, max(cDragSim(k).thrust));
+<span class="keyword">end</span>
+
+xlim([0 0.4]);
+ylim([0 250]);
+xlabel(<span class="string">'Time (sec)'</span>)
+ylabel(<span class="string">'Thrust (N)'</span>)
+legend(plots, label, <span class="string">'Location'</span>, <span class="string">'best'</span>);
+
+hold <span class="string">off</span>
+
+subplot(1,2,2);
+hold <span class="string">on</span>;
+
+title(<span class="string">"Bottle Rocket Full Trajectory"</span>)
+
+label = strings(1,length(cDragSim) + 1);
+label(length(cDragSim) + 1) = sprintf(<span class="string">"Target distance of %.2f m"</span>, target);
+plots = zeros(1,length(cDragSim));
+
+<span class="comment">% Trajectory</span>
+<span class="keyword">for</span> k = 1:length(cDragSim)
+    hold <span class="string">on</span>;
+    rocketX = cDragSim(k).rocketX;
+    rocketZ = cDragSim(k).rocketZ;
+    label(k) = sprintf(<span class="string">"Cd = %.3f, range = %.3f m"</span>, cDragSim(k).Cdrag, max(rocketX));
+    plots(k) = plot(rocketX, rocketZ);
+<span class="keyword">end</span>
+
+plots(k+1) = xline(target, <span class="string">'k--'</span>);
+
+xlim([0, 90]);
+ylim([0, 30]);
+xlabel(<span class="string">"Range (m)"</span>);
+ylabel(<span class="string">"Height (m)"</span>);
+legend(plots, label, <span class="string">'Location'</span>, <span class="string">'best'</span>);
+hold <span class="string">off</span>;
+</pre><pre class="codeoutput">Warning: Ignoring extra legend entries. 
+</pre><img vspace="5" hspace="5" src="VariedCdAngleSimulation_01.png" alt=""> <h2 id="14">Plot the trajectory/thrust with varied initial heading</h2><pre class="codeinput">f = figure();
+f.Position = [940 100 740 740]; <span class="comment">% Start at (940, 100) end at (940 + 740, 100 + 740)</span>
+sgtitle(<span class="string">"Simulation with varied initial heading"</span>);
+
+label = strings(1,length(initialAngleSim) + 1);
+label(length(initialAngleSim) + 1) = sprintf(<span class="string">"Target distance of %.2f m"</span>, target);
+plots = zeros(1,length(initialAngleSim));
+
+<span class="comment">% Thrust</span>
+subplot(1,2,1);
+
+hold <span class="string">on</span>
+
+title(<span class="string">"Bottle Rocket Thrust Curve"</span>);
+
+<span class="keyword">for</span> k = 1:length(initialAngleSim)
+    plots(k) = plot(initialAngleSim(k).time, initialAngleSim(k).thrust);
+    label(k) = sprintf(<span class="string">"Initial angle = %.3f, max thrust = %.3f m"</span>, initialAngleSim(k).initialAngle, max(initialAngleSim(k).thrust));
+<span class="keyword">end</span>
+
+xlabel(<span class="string">"Time (sec)"</span>)
+ylabel(<span class="string">"Thrust (N)"</span>)
+xlim([0 0.4])
+ylim([0 250])
+legend(plots, label, <span class="string">'Location'</span>, <span class="string">'best'</span>)
+
+hold <span class="string">off</span>
+
+subplot(1,2,2);
+
+hold <span class="string">on</span>
+title(<span class="string">"Bottle Rocket Full Trajectory"</span>);
+
+<span class="comment">% Trajectory</span>
+<span class="keyword">for</span> k = 1:length(initialAngleSim)
+    hold <span class="string">on</span>;
+    rocketX = initialAngleSim(k).rocketX;
+    rocketZ = initialAngleSim(k).rocketZ;
+    time = initialAngleSim(k).time;
+    label(k) = sprintf(<span class="string">"Initial angle = %.3f, range = %.3f m"</span>, initialAngleSim(k).initialAngle, max(rocketX));
+    plots(k) = plot(rocketX, rocketZ);
+<span class="keyword">end</span>
+
+plots(k+1) = xline(target, <span class="string">'k--'</span>);
+
+xlim([0, 90]);
+ylim([0, 40]);
+xlabel(<span class="string">"Range (m)"</span>);
+ylabel(<span class="string">"Height (m)"</span>);
+legend(plots, label, <span class="string">'Location'</span>, <span class="string">'best'</span>);
+hold <span class="string">off</span>;
+</pre><pre class="codeoutput">Warning: Ignoring extra legend entries. 
+</pre><img vspace="5" hspace="5" src="VariedCdAngleSimulation_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2021a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% ASEN 2012 Project 2 - Group Portion varied Cd and initial launch angle simulation
+%   By: Ian Faber and Jack Walsh
+%   SID: 108577813, 10040714
+%   Started: 12/5/21, 13:30
+%   Finished: 12/7/21, 16:38
+%
+%   Runs a varied bottle rocket simulation subject to a set of initial
+%   parameters through 3 different phases of flight: water thrust, air
+%   thrust, and ballistic flight. This specific script utilizes a custom
+%   ODE45 EOM function and varies the rocket's coefficient of drag and
+%   intial launch angle, then plots them all together to see trends in
+%   trajectory and thrust.
+%
+
+
+%% Setup
+
+% Housekeeping
+clc; clear; close all;
+
+% Get all constants from the const structure
+const = getConst();
+
+target = 85;
+
+cDragSim = struct('Cdrag',0,'rocketX',[],'rocketZ',[]);
+initialAngleSim = struct('initialAngle',0,'rocketX',[],'rocketZ',[]);
+
+%% Vary Cd
+
+Cds = 0.2:0.1:0.8;
+
+for k = 1:length(Cds)
+    
+    const.Cdrag = Cds(k);
+    
+    % Store simulated Cd
+    cDragSim(k).Cdrag = const.Cdrag;
+    
+    % Difference of Bottle and initial water volumes
+    VAirInit = const.Vbottle - const.VWaterInit;
+    
+    % Need absolute pressure of air, also convert psi to Pa
+    PAirInit = (const.PGageInit+const.PAmb)*6894.76;
+    
+    % Calculate rho w/ Ideal Gas EOS
+    rhoAirInit = (PAirInit)/(const.R*const.TAirInit);
+    
+    % Calculate initial masses
+    mAirInit = rhoAirInit*VAirInit;
+    mWaterInit = const.rhoWater*const.VWaterInit;
+    mRocketInit = const.mBottle + mAirInit + mWaterInit;
+    
+    % Calculate initial x and z velocities
+    vx0 = const.vInit*cosd(const.thetaInit);
+    vz0 = const.vInit*sind(const.thetaInit);
+    
+    % Format the initial conditions vector, and by extension variables to
+    % integrate
+    X0 = [const.xInit; const.zInit; vx0; vz0; mRocketInit; mAirInit; VAirInit];
+    
+    % Define events worthy of stopping integration
+    options = odeset('Events',@phase);
+    
+    %% Simulation
+    
+    % Integrate! Solves for the trajectory of the rocket by integrating the
+    % variables in X0 over tspan according to the derivative information
+    % contained in rocketEOM. Also stops integration according to "options," a
+    % predefined set of stopping conditions
+    [time, state, timePhases, ~, ~] = ode45(@(t,state)rocketEOM(t,state,const), const.tspan, X0, options);
+    
+    % Extract intermediate variables from rocketEOM for debugging, particularly
+    % weight, drag, thrust, and air pressure. Found this approach on the MATLAB
+    % forums.
+    [~,gravCell, dragCell, thrustCell, PairCell] = cellfun(@(t,state)rocketEOM(t,state.',const), num2cell(time), num2cell(state,2), 'uni', 0);
+    
+    %Allocate space for intermediate variables
+    gravity = zeros(length(time),1);
+    drag = zeros(length(time),1);
+    thrust = zeros(length(time),1);
+    Pair = zeros(length(time),1);
+    
+    % Extract intermediate variables from their cells
+    for i = 1:length(time)
+        gravity(i) = norm(gravCell{i});
+        drag(i) = norm(dragCell{i});
+        thrust(i) = norm(thrustCell{i});
+        Pair(i) = norm(PairCell{i});
+    end
+    
+    %% Extraction
+    
+    % Extract variables of interest
+    rocketX = state(:,1);
+    rocketZ = state(:,2);
+    rocketVx = state(:,3);
+    rocketVz = state(:,4);
+    rocketM = state(:,5);
+    rocketMair = state(:,6);
+    rocketV = state(:,7);
+    
+    % Find maximum values of interest
+    maxRange = max(rocketX)
+    maxHeight = max(rocketZ)
+    maxVx = max(rocketVx)
+    maxVy = max(rocketVz)
+    maxThrust = max(thrust)
+    
+    timePhases
+    
+    % Update structure entry
+    cDragSim(k).time = time;
+    cDragSim(k).timePhases = timePhases;
+    cDragSim(k).rocketX = rocketX;
+    cDragSim(k).rocketZ = rocketZ;
+    cDragSim(k).thrust = thrust;
+    
+end
+
+%% Vary initial heading
+headings = 5:5:85;
+
+const.Cdrag = 0.5; % Reset Cd
+
+for k = 1:length(headings)
+    
+    const.thetaInit = headings(k);
+    
+    % Store simulated initial angle
+    initialAngleSim(k).initialAngle = const.thetaInit;
+    
+    % Difference of Bottle and initial water volumes
+    VAirInit = const.Vbottle - const.VWaterInit;
+    
+    % Need absolute pressure of air, also convert psi to Pa
+    PAirInit = (const.PGageInit+const.PAmb)*6894.76;
+    
+    % Calculate rho w/ Ideal Gas EOS
+    rhoAirInit = (PAirInit)/(const.R*const.TAirInit);
+    
+    % Calculate initial masses
+    mAirInit = rhoAirInit*VAirInit;
+    mWaterInit = const.rhoWater*const.VWaterInit;
+    mRocketInit = const.mBottle + mAirInit + mWaterInit;
+    
+    % Calculate initial x and z velocities
+    vx0 = const.vInit*cosd(const.thetaInit);
+    vz0 = const.vInit*sind(const.thetaInit);
+    
+    % Format the initial conditions vector, and by extension variables to
+    % integrate
+    X0 = [const.xInit; const.zInit; vx0; vz0; mRocketInit; mAirInit; VAirInit];
+    
+    % Define events worthy of stopping integration
+    options = odeset('Events',@phase);
+    
+    %% Simulation
+    
+    % Integrate! Solves for the trajectory of the rocket by integrating the
+    % variables in X0 over tspan according to the derivative information
+    % contained in rocketEOM. Also stops integration according to "options," a
+    % predefined set of stopping conditions
+    [time, state, timePhases, ~, ~] = ode45(@(t,state)rocketEOM(t,state,const), const.tspan, X0, options);
+    
+    % Extract intermediate variables from rocketEOM for debugging, particularly
+    % weight, drag, thrust, and air pressure. Found this approach on the MATLAB
+    % forums.
+    [~,gravCell, dragCell, thrustCell, PairCell] = cellfun(@(t,state)rocketEOM(t,state.',const), num2cell(time), num2cell(state,2), 'uni', 0);
+    
+    %Allocate space for intermediate variables
+    gravity = zeros(length(time),1);
+    drag = zeros(length(time),1);
+    thrust = zeros(length(time),1);
+    Pair = zeros(length(time),1);
+    
+    % Extract intermediate variables from their cells
+    for i = 1:length(time)
+        gravity(i) = norm(gravCell{i});
+        drag(i) = norm(dragCell{i});
+        thrust(i) = norm(thrustCell{i});
+        Pair(i) = norm(PairCell{i});
+    end
+    
+    %% Extraction
+    
+    % Extract variables of interest
+    rocketX = state(:,1);
+    rocketZ = state(:,2);
+    rocketVx = state(:,3);
+    rocketVz = state(:,4);
+    rocketM = state(:,5);
+    rocketMair = state(:,6);
+    rocketV = state(:,7);
+    
+    % Find maximum values of interest
+    maxRange = max(rocketX)
+    maxHeight = max(rocketZ)
+    maxVx = max(rocketVx)
+    maxVy = max(rocketVz)
+    maxThrust = max(thrust)
+    
+    % Update structure entry
+    initialAngleSim(k).time = time;
+    initialAngleSim(k).timePhases = timePhases;
+    initialAngleSim(k).rocketX = rocketX;
+    initialAngleSim(k).rocketZ = rocketZ;
+    initialAngleSim(k).thrust = thrust;
+    
+end
+
+%% Plotting
+
+%% Plot the trajectory/thrust with varied Cd
+f = figure();
+f.Position = [100 100 740 740]; % Start at (100, 100), end at (100 + 740, 100 + 740)
+sgtitle("Simulation with varied Cd");
+
+% Thrust
+subplot(1,2,1);
+
+hold on
+
+title("Bottle Rocket Thrust Curve")
+label = strings(1,length(cDragSim) + 1);
+label(length(cDragSim) + 1) = sprintf("Target distance of %.2f m", target);
+plots = zeros(1,length(cDragSim));
+
+for k = 1:length(cDragSim)
+    plots(k) = plot(cDragSim(k).time, cDragSim(k).thrust);
+    label(k) = sprintf("Cd = %.3f, max thrust = %.3f N", cDragSim(k).Cdrag, max(cDragSim(k).thrust));
+end
+
+xlim([0 0.4]);
+ylim([0 250]);
+xlabel('Time (sec)')
+ylabel('Thrust (N)')
+legend(plots, label, 'Location', 'best');
+
+hold off
+
+subplot(1,2,2);
+hold on;
+
+title("Bottle Rocket Full Trajectory")
+
+label = strings(1,length(cDragSim) + 1);
+label(length(cDragSim) + 1) = sprintf("Target distance of %.2f m", target);
+plots = zeros(1,length(cDragSim));
+
+% Trajectory
+for k = 1:length(cDragSim)
+    hold on;
+    rocketX = cDragSim(k).rocketX;
+    rocketZ = cDragSim(k).rocketZ;
+    label(k) = sprintf("Cd = %.3f, range = %.3f m", cDragSim(k).Cdrag, max(rocketX));
+    plots(k) = plot(rocketX, rocketZ);
+end
+
+plots(k+1) = xline(target, 'kREPLACE_WITH_DASH_DASH');
+
+xlim([0, 90]);
+ylim([0, 30]);
+xlabel("Range (m)");
+ylabel("Height (m)");
+legend(plots, label, 'Location', 'best');
+hold off;
+
+%% Plot the trajectory/thrust with varied initial heading
+f = figure();
+f.Position = [940 100 740 740]; % Start at (940, 100) end at (940 + 740, 100 + 740)
+sgtitle("Simulation with varied initial heading");
+
+label = strings(1,length(initialAngleSim) + 1);
+label(length(initialAngleSim) + 1) = sprintf("Target distance of %.2f m", target);
+plots = zeros(1,length(initialAngleSim));
+
+% Thrust
+subplot(1,2,1);
+
+hold on
+
+title("Bottle Rocket Thrust Curve");
+
+for k = 1:length(initialAngleSim)
+    plots(k) = plot(initialAngleSim(k).time, initialAngleSim(k).thrust);
+    label(k) = sprintf("Initial angle = %.3f, max thrust = %.3f m", initialAngleSim(k).initialAngle, max(initialAngleSim(k).thrust));
+end
+
+xlabel("Time (sec)")
+ylabel("Thrust (N)")
+xlim([0 0.4])
+ylim([0 250])
+legend(plots, label, 'Location', 'best')
+
+hold off
+
+subplot(1,2,2);
+
+hold on
+title("Bottle Rocket Full Trajectory");
+
+% Trajectory
+for k = 1:length(initialAngleSim)
+    hold on;
+    rocketX = initialAngleSim(k).rocketX;
+    rocketZ = initialAngleSim(k).rocketZ;
+    time = initialAngleSim(k).time;
+    label(k) = sprintf("Initial angle = %.3f, range = %.3f m", initialAngleSim(k).initialAngle, max(rocketX));
+    plots(k) = plot(rocketX, rocketZ);
+end
+
+plots(k+1) = xline(target, 'kREPLACE_WITH_DASH_DASH');
+
+xlim([0, 90]);
+ylim([0, 40]);
+xlabel("Range (m)");
+ylabel("Height (m)");
+legend(plots, label, 'Location', 'best');
+hold off;
+
+##### SOURCE END #####
+--></body></html>
