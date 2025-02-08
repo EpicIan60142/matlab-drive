@@ -1,0 +1,59 @@
+function [epsilon_x_bar, epsilon_y_bar, NEESbounds, NISbounds] = chi2tests(filterFunc, N, alpha, filterParams, Qtrue, Rtrue, filterInit, timesteps, x0)
+    
+    if timesteps > 533
+        figure
+        hold on; grid on; axis equal;
+        title("All Monte Carlo runs")
+
+        colors = colororder('glow12');
+    end
+
+    epsilon_mat_x = NaN(2*N,timesteps+1);
+    epsilon_mat_y = NaN(2*N,timesteps+1);
+
+    perturb = chol(filterInit.P0,"lower") * randn(4,N);
+
+    for i =1:N
+        [xtrue, ytrue] = orbitMonteCarlo(Qtrue, Rtrue, filterInit.dt, timesteps, x0 + perturb(:,i));
+    
+        filterData = filterFunc(ytrue, filterParams, filterInit);
+        state_error = xtrue - filterData.x_KF;
+        
+        if timesteps > 533
+            plot(filterData.x_KF(1,:), filterData.x_KF(3,:));
+            plot(xtrue(1,:), xtrue(3,:), '-.')
+            if i == 1
+                start = plot(filterData.x_KF(1,1), filterData.x_KF(3,1), 'g.', 'MarkerSize', 15);
+                spikes = plot(filterData.x_KF(1,points), filterData.x_KF(3,points), 'k.', 'MarkerSize', 15);
+            else
+                plot(filterData.x_KF(1,1), filterData.x_KF(3,1), 'g.', 'MarkerSize', 15);
+                plot(filterData.x_KF(1,points), filterData.x_KF(3,points), 'k.', 'MarkerSize', 15);
+            end
+        end
+
+        for j = 1:timesteps
+            if(isempty(filterData.innovation_KF{j}))
+                continue
+            elseif length(filterData.innovation_KF{j}) == 3
+                epsilon_mat_x(i,j) = state_error(:,j)' * inv(filterData.P_KF(:,:,j)) * state_error(:,j);
+                epsilon_mat_y(i,j) = filterData.innovation_KF{j}' * inv(filterData.Sk_KF{j}) * filterData.innovation_KF{j};
+            else
+                epsilon_mat_x(i+N,j) = state_error(:,j)' * inv(filterData.P_KF(:,:,j)) * state_error(:,j);
+                epsilon_mat_y(i+N,j) = filterData.innovation_KF{j}' * inv(filterData.Sk_KF{j}) * filterData.innovation_KF{j};
+            end
+        end
+        
+    end
+    epsilon_x_bar = [mean(epsilon_mat_x(1:N, :), "omitnan")];
+    epsilon_y_bar = [mean(epsilon_mat_y(1:N, :), "omitnan"); mean(epsilon_mat_y(N+1:end, :), "omitnan")];
+
+    NEESbounds = [chi2inv(alpha/2, N*length(filterInit.dx0))./N, chi2inv(1-alpha/2, N*length(filterInit.dx0))./N];
+    NISbounds(:,2) = [chi2inv(alpha/2, N*6)./N, chi2inv(1-alpha/2, N*6)./N];
+    NISbounds(:,1) = [chi2inv(alpha/2, N*3)./N, chi2inv(1-alpha/2, N*3)./N];
+
+    if timesteps > 533
+        nom = plot(filterInit.xNom(1,:), filterInit.xNom(3,:), 'k--');
+        legend([start, spikes, nom], ["Start point", "NEES Spike locations", "Nominal solution"])
+    end
+
+end
