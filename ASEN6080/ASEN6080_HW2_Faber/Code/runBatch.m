@@ -1,4 +1,4 @@
-function batchRun = runBatch(X0, x0, P0, pConst, stations, X_ref, tspan, opt)
+function batchRun = runBatch(X0, x0, P0, pConst, stations, X_ref, tspan, dt, opt)
 % Function that runs a batch filter on the given data for a stat OD
 % problem. Iterates batch runs until convergence, or the maximum number of
 % iterations is met.
@@ -14,6 +14,7 @@ function batchRun = runBatch(X0, x0, P0, pConst, stations, X_ref, tspan, opt)
 %       - stations: Stations structure as defined by makeSations.m
 %       - X_ref: Reference orbit from truth data
 %       - tspan: Time span of the reference orbit
+%       - dt: Output timestep corresponding to tspan
 %       - opt: ode45 settings used to generate X_ref
 %   - Outputs:
 %       - batchRun: Batch filter results structure organized as follows:
@@ -33,8 +34,10 @@ function batchRun = runBatch(X0, x0, P0, pConst, stations, X_ref, tspan, opt)
 %                                   component
 %           - RMS_state_full_batch: Full state RMS error after the filter
 %                                   has converged
-%           - fig_BatchRes: Array of batch residual plot figure handles, 
-%                           one per filter iteration
+%           - fig_BatchPreRes: Array of batch prefit residual plot figure 
+%                              handles, one per filter iteration
+%           - fig_BatchPostRes: Array of batch postfit residual plot figure 
+%                              handles, one per filter iteration
 %           - fig_BatchError: Batch filter state error plot figure handle
 %
 %   By: Ian Faber, 02/03/2025
@@ -52,31 +55,39 @@ RMS_postfit_batch = 1e99; % Start RMS with a bogus value
 batchTolerance = 1e-6; % any ratio less than this is considered converged
 maxBatchRuns = 10; % Cap number of runs
 batchRuns = 0;
-fig_BatchRes = [];
+fig_BatchPreRes = [];
+fig_BatchPostRes = [];
 k = 2; % Start counter with bogus value
 while true
         % Run batch
-    batchOut = BatchFilter(X0_batch, stations, pConst, P0_batch, x0_batch);
+    batchOut = BatchFilter(X0_batch, stations, pConst, P0_batch, x0_batch, dt);
 
         % Extract batch data
     x0Est_batch = batchOut.x0Est;
     P0Est_batch = batchOut.P0Est;
+    prefit_res_batch = batchOut.prefit_res;
     postfit_res_batch = batchOut.postfit_res;
-    epsilon_batch = batchOut.epsilon;
     t_batch = batchOut.t;
     statVis_batch = batchOut.statVis;
     
         % Find residual RMS errors
-    rms = calcPostFitRMS(epsilon_batch, stations, statVis_batch);
+    rms = calcResidualRMS(postfit_res_batch, stations, statVis_batch);
     RMS_postfit_batch = [RMS_postfit_batch; rms];
     
         % Plot residuals
+    titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", k-1); 
+    xLabel = "Time [sec]"; 
+    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    colors = ['b', 'r'];
+    
+    fig_BatchPreRes = [fig_BatchPreRes; plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors)];
+
     titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", k-1); 
     xLabel = "Time [sec]"; 
     yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
     colors = ['b', 'r'];
     
-    fig_BatchRes = [fig_BatchRes; plotPostFitRes(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors)];
+    fig_BatchPostRes = [fig_BatchPostRes; plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors)];
 
         % Determine if another run is needed via percent change
     if (abs((RMS_postfit_batch(k) - RMS_postfit_batch(k-1))/RMS_postfit_batch(k-1)) > batchTolerance) && (batchRuns < maxBatchRuns)
@@ -108,28 +119,18 @@ end
     %% Calculate state error and uncertainty
 stateError_batch = X_batchFilt - X_ref;
 
-sig_batch = [];
+sigma_batch = [];
+t_sigma = [];
 for k = 1:size(batchOut.Phi,1)
     sigPart = [];
-    Phi = batchOut.Phi{k};
+    Phi = batchOut.Phi{k,1};
+    t_sig = batchOut.Phi{k,2};
     P = Phi*P0Est_batch*Phi';
     for kk = 1:size(P, 1)
         sigPart = [sigPart; sqrt(P(kk,kk))];
     end
-    sig_batch = [sig_batch, sigPart];
-end
-
-sigma_batch = [];
-kk = 1;
-for k = 1:length(t_batchFilt)
-    if t_batchFilt(k) >= t_batch(kk)
-        kk = kk + 1;
-    end
-    if kk > length(t_batch)
-        k;
-        kk = length(t_batch);
-    end
-    sigma_batch = [sigma_batch; sig_batch(:,kk)'];
+    t_sigma = [t_sigma; t_sig];
+    sigma_batch = [sigma_batch; sigPart'];
 end
 
     %% Find state RMS error: component-wise and state-wise
@@ -142,11 +143,12 @@ xLabel = "Time [sec]";
 yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
           "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
 
-fig_BatchError = plotStateError(t_batchFilt, stateError_batch, sigma_batch, boundLevel, titleText, xLabel, yLabel);
+fig_BatchError = plotStateError(t_batchFilt, stateError_batch, t_sigma, sigma_batch, boundLevel, titleText, xLabel, yLabel);
 
     %% Assign output
 batchRun = struct("batchOut", batchOut, "t_batchFilt", t_batchFilt, "X_batchFilt", X_batchFilt, ...
                   "RMS_postfit_batch", RMS_postfit_batch, "RMS_state_comp_batch", RMS_state_comp_batch, ...
-                  "RMS_state_full_batch", RMS_state_full_batch, "fig_BatchRes", fig_BatchRes, "fig_BatchError", fig_BatchError);
+                  "RMS_state_full_batch", RMS_state_full_batch, "fig_BatchPreRes", fig_BatchPreRes, ...
+                  "fig_BatchPostRes", fig_BatchPostRes, "fig_BatchError", fig_BatchError);
 
 end
