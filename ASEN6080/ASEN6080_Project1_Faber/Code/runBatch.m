@@ -14,7 +14,7 @@ function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, o
 %       - scConst: Spacecraft constant structure as formatted by
 %                  getSCConst.m
 %       - stations: Stations structure as defined by makeSations.m
-%       - tspan: Time span of the reference orbit
+%       - tspan: Time span of the dataset
 %       - dt: Output timestep corresponding to tspan
 %       - opt: ode45 settings used to generate X_ref
 %       - numIter: Max number of times to iterate the filter
@@ -54,7 +54,7 @@ fprintf("\n\tRunning Batch Filter:\n")
 
     %% Iterate Batch Filter until residual RMS doesn't change
 RMS_postfit_batch = 1e99; % Start RMS with a bogus value
-batchTolerance = 1e-6; % any ratio less than this is considered converged
+batchTolerance = 1e-3; % any ratio less than this is considered converged
 maxBatchRuns = numIter; % Cap number of runs
 batchRuns = 0;
 fig_BatchPreRes = [];
@@ -102,7 +102,11 @@ while batchRuns < maxBatchRuns
         batchRuns = batchRuns + 1;
 
             % Write to console
-        fprintf("Postfit RMS: %.4f. Iterating Batch. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns)
+        if batchRuns < maxBatchRuns
+            fprintf("Postfit RMS: %.4f. Iterating Batch. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns)
+        else
+            fprintf("Postfit RMS: %.4f. Hit max Batch iterations. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns)
+        end
     else
         break;
     end

@@ -49,7 +49,7 @@ delXddDelX = -mu*( ((r^2 - 3*x^2)/r^5) + ((Ri^2*J2)/2)*(((15*(x^2 + z^2))/r^7) -
 delXddDelY = mu*( ((3*x*y)/r^5) - ((Ri^2*J2*x*y)/2)*((15/r^7) - ((105*z^2)/r^9)) ) + dragConst*v*xDot*y*atmosConst;
 delXddDelZ = mu*( ((3*x*z)/r^5) - ((Ri^2*J2*x*z)/2)*((45/r^7) - ((105*z^2)/r^9)) ) + dragConst*v*xDot*z*atmosConst;
 
-delXddDelXd = -dragConst*rho*((xDot^2)/v + v);
+delXddDelXd = -dragConst*rho*(((xDot^2)/v) + v);
 delXddDelYd = -dragConst*rho*xDot*yDot/v;
 delXddDelZd = -dragConst*rho*xDot*zDot/v;
 
@@ -58,7 +58,7 @@ delYddDelY = -mu*( ((r^2 - 3*y^2)/r^5) + ((Ri^2*J2)/2)*(((15*(y^2 + z^2))/r^7) -
 delYddDelZ = mu*( ((3*y*z)/r^5) - ((Ri^2*J2*y*z)/2)*((45/r^7) - ((105*z^2)/r^9)) ) + dragConst*v*yDot*z*atmosConst;
 
 delYddDelXd = -dragConst*rho*yDot*xDot/v;
-delYddDelYd = -dragConst*rho*((yDot^2)/v + v);
+delYddDelYd = -dragConst*rho*(((yDot^2)/v) + v);
 delYddDelZd = -dragConst*rho*yDot*zDot/v;
 
 delZddDelX = mu*( ((3*x*z)/r^5) - ((Ri^2*J2*x*z)/2)*((45/r^7) - ((105*z^2)/r^9)) ) + dragConst*v*zDot*x*atmosConst;
@@ -67,7 +67,7 @@ delZddDelZ = -mu*( ((r^2 - 3*z^2)/r^5) + ((Ri^2*J2)/2)*(((90*z^2)/r^7) - ((105*z
 
 delZddDelXd = -dragConst*rho*zDot*xDot/v;
 delZddDelYd = -dragConst*rho*zDot*yDot/v;
-delZddDelZd = -dragConst*rho*((zDot^2)/v + v);
+delZddDelZd = -dragConst*rho*(((zDot^2)/v) + v);
 
 delXddDelMu = (-x/r^3)*(1 + ((Ri/r)^2)*J2*((15/2)*(z/r)^2 - (3/2)));
 delYddDelMu = (-y/r^3)*(1 + ((Ri/r)^2)*J2*((15/2)*(z/r)^2 - (3/2)));

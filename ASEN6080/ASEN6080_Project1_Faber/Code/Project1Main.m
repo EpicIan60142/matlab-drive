@@ -5,6 +5,8 @@
 clc; clear; close all;
 
 %% Setup
+addpath(genpath("..\..\Utilities"))
+
 earthConst = getPlanetConst();
 scConst = getSCConst();
 stations = makeStations();
@@ -14,7 +16,6 @@ data = readmatrix("..\Data\project.txt");
 
 stations = readData(stations, data);
 
-
 %% Filter setup
 stationX0 = [];
 for k = 1:length(stations)
@@ -23,7 +24,7 @@ end
 
 X0 = [scConst.X0_cart; earthConst.mu; earthConst.J2; scConst.Cd; stationX0];
 P0 = diag([
-            1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6, ...
+            1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e20, 1e6, 1e6, ...
             1e-10, 1e-10, 1e-10, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6
           ]);
 
