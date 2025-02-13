@@ -1,11 +1,12 @@
-function fig = plotStateError(t, stateError, sigma, boundLevel, titleText, xLabel, yLabel)
+function fig = plotStateError(t_state, stateError, t_sigma, sigma, boundLevel, titleText, xLabel, yLabel)
 % Function that plots state errors from a filter estimate with specified
 % sigma bounds
 %   Inputs:
-%       - t: Time vector corresponding to the state errors
+%       - t_state: Time vector corresponding to the state errors
 %       - stateError: State error matrix, organized as a stack of state
 %                     error row vectors - one row per entry in t and one
 %                     column per state
+%       - t_sigma: Time vector corresponding to the state error uncertainty
 %       - sigma: Error uncertainty corresponding to the state errors,
 %                organized as a stack of row vectors - one row per entry in
 %                t and one column per state
@@ -23,16 +24,16 @@ function fig = plotStateError(t, stateError, sigma, boundLevel, titleText, xLabe
 %   By: Ian Faber, 02/01/2025
 %
 
-fig = figure; tl = tiledlayout(2,3); ax = [];
+fig = figure; tl = tiledlayout(6,3); ax = [];
 title(tl, titleText)
 for k = 1:size(stateError,2)
     nt = nexttile;
         ax = [ax; nt];
         hold on; grid on;
-        plot(t, stateError(:,k));
-        if ~isnan(sigma)
-            plot(t, -boundLevel*sigma(:,k), 'k--')
-            plot(t, boundLevel*sigma(:,k), 'k--')
+        plot(t_state, stateError(:,k),'.');
+        if ~isempty(sigma)
+            plot(t_sigma, -boundLevel*sigma(:,k), 'k--')
+            plot(t_sigma, boundLevel*sigma(:,k), 'k--')
         end
         xlabel(xLabel); ylabel(yLabel(k))
         % ylim([-4*max(sigma(:,k)) 4*max(sigma(:,k))]);
