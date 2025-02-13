@@ -17,10 +17,10 @@ function orbital = getOrbitConst()
 %
 
 orbital.a = 800+6378;
-orbital.e = NaN; % unknown
+orbital.e = deg2rad(0); % unknown
 orbital.i = deg2rad(98.6);
-orbital.RAAN = NaN; % unknown
-orbital.argPeri = NaN; % unknown
-orbital.truAnom = NaN; % unknown
+orbital.RAAN = deg2rad(0); % unknown
+orbital.argPeri = deg2rad(0); % unknown
+orbital.truAnom = deg2rad(0); % unknown
 
 end

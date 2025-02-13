@@ -8,7 +8,10 @@ function Y = generateRngRngRate(X, statVis, elMask, pConst, ignoreMask)
 %       - X: Spacecraft state, organized as follows:
 %            [x; y; z; xDot; yDot; zDot; mu; J2; Cd; statPos_1; statPos_2; 
 %             statPos_3]
+%       - statVis: Visible station index that is generating the measurement
 %       - elMask: Ground station elevation mask in RADIANS
+%       - pConst: Planetary constants structure as defined by
+%                 getPlanetConst.m
 %       - ignoreMask: Boolean indicating if the elevation mask is ignored
 %                     (1) or enforced (0). If not provided, defaults to 0.
 %   Outputs:
@@ -26,7 +29,7 @@ R = X(1:3);
 V = X(4:6);
 
 idx = statVis;
-Rs = X(7+3*idx:7+3*idx+2);
+Rs = X((7+3*idx):(7+3*idx+2));
 Vs = cross(pConst.wPlanet, Rs);
 
 rhoVec = R - Rs;

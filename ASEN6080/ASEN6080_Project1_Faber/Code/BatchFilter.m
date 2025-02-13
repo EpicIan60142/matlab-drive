@@ -103,7 +103,7 @@ for k = 2:length(Y)
     yExp = [];
     for kk = 1:meas
         genMeas = generateRngRngRate(Xstar_i, statVis, stations(statVis(kk)).elMask, pConst, true); % Ignore elevation mask
-        yExp = [yExp; genMeas(1:2)];
+        yExp = [yExp; genMeas(1:2)]; % Only pull out range and range rate
     end
 
     y_i = Y_i - yExp;

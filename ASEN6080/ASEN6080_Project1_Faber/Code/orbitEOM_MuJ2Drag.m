@@ -42,9 +42,9 @@ v = sqrt(xDot^2 + yDot^2 + zDot^2);
 rho = calcDensity(pConst, r);
 
     % Calculate accelerations
-xDDot = -(mu*x/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(3/2)))) - 0.5*dragConst*v*xDot;
-yDDot = -(mu*y/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(3/2)))) - 0.5*dragConst*v*yDot;
-zDDot = -(mu*z/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(9/2)))) - 0.5*dragConst*v*zDot;
+xDDot = -(mu*x/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(3/2)))) - 0.5*rho*dragConst*v*xDot;
+yDDot = -(mu*y/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(3/2)))) - 0.5*rho*dragConst*v*yDot;
+zDDot = -(mu*z/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(9/2)))) - 0.5*rho*dragConst*v*zDot;
 
     % Calculate station velocities
 Rs_1dot = cross(pConst.wPlanet, Rs_1);

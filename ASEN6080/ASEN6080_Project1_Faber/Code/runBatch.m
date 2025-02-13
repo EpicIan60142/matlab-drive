@@ -99,13 +99,15 @@ while batchRuns < maxBatchRuns
 
             % Update counters
         k = k + 1;
-        batchRuns = k - 1; % Offset current k by 1 to account for bogus starting value
+        batchRuns = batchRuns + 1;
 
             % Write to console
-        fprintf("Postfit RMS: %.4f. Iterating Batch. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns-1)
+        fprintf("Postfit RMS: %.4f. Iterating Batch. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns)
     else
         break;
     end
+    
+
 end
 RMS_postfit_batch = RMS_postfit_batch(2:end); % Get rid of bogus starting RMS value
 
@@ -122,7 +124,7 @@ end
 Phi = batchOut.Phi;
 relState_batch = [];
 for k = 1:length(Phi)
-    dX = Phi{k}*batchOut.x0Est - X_batchFilt(k,:)';
+    dX = Phi{k}*batchOut.x0Est;
     relState_batch = [relState_batch, dX];
 end
 
@@ -145,14 +147,14 @@ end
 
     %% Create state error plots
 boundLevel = 3; % Plot +/- boundLevel*sigma around state errors
-titleText = "Batch Filter Estimated State Error (X_{filt} - X_{ref})";
+titleText = "Batch Filter Relative State (\Deltax_{LS} = \phi(t,xHat_0,t_0) - xHat(t))";
 xLabel = "Time [sec]";
 yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
           "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]", ...
           "\mu error [km^3/s^2]", "J_2 error", "Cd error", ...
-          "Xs_1 error [km]", "Ys_1 error [km]", "Zs_1 error [km]", ...
-          "Xs_2 error [km]", "Ys_2 error [km]", "Zs_2 error [km]", ...
-          "Xs_3 error [km]", "Ys_3 error [km]", "Zs_3 error [km]"];
+          "X_{s,1} error [km]", "Y_{s,1} error [km]", "Z_{s,1} error [km]", ...
+          "X_{s,2} error [km]", "Y_{s,2} error [km]", "Z_{s,2} error [km]", ...
+          "X_{s,3} error [km]", "Y_{s,3} error [km]", "Z_{s,3} error [km]"];
 
 fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, sigma_batch, boundLevel, titleText, xLabel, yLabel);
 % fig_BatchError = plotStateError()
