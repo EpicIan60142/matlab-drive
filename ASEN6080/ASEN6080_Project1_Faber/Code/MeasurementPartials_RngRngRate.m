@@ -63,19 +63,25 @@ wTilde = tilde(pConst.wPlanet);
 
 HBlock_2 = [];
 for k = 1:3
-    Rs = [
-            X(7 + 3*k);
-            X(7 + 3*k + 1);
-            X(7 + 3*k + 2);
-         ];
+    if k == idx % Nonzero partials if the station is visible
+        Rs = [
+                X(7 + 3*k);
+                X(7 + 3*k + 1);
+                X(7 + 3*k + 2);
+             ];
+    
+        rhoVec = R - Rs;
+        rho = norm(rhoVec);
+    
+        stationPosPart = -rhoVec'/rho;
+        stationVelPart = ((rho^2)*(wTilde*R - V) + rhoVec'*(V - wTilde*Rs)*rhoVec)/rho^3;
 
-    rhoVec = R - Rs;
-    rho = norm(rhoVec);
-
-    stationPosPart = -rhoVec'/rho;
-    stationVelPart = ((rho^2)*(wTilde*R - V) + rhoVec'*(V - wTilde*Rs)*rhoVec)/rho^3;
-
-    HBlock_2 = [HBlock_2, [stationPosPart; stationVelPart']];
+        stationVelPart = stationVelPart'; % Make into a row vector
+    else % zero partials if station isn't visible
+        stationPosPart = zeros(1,3);
+        stationVelPart = zeros(1,3);
+    end
+    HBlock_2 = [HBlock_2, [stationPosPart; stationVelPart]];
 end
 
 Htilde = [HBlock_1, HBlock_2];
