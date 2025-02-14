@@ -28,6 +28,7 @@ function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, o
 %                               [X, Y, Z, Xdot, Ydot, Zdot]; 
 %                               [X, Y, Z, Xdot, Ydot, Zdot]; ...
 %                          ]
+%           - P_batch: Propagated batch filter covariance matrices
 %           - RMS_postfit_batch: Postfit residual RMS errors for each run 
 %                                of the batch filter, one run's error per 
 %                                row
@@ -36,10 +37,9 @@ function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, o
 %                                   component
 %           - RMS_state_full_batch: Full state RMS error after the filter
 %                                   has converged
-%           - fig_BatchPreRes: Array of batch prefit residual plot figure 
-%                              handles, one per filter iteration
-%           - fig_BatchPostRes: Array of batch postfit residual plot figure 
-%                              handles, one per filter iteration
+%           - fig_BatchPreRes: Batch prefit residual plot figure handle
+%           - fig_BatchPostRes: Batch postfit residual plot figure handle
+%           - fig_BatchPTrace: Batch covariance trace plot figure handle
 %           - fig_BatchError: Batch filter state error plot figure handle
 %
 %   By: Ian Faber, 02/03/2025
@@ -84,11 +84,11 @@ while batchRuns < maxBatchRuns
     
     % fig_BatchPreRes = [fig_BatchPreRes; plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors)];
 
-    titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", k-1); 
-    xLabel = "Time [sec]"; 
-    yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
-    colors = ['b', 'r'];
-    
+    % titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", k-1); 
+    % xLabel = "Time [sec]"; 
+    % yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
+    % colors = ['b', 'r'];
+    % 
     % fig_BatchPostRes = [fig_BatchPostRes; plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors)];
 
         % Determine if another run is needed via percent change
@@ -121,6 +121,7 @@ else
     fprintf("Final postfit RMS: %.4f. Hit maximum number of %.0f runs\n", RMS_postfit_batch(end), maxBatchRuns)
 end
 
+    %% Plot residuals and covariance trace
 titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
 yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
@@ -133,13 +134,26 @@ yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
 colors = ['b', 'r'];
 fig_BatchPostRes = plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors);
 
+Phi = batchOut.Phi;
+P_batch = [];
+for k = 1:length(Phi)
+    P = Phi{k}*P0Est_batch*Phi{k}';
+    P_batch = [P_batch; {P}];
+end
+
+titleText = sprintf("Batch Filter R and V Covariance Trace - Run %.0f", batchRuns); 
+xLabel = "Time [sec]"; 
+yLabel = "trace(P)";
+colors = 'b';
+elements = 1:6; % Only plot trace of position and velocity
+fig_BatchPTrace = plotPTrace(t_batch, P_batch, elements, titleText, xLabel, yLabel, colors);
+
     %% Repropagate orbit with the new X0
 [t_batchFilt, X_batchFilt] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch, opt);
 [~, X_batchFiltNom] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch-batchOut.x0Est, opt);
 
 xHat = X_batchFilt - X_batchFiltNom;
     %% Calculate relative state and uncertainty
-Phi = batchOut.Phi;
 relState_batch = [];
 for k = 1:length(Phi)
     dX = Phi{k}*batchOut.x0Est - xHat(k,:)';
@@ -150,9 +164,8 @@ sigma_batch = [];
 t_sigma = [];
 for k = 1:size(batchOut.Phi,1)
     sigPart = [];
-    Phi = batchOut.Phi{k,1};
     t_sig = batchOut.Phi{k,2};
-    P = Phi*P0Est_batch*Phi';
+    P = P_batch{k};
     for kk = 1:size(P, 1)
         sigPart = [sigPart; sqrt(P(kk,kk))];
     end
@@ -179,8 +192,10 @@ fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, si
 
     %% Assign output
 batchRun = struct("batchOut", batchOut, "t_batchFilt", t_batchFilt, "X_batchFilt", X_batchFilt, ...
-                  "RMS_postfit_batch", RMS_postfit_batch, "RMS_state_comp_batch", RMS_state_comp_batch, ...
+                  "P_batch", {P_batch}, "RMS_postfit_batch", RMS_postfit_batch, ...
+                  "RMS_state_comp_batch", RMS_state_comp_batch, ...
                   "RMS_state_full_batch", RMS_state_full_batch, "fig_BatchPreRes", fig_BatchPreRes, ...
-                  "fig_BatchPostRes", fig_BatchPostRes, "fig_BatchError", fig_BatchError);
+                  "fig_BatchPostRes", fig_BatchPostRes, "fig_BatchError", fig_BatchError, ...
+                  "fig_BatchPTrace", fig_BatchPTrace);
 
 end

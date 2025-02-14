@@ -60,7 +60,7 @@ batchRun = runBatch(X0, zeros(size(X0)), P0, earthConst, scConst, stations, data
 
 
 %% Run LKF
-LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 10);
+LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 1);
 
 
 
