@@ -12,8 +12,8 @@ function stations = readData(stations,data)
 
 tMeas = data(:,1);
 id = data(:,2);
-rho = data(:,3)/1000;
-rhoDot = data(:,4)/1000;
+rho = data(:,3);
+rhoDot = data(:,4);
 
 ids = [];
 for k = 1:length(stations)

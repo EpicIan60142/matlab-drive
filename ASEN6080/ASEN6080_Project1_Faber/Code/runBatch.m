@@ -86,7 +86,7 @@ while batchRuns < maxBatchRuns
 
     titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", k-1); 
     xLabel = "Time [sec]"; 
-    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
     colors = ['b', 'r'];
     
     % fig_BatchPostRes = [fig_BatchPostRes; plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors)];
@@ -123,13 +123,13 @@ end
 
 titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
-yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
 colors = ['b', 'r'];
 fig_BatchPreRes = plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors);
 
 titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
-yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
 colors = ['b', 'r'];
 fig_BatchPostRes = plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors);
 
@@ -167,12 +167,12 @@ end
 boundLevel = 3; % Plot +/- boundLevel*sigma around state errors
 titleText = "Batch Filter Relative State (\Deltax_{LS} = \phi(t,xHat_0,t_0) - xHat(t))";
 xLabel = "Time [sec]";
-yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
-          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]", ...
-          "\mu error [km^3/s^2]", "J_2 error", "Cd error", ...
-          "X_{s,1} error [km]", "Y_{s,1} error [km]", "Z_{s,1} error [km]", ...
-          "X_{s,2} error [km]", "Y_{s,2} error [km]", "Z_{s,2} error [km]", ...
-          "X_{s,3} error [km]", "Y_{s,3} error [km]", "Z_{s,3} error [km]"];
+yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
+          "Xdot error [m/s]", "Ydot error [m/s]", "Zdot error [m/s]", ...
+          "\mu error [m^3/s^2]", "J_2 error", "Cd error", ...
+          "X_{s,1} error [m]", "Y_{s,1} error [m]", "Z_{s,1} error [m]", ...
+          "X_{s,2} error [m]", "Y_{s,2} error [m]", "Z_{s,2} error [m]", ...
+          "X_{s,3} error [m]", "Y_{s,3} error [m]", "Z_{s,3} error [m]"];
 
 fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, sigma_batch, boundLevel, titleText, xLabel, yLabel);
 % fig_BatchError = plotStateError()

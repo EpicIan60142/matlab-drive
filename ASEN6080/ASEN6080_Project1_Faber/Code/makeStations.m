@@ -15,8 +15,8 @@ function stations = makeStations()
 %                   - tMeas: Vector of times when measurements are made.
 %                            There will be one time per measurement in rho,
 %                            rhoDot, elAngle, etc.
-%                   - sigRho: Range measurement uncertainty in km
-%                   - sigRhoDot: Range rate measurement uncertainty in km/s
+%                   - sigRho: Range measurement uncertainty in m
+%                   - sigRhoDot: Range rate measurement uncertainty in m/s
 %                   - R: Measurement uncertainty matrix
 %                   - id: Station id as specified in the project statement
 %                   - idx: Station index in the overall stations struct
@@ -35,11 +35,11 @@ stations = struct('X0', [], 'elMask', [], 'fT', [], 'rho', [], ...
     % Set individual station parameters
 elMask = deg2rad([10; 10; 10]);
 fT = [8.99e9; 8.99e9; 8.99e9];
-sigRho = [0.01; 0.01; 0.01]/1000; % cm -> km
-sigRhoDot = [0.001; 0.001; 0.001]/1000; % mm -> km
-Xs = [-5127510.0; 3860910.0; 549505.0]/1000; % m -> km
-Ys = [-3794160.0; 3238490.0; -1380872.0]/1000; % m -> km
-Zs = [0.0; 3898094.0; 6182197.0]/1000; % m -> km
+sigRho = [0.01; 0.01; 0.01]; % cm -> m
+sigRhoDot = [0.001; 0.001; 0.001]; % mm -> m
+Xs = [-5127510.0; 3860910.0; 549505.0];
+Ys = [-3794160.0; 3238490.0; -1380872.0];
+Zs = [0.0; 3898094.0; 6182197.0];
 ids = [101; 337; 394];
 colors = ['b', 'r', 'k'];
 

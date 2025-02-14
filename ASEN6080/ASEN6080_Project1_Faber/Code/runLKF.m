@@ -76,13 +76,13 @@ while LKFRuns < maxLKFRuns
         % Plot residuals
     titleText = sprintf("LKF Pre-Fit Residuals - Run %.0f", k-1); 
     xLabel = "Time [sec]"; 
-    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
     colors = ['b', 'r'];
     fig_LKFPreRes = [fig_LKFPreRes; plotResiduals(t_LKF, prefit_res_LKF, titleText, xLabel, yLabel, colors)];
 
     titleText = sprintf("LKF Post-Fit Residuals - Run %.0f", k-1); 
     xLabel = "Time [sec]"; 
-    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
     colors = ['b', 'r'];
     fig_LKFPostRes = [fig_LKFPostRes; plotResiduals(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors)];
 
@@ -141,12 +141,12 @@ end
 boundLevel = 3; % Plot +/- boundLevel*sigma around state errors
 titleText = "LKF Relative State (\Deltax_{LKF} = \phi(t,xHat_0,t_0) - xHat(t))";
 xLabel = "Time [sec]";
-yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
-          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]", ...
-          "\mu error [km^3/s^2]", "J_2 error", "Cd error", ...
-          "X_{s,1} error [km]", "Y_{s,1} error [km]", "Z_{s,1} error [km]", ...
-          "X_{s,2} error [km]", "Y_{s,2} error [km]", "Z_{s,2} error [km]", ...
-          "X_{s,3} error [km]", "Y_{s,3} error [km]", "Z_{s,3} error [km]"];
+yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
+          "Xdot error [m/s]", "Ydot error [m/s]", "Zdot error [m/s]", ...
+          "\mu error [m^3/s^2]", "J_2 error", "Cd error", ...
+          "X_{s,1} error [m]", "Y_{s,1} error [m]", "Z_{s,1} error [m]", ...
+          "X_{s,2} error [m]", "Y_{s,2} error [m]", "Z_{s,2} error [m]", ...
+          "X_{s,3} error [m]", "Y_{s,3} error [m]", "Z_{s,3} error [m]"];
 
 fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
