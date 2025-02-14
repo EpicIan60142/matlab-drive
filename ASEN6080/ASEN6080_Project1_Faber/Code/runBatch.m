@@ -141,12 +141,19 @@ for k = 1:length(Phi)
     P_batch = [P_batch; {P}];
 end
 
-titleText = sprintf("Batch Filter R and V Covariance Trace - Run %.0f", batchRuns); 
+titleText = sprintf("Batch Filter R Covariance Trace - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
 yLabel = "trace(P)";
-colors = 'b';
-elements = 1:6; % Only plot trace of position and velocity
+colors = ['b', 'r'];
+elements = 1:3; % Only plot trace of position
 fig_BatchPTrace = plotPTrace(t_batch, P_batch, elements, titleText, xLabel, yLabel, colors);
+
+titleText = sprintf("Batch Filter V Covariance Trace - Run %.0f", batchRuns); 
+xLabel = "Time [sec]"; 
+yLabel = "trace(P)";
+colors = ['b', 'r'];
+elements = 4:6; % Only plot trace of velocity
+fig_BatchPTrace = [fig_BatchPTrace; plotPTrace(t_batch, P_batch, elements, titleText, xLabel, yLabel, colors)];
 
     %% Repropagate orbit with the new X0
 [t_batchFilt, X_batchFilt] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch, opt);

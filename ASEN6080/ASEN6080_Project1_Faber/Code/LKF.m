@@ -91,7 +91,6 @@ for k = 2:numMeas
         % Time update
     x_i = Phi_i*x_im1;
     P_i = Phi_i*P_im1*Phi_i';
-    % chol(P_i)
 
         % Get number of measurements in Y, station states, and station 
         % visibility at this time

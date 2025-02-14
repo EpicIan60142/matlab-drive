@@ -26,10 +26,23 @@ for k = 1:length(P)
 end
 
 fig = figure;
-semilogy(t, traces, '.', 'Color', colors(1));
-hold on; grid on;
-title(titleText)
+if any(traces<0)
+    yyaxis left
+end
+a = semilogy(t(traces>0), traces(traces>0), '.', 'Color', colors(1));
+yLim = ylim;
 xlabel(xLabel); ylabel(yLabel);
+% hold on; grid on;
+if any(traces<0)
+    yyaxis right
+    negTrace = -traces(traces<0);
+    b = semilogy(t(traces<0), negTrace, '.', 'Color', colors(2), 'MarkerSize', 15);
+    ylim(yLim)
+    xlabel(xLabel), ylabel("-trace(P)")
+    legend([a,b], ["trace(P)>0","trace(P)<0"])
+end
+grid on;
+title(titleText)
 
 
 end

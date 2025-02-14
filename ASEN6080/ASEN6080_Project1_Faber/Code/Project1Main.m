@@ -56,11 +56,13 @@ opt = odeset('AbsTol',1e-12,'RelTol',1e-12);
 % return;
 
 %% Run Batch
-batchRun = runBatch(X0, zeros(size(X0)), P0, earthConst, scConst, stations, data(:,1), [], opt, 3);
+batchRun = runBatch(X0, zeros(size(X0)), P0, earthConst, scConst, stations, data(:,1), [], opt, 10);
+
+
 
 
 %% Run LKF
-LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 1);
+LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
 
 
 

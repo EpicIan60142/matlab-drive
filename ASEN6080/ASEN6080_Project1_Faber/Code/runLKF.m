@@ -49,7 +49,7 @@ fprintf("\n\tRunning LKF:\n")
 
     %% Iterate LKF until residual RMS doesn't change
 RMS_postfit_LKF = 1e99; % Start RMS with a bogus value
-LKFTolerance = 1e-3; % any ratio less than this is considered converged
+LKFTolerance = 1e-2; % any ratio less than this is considered converged
 maxLKFRuns = numIter; % Cap number of runs
 LKFRuns = 0;
 % fig_LKFPreRes = [];
@@ -126,12 +126,19 @@ yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
 colors = ['b', 'r'];
 fig_LKFPostRes = plotResiduals(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors);
 
-titleText = sprintf("LKF R and V Covariance Trace - Run %.0f", LKFRuns); 
+titleText = sprintf("LKF R Covariance Trace - Run %.0f", LKFRuns); 
 xLabel = "Time [sec]"; 
 yLabel = "trace(P)";
-colors = 'b';
-elements = 1:6; % Only plot trace of position and velocity
+colors = ['b', 'r'];
+elements = 1:3; % Only plot trace of position
 fig_LKFPTrace = plotPTrace(t_LKF, LKFOut.PEst, elements, titleText, xLabel, yLabel, colors);
+
+titleText = sprintf("LKF V Covariance Trace - Run %.0f", LKFRuns); 
+xLabel = "Time [sec]"; 
+yLabel = "trace(P)";
+colors = ['b', 'r'];
+elements = 4:6; % Only plot trace of velocity
+fig_LKFPTrace = [fig_LKFPTrace; plotPTrace(t_LKF, LKFOut.PEst, elements, titleText, xLabel, yLabel, colors)];
 
     %% Calculate relative state and uncertainty
 Phi = LKFOut.Phi;
