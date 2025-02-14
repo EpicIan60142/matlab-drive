@@ -35,8 +35,8 @@ function filterOut = LKF(Xstar0, stations, pConst, scConst, P0, x0, numMeas)
 %           - XEst: Estimated full state at each time in t:
 %                   [XEst_1, XEst_2, ..., XEst_t], where
 %                   XEst = [X; Y; Z; XDot; YDot; ZDot]
-%           - Phi_full: Integrated STM from t0 to tf, for iteration
-%                       purposes (Phi(t0, tf))
+%           - Phi: Cell array of STMs from t0 to each t_i in t: 
+%                  [{Phi(t_1, t0)}; {Phi(t_2,t0)}; ...; {Phi(t_f,t_0)}]
 %
 %   By: Ian Faber, 02/02/2025
 %
@@ -51,9 +51,10 @@ PEst = [];
 prefit_res = [];
 postfit_res = [];
 XEst = [];
+Phi = [];
 
     %% Process station data into a usable form
-[t, Y, R, Xs, vis] = processStations(stations);
+[t, Y, R, vis] = processStations(stations);
 
     % Specify number of measurements to process
 if ~exist("numMeas", 'var')
@@ -78,6 +79,8 @@ for k = 2:numMeas
     [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_MuJ2Drag(t,XPhi,pConst,scConst), [t_im1 t_i], XPhi_full, opt);
     Phi_full = reshape(XPhi_full(end,n+1:end), n, n);
 
+    Phi = [Phi; {Phi_full}];
+
         % Integrate Xstar and Phi from t_im1 to t_i
     Phi_im1 = eye(n);
     XPhi_im1 = [Xstar_im1; reshape(Phi_im1,n^2,1)];
@@ -92,7 +95,6 @@ for k = 2:numMeas
         % Get number of measurements in Y, station states, and station 
         % visibility at this time
     meas = length(Y_i)/2; % Assuming 2 data points per measurement: range and range-rate
-    Xstat = Xs{k}'; % Extract station state(s) at the time of measurement
     statVis = vis{k}; % Extract the stations that were visible at the time of measurement
 
         % Build y_i
@@ -118,6 +120,7 @@ for k = 2:numMeas
 
     mat = K_i*Htilde_i; % Intermediate matrix for sizing
     P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
+    % P_i = (eye(size(mat))-mat)*P_i;
 
         % Accumulate data to save
     xEst = [xEst, x_i];
@@ -142,6 +145,6 @@ filterOut.postfit_res = postfit_res;
 filterOut.t = t(2:end); % t_0 not included in estimate
 filterOut.statVis = vis;
 filterOut.XEst = XEst;
-filterOut.Phi_full = Phi_full;
+filterOut.Phi = Phi;
 
 end

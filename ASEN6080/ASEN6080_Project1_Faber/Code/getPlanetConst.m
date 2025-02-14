@@ -24,7 +24,7 @@ constants.mu = 398600.4415; % Earth
 constants.J2 = 1.082626925638815e-3; % Earth
 
     % Planetary parameters
-constants.Ri = 6378; % Earth
+constants.Ri = 6378.1363; % Earth
 constants.wPlanet = [0; 0; 7.2921158553e-5]; % Earth - 23 hr, 56 min and 4 sec day
 
     % Atmospheric parameters

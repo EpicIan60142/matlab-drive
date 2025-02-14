@@ -77,19 +77,19 @@ while batchRuns < maxBatchRuns
     RMS_postfit_batch = [RMS_postfit_batch; rms];
     
         % Plot residuals
-    titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", k-1); 
-    xLabel = "Time [sec]"; 
-    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
-    colors = ['b', 'r'];
+    % titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", k-1); 
+    % xLabel = "Time [sec]"; 
+    % yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    % colors = ['b', 'r'];
     
-    fig_BatchPreRes = [fig_BatchPreRes; plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors)];
+    % fig_BatchPreRes = [fig_BatchPreRes; plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors)];
 
     titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", k-1); 
     xLabel = "Time [sec]"; 
     yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
     colors = ['b', 'r'];
     
-    fig_BatchPostRes = [fig_BatchPostRes; plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors)];
+    % fig_BatchPostRes = [fig_BatchPostRes; plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors)];
 
         % Determine if another run is needed via percent change
     if (abs((RMS_postfit_batch(k) - RMS_postfit_batch(k-1))/RMS_postfit_batch(k-1)) > batchTolerance)
@@ -121,14 +121,28 @@ else
     fprintf("Final postfit RMS: %.4f. Hit maximum number of %.0f runs\n", RMS_postfit_batch(end), maxBatchRuns)
 end
 
+titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", batchRuns); 
+xLabel = "Time [sec]"; 
+yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+colors = ['b', 'r'];
+fig_BatchPreRes = plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors);
+
+titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", batchRuns); 
+xLabel = "Time [sec]"; 
+yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+colors = ['b', 'r'];
+fig_BatchPostRes = plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors);
+
     %% Repropagate orbit with the new X0
 [t_batchFilt, X_batchFilt] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch, opt);
+[~, X_batchFiltNom] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch-batchOut.x0Est, opt);
 
-    %% Calculate state error and uncertainty
+xHat = X_batchFilt - X_batchFiltNom;
+    %% Calculate relative state and uncertainty
 Phi = batchOut.Phi;
 relState_batch = [];
 for k = 1:length(Phi)
-    dX = Phi{k}*batchOut.x0Est;
+    dX = Phi{k}*batchOut.x0Est - xHat(k,:)';
     relState_batch = [relState_batch, dX];
 end
 

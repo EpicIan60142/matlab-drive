@@ -1,4 +1,4 @@
-function LKFRun = runLKF(X0, x0, P0, pConst, stations, X_ref, t_ref)
+function LKFRun = runLKF(X0, x0, P0, pConst, scConst, stations, numIter)
 % Function that runs an LKF on the given data for a stat OD problem. 
 % Iterates LKF runs until convergence, or the maximum number of iterations 
 % is met.
@@ -11,9 +11,12 @@ function LKFRun = runLKF(X0, x0, P0, pConst, stations, X_ref, t_ref)
 %       - P0: Initial state covariance matrix for the filter to use
 %       - pConst: Planetary constants structure as defined by
 %                 getPlanetConst.m
+%       - scConst: Spacecraft constants structure as defined by
+%                  getSCConst.m
 %       - stations: Stations structure as defined by makeSations.m
 %       - X_ref: Reference orbit from truth data
-%       - t_ref: Reference time vector from truth data
+%       - t_ref: Reference time vector from truth data\
+%       - numIter: Max number of times to iterate the filter
 %   - Outputs:
 %       - LKFRun: LKF results structure organized as follows:
 %           - LKFOut: Filter output structure as defined in LKF.m
@@ -47,15 +50,15 @@ fprintf("\n\tRunning LKF:\n")
 
     %% Iterate LKF until residual RMS doesn't change
 RMS_postfit_LKF = 1e99; % Start RMS with a bogus value
-LKFTolerance = 1e-6; % any ratio less than this is considered converged
-maxLKFRuns = 5; % Cap number of runs
+LKFTolerance = 1e-3; % any ratio less than this is considered converged
+maxLKFRuns = numIter; % Cap number of runs
 LKFRuns = 0;
 fig_LKFPreRes = [];
 fig_LKFPostRes = [];
 k = 2; % Start counter with bogus value
-while true
+while LKFRuns < maxLKFRuns
         % Run LKF
-    LKFOut = LKF(X0_LKF, stations, pConst, P0_LKF, x0_LKF);
+    LKFOut = LKF(X0_LKF, stations, pConst, scConst, P0_LKF, x0_LKF);
 
         % Extract LKF data
     xEst_LKF = LKFOut.xEst;
@@ -65,7 +68,7 @@ while true
     t_LKF = LKFOut.t;
     statVis_LKF = LKFOut.statVis;
     X_LKF = LKFOut.XEst;
-    Phi_full_LKF = LKFOut.Phi_full;
+    Phi_full_LKF = LKFOut.Phi{end};
     
         % Calculate residual RMS errors
     RMS_postfit_LKF = [RMS_postfit_LKF; calcResidualRMS(postfit_res_LKF, stations, statVis_LKF)];
@@ -84,17 +87,21 @@ while true
     fig_LKFPostRes = [fig_LKFPostRes; plotResiduals(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors)];
 
         % Determine if another run is needed via percent change
-    if (abs((RMS_postfit_LKF(k) - RMS_postfit_LKF(k-1))/RMS_postfit_LKF(k-1)) > LKFTolerance) && (LKFRuns < maxLKFRuns)
+    if (abs((RMS_postfit_LKF(k) - RMS_postfit_LKF(k-1))/RMS_postfit_LKF(k-1)) > LKFTolerance)
             % Update initial state and perturbations for next run
         x0_LKF = (Phi_full_LKF^-1)*xEst_LKF(:,end);
         X0_LKF = X0_LKF + x0_LKF;
         
             % Update counters
         k = k + 1;
-        LKFRuns = k - 1; % Offset current k by 1 to account for bogus starting value
+        LKFRuns = LKFRuns + 1;
 
             % Write to console
-        fprintf("Postfit RMS: %.4f. Iterating LKF with x0_LKF = [%.3e; %.3e; %.3e; %.3e; %.3e; %.3e]. Runs so far: %.0f\n", RMS_postfit_LKF(k-1), x0_LKF, LKFRuns-1)
+        if LKFRuns < maxLKFRuns
+            fprintf("Postfit RMS: %.4f. Iterating LKF. Runs so far: %.0f\n", RMS_postfit_LKF(k-1), LKFRuns)
+        else
+            fprintf("Postfit RMS: %.4f. Hit max LKF iterations. Runs so far: %.0f\n", RMS_postfit_LKF(k-1), LKFRuns)
+        end
     else
         break;
     end
@@ -107,14 +114,13 @@ else
     fprintf("Final postfit RMS: %.4f. Hit maximum number of %.0f runs\n", RMS_postfit_LKF(end), maxLKFRuns)
 end
 
-    %% Extract nominal state from LKF deviation estimates
-X_ref_LKF = [];
-for k = 1:length(t_LKF)
-    X_ref_LKF = [X_ref_LKF; X_ref(t_ref == t_LKF(k),:)];
+    %% Calculate relative state and uncertainty
+Phi = LKFOut.Phi;
+relState_LKF = [];
+for k = 1:length(Phi)
+    dX = Phi{k}*x0_LKF - LKFOut.xEst(:,k);
+    relState_LKF = [relState_LKF, dX];
 end
-
-    %% Calculate state error and uncertainty
-stateError_LKF = X_LKF' - X_ref_LKF;
 
 sigma_LKF = [];
 for k = 1:length(PEst_LKF)
@@ -129,16 +135,20 @@ for k = 1:length(PEst_LKF)
 end
 
     %% Find state RMS error: component-wise and state-wise
-[RMS_state_comp_LKF, RMS_state_full_LKF] = calcStateErrorRMS(stateError_LKF);
+[RMS_state_comp_LKF, RMS_state_full_LKF] = calcStateErrorRMS(relState_LKF);
 
     %% Create state error plots
 boundLevel = 3; % Plot +/- boundLevel*sigma around state errors
-titleText = "LKF Estimated State Error (X_{filt} - X_{ref})";
+titleText = "LKF Relative State (\Deltax_{LKF} = \phi(t,xHat_0,t_0) - xHat(t))";
 xLabel = "Time [sec]";
 yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
-          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
+          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]", ...
+          "\mu error [km^3/s^2]", "J_2 error", "Cd error", ...
+          "X_{s,1} error [km]", "Y_{s,1} error [km]", "Z_{s,1} error [km]", ...
+          "X_{s,2} error [km]", "Y_{s,2} error [km]", "Z_{s,2} error [km]", ...
+          "X_{s,3} error [km]", "Y_{s,3} error [km]", "Z_{s,3} error [km]"];
 
-fig_LKFError = plotStateError(t_LKF, stateError_LKF, t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
+fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
     %% Assign output
 LKFRun = struct("LKFOut", LKFOut, "t_LKF", t_LKF, "X_LKF", X_LKF, ...
