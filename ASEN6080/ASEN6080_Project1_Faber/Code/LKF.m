@@ -119,8 +119,14 @@ for k = 2:numMeas
     x_i = x_i + K_i*(y_i - Htilde_i*x_i);
 
     mat = K_i*Htilde_i; % Intermediate matrix for sizing
-    P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
-    % P_i = (eye(size(mat))-mat)*P_i;
+    % try
+        % chol(P_i); % If this fails, Pbar isn't positive definite
+        P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
+        % P_i = (eye(size(mat))-mat)*P_i;
+    % catch
+    %     % P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
+    %     P_i = (eye(size(mat))-mat)*P_i;
+    % end
 
         % Accumulate data to save
     xEst = [xEst, x_i];

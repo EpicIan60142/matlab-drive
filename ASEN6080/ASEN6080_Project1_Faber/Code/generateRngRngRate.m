@@ -12,6 +12,8 @@ function Y = generateRngRngRate(X, statVis, elMask, pConst, ignoreMask)
 %       - elMask: Ground station elevation mask in RADIANS
 %       - pConst: Planetary constants structure as defined by
 %                 getPlanetConst.m
+%       - measInclude: Boolean array indicating which measurements to
+%                      include in the generated results
 %       - ignoreMask: Boolean indicating if the elevation mask is ignored
 %                     (1) or enforced (0). If not provided, defaults to 0.
 %   Outputs:

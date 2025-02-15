@@ -29,6 +29,9 @@ function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, o
 %                               [X, Y, Z, Xdot, Ydot, Zdot]; ...
 %                          ]
 %           - P_batch: Propagated batch filter covariance matrices
+%           - RMS_prefit_batch: Prefit residual RMS errors for each run 
+%                               of the batch filter, one run's error per 
+%                               row
 %           - RMS_postfit_batch: Postfit residual RMS errors for each run 
 %                                of the batch filter, one run's error per 
 %                                row
@@ -40,6 +43,7 @@ function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, o
 %           - fig_BatchPreRes: Batch prefit residual plot figure handle
 %           - fig_BatchPostRes: Batch postfit residual plot figure handle
 %           - fig_BatchPTrace: Batch covariance trace plot figure handle
+%           - fig_CovEllipsoids: Covariance ellipsoids plot figure handles
 %           - fig_BatchError: Batch filter state error plot figure handle
 %
 %   By: Ian Faber, 02/03/2025
@@ -53,8 +57,9 @@ P0_batch = P0;
 fprintf("\n\tRunning Batch Filter:\n")
 
     %% Iterate Batch Filter until residual RMS doesn't change
+RMS_prefit_batch = 1e99;
 RMS_postfit_batch = 1e99; % Start RMS with a bogus value
-batchTolerance = 1e-3; % any ratio less than this is considered converged
+batchTolerance = 1e-6; % any ratio less than this is considered converged
 maxBatchRuns = numIter; % Cap number of runs
 batchRuns = 0;
 fig_BatchPreRes = [];
@@ -73,6 +78,9 @@ while batchRuns < maxBatchRuns
     statVis_batch = batchOut.statVis;
     
         % Find residual RMS errors
+    rms = calcResidualRMS(prefit_res_batch, stations, statVis_batch);
+    RMS_prefit_batch = [RMS_prefit_batch; rms];
+
     rms = calcResidualRMS(postfit_res_batch, stations, statVis_batch);
     RMS_postfit_batch = [RMS_postfit_batch; rms];
     
@@ -103,9 +111,9 @@ while batchRuns < maxBatchRuns
 
             % Write to console
         if batchRuns < maxBatchRuns
-            fprintf("Postfit RMS: %.4f. Iterating Batch. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns)
+            fprintf("Prefit RMS: %.4f, Postfit RMS: %.4f. Iterating Batch. Runs so far: %.0f\n", RMS_prefit_batch(k-1), RMS_postfit_batch(k-1), batchRuns)
         else
-            fprintf("Postfit RMS: %.4f. Hit max Batch iterations. Runs so far: %.0f\n", RMS_postfit_batch(k-1), batchRuns)
+            fprintf("Prefit RMS: %.4f, Postfit RMS: %.4f. Hit max Batch iterations. Runs so far: %.0f\n", RMS_prefit_batch(k-1), RMS_postfit_batch(k-1), batchRuns)
         end
     else
         break;
@@ -113,15 +121,19 @@ while batchRuns < maxBatchRuns
     
 
 end
+RMS_prefit_batch = RMS_prefit_batch(2:end); % Get rid of bogus starting RMS value
 RMS_postfit_batch = RMS_postfit_batch(2:end); % Get rid of bogus starting RMS value
 
 if batchRuns < maxBatchRuns
+    fprintf("Final prefit RMS: %.4f. Converged after %.0f runs\n", RMS_prefit_batch(end), batchRuns)
     fprintf("Final postfit RMS: %.4f. Converged after %.0f runs\n", RMS_postfit_batch(end), batchRuns)
 else
+    fprintf("Final prefit RMS: %.4f. Hit maximum number of %.0f runs\n", RMS_prefit_batch(end), maxBatchRuns)
     fprintf("Final postfit RMS: %.4f. Hit maximum number of %.0f runs\n", RMS_postfit_batch(end), maxBatchRuns)
 end
 
     %% Plot residuals and covariance trace
+        % Residuals
 titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
 yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
@@ -141,6 +153,7 @@ for k = 1:length(Phi)
     P_batch = [P_batch; {P}];
 end
 
+        % Covariance trace
 titleText = sprintf("Batch Filter R Covariance Trace - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
 yLabel = "trace(P)";
@@ -159,8 +172,25 @@ fig_BatchPTrace = [fig_BatchPTrace; plotPTrace(t_batch, P_batch, elements, title
 [t_batchFilt, X_batchFilt] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch, opt);
 [~, X_batchFiltNom] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), tspan, X0_batch-batchOut.x0Est, opt);
 
-xHat = X_batchFilt - X_batchFiltNom;
+    %% Plot covariance ellipsoids
+fig_CovEllipsoids = [];
+P_end = P_batch{end};
+
+elements = 1:3;
+P_pos = P_end(elements, elements); mu = X_batchFilt(end,elements)';
+titleText = sprintf("Final Batch Filter Position Covariance Ellipsoid\n\\mu = [%.3e, %.3e, %.3e]^T m\n\\sigma_X = %.3e m, \\sigma_Y = %.3e m, \\sigma_Z = %.3e m", mu, sqrt(P_pos(1,1)), sqrt(P_pos(2,2)), sqrt(P_pos(3,3)));
+xLabel = "X [m]"; yLabel = "Y [m]"; zLabel = "Z [m]"; cBarText = "||R - \mu||_2 [m]";
+fig_CovEllipsoids = [fig_CovEllipsoids; plotCovEllipsoid(P_pos, mu, titleText, xLabel, yLabel, zLabel, cBarText)];
+
+elements = 4:6;
+P_vel = P_end(elements, elements); mu = X_batchFilt(end,elements)';
+titleText = sprintf("Final Batch Filter Velocity Covariance Ellipsoid\n\\mu = [%.3e, %.3e, %.3e]^T m/s\n\\sigma_{Xdot} = %.3e m/s, \\sigma_{Ydot} = %.3e m/s, \\sigma_{Zdot} = %.3e m/s", mu, sqrt(P_vel(1,1)), sqrt(P_vel(2,2)), sqrt(P_vel(3,3)));
+xLabel = "Xdot [m/s]"; yLabel = "Ydot [m/s]"; zLabel = "Zdot [m/s]"; cBarText = "||V - \mu||_2 [m/s]";
+fig_CovEllipsoids = [fig_CovEllipsoids; plotCovEllipsoid(P_vel, mu, titleText, xLabel, yLabel, zLabel, cBarText)];
+
     %% Calculate relative state and uncertainty
+xHat = X_batchFilt - X_batchFiltNom;
+
 relState_batch = [];
 for k = 1:length(Phi)
     dX = Phi{k}*batchOut.x0Est - xHat(k,:)';
@@ -199,10 +229,11 @@ fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, si
 
     %% Assign output
 batchRun = struct("batchOut", batchOut, "t_batchFilt", t_batchFilt, "X_batchFilt", X_batchFilt, ...
-                  "P_batch", {P_batch}, "RMS_postfit_batch", RMS_postfit_batch, ...
-                  "RMS_state_comp_batch", RMS_state_comp_batch, ...
+                  "P_batch", {P_batch}, "RMS_prefit_batch", RMS_prefit_batch, ...
+                  "RMS_postfit_batch", RMS_postfit_batch, "RMS_state_comp_batch", RMS_state_comp_batch, ...
                   "RMS_state_full_batch", RMS_state_full_batch, "fig_BatchPreRes", fig_BatchPreRes, ...
-                  "fig_BatchPostRes", fig_BatchPostRes, "fig_BatchError", fig_BatchError, ...
-                  "fig_BatchPTrace", fig_BatchPTrace);
+                  "fig_BatchPostRes", fig_BatchPostRes, "fig_BatchPTrace", fig_BatchPTrace, ...
+                  "fig_CovEllipsoids", fig_CovEllipsoids, "fig_BatchError", fig_BatchError ...
+                  );
 
 end
