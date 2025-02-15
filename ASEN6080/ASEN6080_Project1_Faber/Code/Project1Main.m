@@ -61,8 +61,6 @@ switch choice
         runQuestion = 4;
     case 5
         runQuestion = 5;
-    case 6
-        runQuestion = 6;
     otherwise
         fprintf("Invalid input, provide the number of the option you'd like to run!")
 end
@@ -116,7 +114,7 @@ elseif runQuestion == 3
     pause
 
     % Run LKF - new P0
-    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 6);
 
     fprintf("\n\nDone, have a great day!\n\n")
 elseif runQuestion == 4
@@ -134,7 +132,7 @@ elseif runQuestion == 4
     pause
 
     % Run LKF - new P0
-    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 7);
 
     fprintf("\n\nDone, have a great day!\n\n")
 elseif runQuestion == 5
@@ -152,7 +150,7 @@ elseif runQuestion == 5
     pause
 
     % Run LKF - new P0
-    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 8);
 
     fprintf("\n\nDone, have a great day!\n\n")
 end

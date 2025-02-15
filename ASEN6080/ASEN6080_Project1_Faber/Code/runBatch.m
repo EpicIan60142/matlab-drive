@@ -238,7 +238,7 @@ for k = 1:size(batchOut.Phi,1)
 end
 
     %% Find state RMS error: component-wise and state-wise
-[RMS_state_comp_batch, RMS_state_full_batch] = calcStateErrorRMS(relState_batch);
+[RMS_state_comp_batch, RMS_state_full_batch] = calcStateErrorRMS(relState_batch');
 
     %% Create state error plots
 boundLevel = 3; % Plot +/- boundLevel*sigma around state errors

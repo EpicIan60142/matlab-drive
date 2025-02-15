@@ -31,44 +31,64 @@ for k = 1:size(Lambda,1)
 end
 
     % Calculate ellipse coordinates
-[X, Y, Z] = sphere(100);
-Xscaled = axes(1)*X;
-Yscaled = axes(2)*Y;
-Zscaled = axes(3)*Z;
-
-coords = [];
-coords(:,:,1) = Xscaled;
-coords(:,:,2) = Yscaled;
-coords(:,:,3) = Zscaled;
-
-dist = zeros(size(Xscaled));
-coordsRot = zeros(size(coords));
-for k = 1:size(coords,1)
-    for kk = 1:size(coords,2)
-        coordsRot(k,kk,:) = eigVec*squeeze(coords(k,kk,:)) + mu;
-        dist(k,kk) = norm(squeeze(coordsRot(k,kk,:))-mu);
+ellipsoids = struct("X", [], "Y", [], "Z", [], "dist", [], "alpha", [], "color", []);
+for sig = 1:3
+    [X, Y, Z] = sphere(50);
+    Xscaled = sig*axes(1)*X;
+    Yscaled = sig*axes(2)*Y;
+    Zscaled = sig*axes(3)*Z;
+    
+    coords = [];
+    coords(:,:,1) = Xscaled;
+    coords(:,:,2) = Yscaled;
+    coords(:,:,3) = Zscaled;
+    
+    dist = zeros(size(Xscaled));
+    coordsRot = zeros(size(coords));
+    for k = 1:size(coords,1)
+        for kk = 1:size(coords,2)
+            coordsRot(k,kk,:) = eigVec*squeeze(coords(k,kk,:)) + mu;
+            dist(k,kk) = norm(squeeze(coordsRot(k,kk,:))-mu);
+        end
     end
+    
+    ellipsoids(sig).X = coordsRot(:,:,1);
+    ellipsoids(sig).Y = coordsRot(:,:,2);
+    ellipsoids(sig).Z = coordsRot(:,:,3);
+    ellipsoids(sig).dist = dist;
+    switch sig
+        case 1
+            ellipsoids(sig).alpha = 0.75;
+            ellipsoids(sig).color = 'b';
+        case 2
+            ellipsoids(sig).alpha = 0.5;
+            ellipsoids(sig).color = 'r';
+        case 3
+            ellipsoids(sig).alpha = 0.25;
+            ellipsoids(sig).color = 'y';
+    end
+    % coords = coords + reshape(mu,1,1,3);
 end
-% coordsRot = tensorprod(eigVec',coords,1,3) + mu;
-% coords = eigVec*[axes(1)*sin(phi).*cos(theta); axes(2)*sin(phi).*sin(theta); axes(3)*cos(phi)];
-coords = coords + reshape(mu,1,1,3);
 
-    % Plot ellipse
+    % Plot ellipsoids
 fontSize = 10;
 scale = 3.0;
 fig = figure;
 hold on; grid on; axis equal
 title(titleText, 'FontSize', fontSize)
-% oneSig = surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), 'FaceColor', 'b', 'FaceAlpha', 1, 'LineStyle', 'none');
-% twoSig = surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), 'FaceColor', 'r', 'FaceAlpha', 0.75, 'LineStyle', 'none');
-% threeSig = surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), 'FaceColor', 'y', 'FaceAlpha', 0.5, 'LineStyle', 'none');
-surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), dist, 'FaceAlpha',0.5, 'LineStyle','none')
-a = quiver3(mu(1),mu(2),mu(3),eigVec(1,1),eigVec(2,1),eigVec(3,1),scale*Lambda(1,1),'filled','b');
-b = quiver3(mu(1),mu(2),mu(3),eigVec(1,2),eigVec(2,2),eigVec(3,2),scale*Lambda(2,2),'filled','r');
-c = quiver3(mu(1),mu(2),mu(3),eigVec(1,3),eigVec(2,3),eigVec(3,3),scale*Lambda(3,3),'filled','k');
+ell = [];
+for k = 1:length(ellipsoids)
+    X = ellipsoids(k).X; Y = ellipsoids(k).Y; Z = ellipsoids(k).Z;
+    alpha = ellipsoids(k).alpha; color = ellipsoids(k).color;
+    ell = [ell, surf(X, Y, Z, 'FaceColor', color, 'FaceAlpha', alpha, 'LineStyle', ':', 'FaceLighting','gouraud')];
+end
+% surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), dist, 'FaceAlpha',0.5, 'LineStyle','none')
+a = quiver3(mu(1),mu(2),mu(3),eigVec(1,1),eigVec(2,1),eigVec(3,1),scale*Lambda(1,1),'filled','b','LineWidth',3);
+b = quiver3(mu(1),mu(2),mu(3),eigVec(1,2),eigVec(2,2),eigVec(3,2),scale*Lambda(2,2),'filled','r','LineWidth',3);
+c = quiver3(mu(1),mu(2),mu(3),eigVec(1,3),eigVec(2,3),eigVec(3,3),scale*Lambda(3,3),'filled','k','LineWidth',3);
 xlabel(xLabel); ylabel(yLabel); zlabel(zLabel);
-legend([oneSig, twoSig, threeSig, a,b,c], ["1\sigma", "2\sigma", "3\sigma","v_1", "v_2", "v_3"], 'location', 'eastoutside')
-view([30 35]); colormap("turbo"); c = colorbar('southoutside');
-c.Label.String = cBarText; drawnow;
-% drawnow;
+legend([ell,a,b,c], ["1\sigma", "2\sigma", "3\sigma","v_1", "v_2", "v_3"], 'location', 'eastoutside')
+view([30 35]); %colormap("turbo"); c = colorbar('southoutside');
+% c.Label.String = cBarText; drawnow;
+drawnow;
 end
