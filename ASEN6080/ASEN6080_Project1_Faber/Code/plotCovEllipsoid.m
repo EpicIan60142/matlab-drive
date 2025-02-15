@@ -55,17 +55,20 @@ coords = coords + reshape(mu,1,1,3);
 
     % Plot ellipse
 fontSize = 10;
-scale = 1.0;
+scale = 3.0;
 fig = figure;
 hold on; grid on; axis equal
 title(titleText, 'FontSize', fontSize)
+% oneSig = surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), 'FaceColor', 'b', 'FaceAlpha', 1, 'LineStyle', 'none');
+% twoSig = surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), 'FaceColor', 'r', 'FaceAlpha', 0.75, 'LineStyle', 'none');
+% threeSig = surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), 'FaceColor', 'y', 'FaceAlpha', 0.5, 'LineStyle', 'none');
 surf(coordsRot(:,:,1), coordsRot(:,:,2), coordsRot(:,:,3), dist, 'FaceAlpha',0.5, 'LineStyle','none')
 a = quiver3(mu(1),mu(2),mu(3),eigVec(1,1),eigVec(2,1),eigVec(3,1),scale*Lambda(1,1),'filled','b');
 b = quiver3(mu(1),mu(2),mu(3),eigVec(1,2),eigVec(2,2),eigVec(3,2),scale*Lambda(2,2),'filled','r');
 c = quiver3(mu(1),mu(2),mu(3),eigVec(1,3),eigVec(2,3),eigVec(3,3),scale*Lambda(3,3),'filled','k');
 xlabel(xLabel); ylabel(yLabel); zlabel(zLabel);
-legend([a,b,c], ["v_1", "v_2", "v_3"], 'location', 'eastoutside')
+legend([oneSig, twoSig, threeSig, a,b,c], ["1\sigma", "2\sigma", "3\sigma","v_1", "v_2", "v_3"], 'location', 'eastoutside')
 view([30 35]); colormap("turbo"); c = colorbar('southoutside');
 c.Label.String = cBarText; drawnow;
-
+% drawnow;
 end

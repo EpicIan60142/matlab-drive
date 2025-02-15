@@ -1,4 +1,4 @@
-function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, opt, numIter)
+function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, opt, numIter, measInclude)
 % Function that runs a batch filter on the given data for a stat OD
 % problem. Iterates batch runs until convergence, or the maximum number of
 % iterations is met.
@@ -18,6 +18,9 @@ function batchRun = runBatch(X0, x0, P0, pConst, scConst, stations, tspan, dt, o
 %       - dt: Output timestep corresponding to tspan
 %       - opt: ode45 settings used to generate X_ref
 %       - numIter: Max number of times to iterate the filter
+%       - measInclude: Boolean array that indicates which measurements to
+%                      include in the state estimate. If empty, defaults to
+%                      true(1,2) to include both range and range rate
 %   - Outputs:
 %       - batchRun: Batch filter results structure organized as follows:
 %           - batchOut: Filter output structure as defined in BatchFilter.m
@@ -54,6 +57,10 @@ X0_batch = X0;
 x0_batch = x0;
 P0_batch = P0;
 
+if isempty(measInclude)
+    measInclude = true(1,2);
+end
+
 fprintf("\n\tRunning Batch Filter:\n")
 
     %% Iterate Batch Filter until residual RMS doesn't change
@@ -67,7 +74,7 @@ fig_BatchPostRes = [];
 k = 2; % Start counter with bogus value
 while batchRuns < maxBatchRuns
         % Run batch
-    batchOut = BatchFilter(X0_batch, stations, pConst, scConst, P0_batch, x0_batch, dt);
+    batchOut = BatchFilter(X0_batch, stations, pConst, scConst, P0_batch, x0_batch, dt, measInclude);
 
         % Extract batch data
     x0Est_batch = batchOut.x0Est;
@@ -78,10 +85,10 @@ while batchRuns < maxBatchRuns
     statVis_batch = batchOut.statVis;
     
         % Find residual RMS errors
-    rms = calcResidualRMS(prefit_res_batch, stations, statVis_batch);
+    rms = calcResidualRMS(prefit_res_batch, stations, statVis_batch, measInclude);
     RMS_prefit_batch = [RMS_prefit_batch; rms];
 
-    rms = calcResidualRMS(postfit_res_batch, stations, statVis_batch);
+    rms = calcResidualRMS(postfit_res_batch, stations, statVis_batch, measInclude);
     RMS_postfit_batch = [RMS_postfit_batch; rms];
     
         % Plot residuals
@@ -135,15 +142,35 @@ end
     %% Plot residuals and covariance trace
         % Residuals
 titleText = sprintf("Batch Filter Pre-Fit Residuals - Run %.0f", batchRuns); 
-xLabel = "Time [sec]"; 
-yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
-colors = ['b', 'r'];
+xLabel = "Time [sec]";
+yLabel = [];
+colors = [];
+if measInclude(1)
+    yLabel = [yLabel; "Range Residuals [m]"];
+    colors = [colors; 'b'];
+end
+if measInclude(2)
+    yLabel = [yLabel;"Range-Rate Residuals [m/s]"];
+    colors = [colors; 'r'];
+end
+% yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
+% colors = ['b', 'r'];
 fig_BatchPreRes = plotResiduals(t_batch, prefit_res_batch, titleText, xLabel, yLabel, colors);
 
 titleText = sprintf("Batch Filter Post-Fit Residuals - Run %.0f", batchRuns); 
 xLabel = "Time [sec]"; 
-yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
-colors = ['b', 'r'];
+yLabel = [];
+colors = [];
+if measInclude(1)
+    yLabel = [yLabel; "Range Residuals [m]"];
+    colors = [colors; 'b'];
+end
+if measInclude(2)
+    yLabel = [yLabel;"Range-Rate Residuals [m/s]"];
+    colors = [colors; 'r'];
+end
+% yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
+% colors = ['b', 'r'];
 fig_BatchPostRes = plotResiduals(t_batch, postfit_res_batch, titleText, xLabel, yLabel, colors);
 
 Phi = batchOut.Phi;

@@ -1,4 +1,4 @@
-function filterOut = BatchFilter(Xstar0, stations, pConst, scConst, P0, x0, dt)
+function filterOut = BatchFilter(Xstar0, stations, pConst, scConst, P0, x0, dt, measInclude)
 % Function that implements a Batch Filter for OD problems.
 %   Inputs:
 %       - Xstar0: Initial value of the reference trajectory, organized as
@@ -17,6 +17,9 @@ function filterOut = BatchFilter(Xstar0, stations, pConst, scConst, P0, x0, dt)
 %             - Ignore by passing in [] instead
 %       - dt: Timestep for outputing integrated STMs (optional)
 %             - Ignore by passing in [] instead
+%       - measInclude: boolean array that indicates which measurements to
+%                      include in the state estimate. If including both
+%                      range and range-rate, pass in true(1,2) for example.
 %   Outputs:
 %       - filterOut: Filter output structure with the following fields:
 %           - x0Est: Estimated initial state deviation, organized as follows:
@@ -67,8 +70,26 @@ for k = 2:length(Y)
 
         % Read next time, measurement, and measurement covariance
     t_i = t(k);
-    Y_i = Y{k};
-    R_i = R{k};
+
+    Y_i = [];
+    observation = Y{k};
+    if measInclude(1) % include range
+        Y_i = [Y_i; observation(1)];
+    end
+    if measInclude(2)
+        Y_i = [Y_i; observation(2)];
+    end
+    % Y_i = Y{k};
+
+    R_i = [];
+    measCov = R{k};
+    if measInclude(1)
+        R_i = blkdiag(R_i, measCov(1,1));
+    end
+    if measInclude(2)
+        R_i = blkdiag(R_i, measCov(2,2));
+    end
+    % R_i = R{k};
 
         % Integrate STM and EOM from t_{i-1} to t_i
     if timeStep % If a constant output timestep is defined, use it
@@ -92,23 +113,23 @@ for k = 2:length(Y)
     end
 
         % Build Htilde_i
-    meas = length(Y_i)/2; % Find number of measurements in this observation
+    meas = length(Y_i)/sum(measInclude); % Find number of measurements in this observation
     Htilde_i = [];
     statVis = vis{k}; % Extract the stations that were visible at the time of measurement
     for kk = 1:meas
-        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate(Xstar_i, statVis, pConst)];
+        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate(Xstar_i, statVis, pConst, measInclude)];
     end
 
         % Build y_i
     yExp = [];
     for kk = 1:meas
         genMeas = generateRngRngRate(Xstar_i, statVis, stations(statVis(kk)).elMask, pConst, true); % Ignore elevation mask
-        yExp = [yExp; genMeas(1:2)]; % Only pull out range and range rate
+        yExp = [yExp; genMeas([measInclude, false])]; % Only pull out range and range rate
     end
 
     y_i = Y_i - yExp;
 
-    prefit_res = [prefit_res, y_i(1:2,:)];
+    prefit_res = [prefit_res, y_i];
 
         % Build H_i
     H_i = Htilde_i*Phi_i;

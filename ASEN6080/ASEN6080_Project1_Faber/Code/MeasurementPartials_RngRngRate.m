@@ -1,4 +1,4 @@
-function Htilde = MeasurementPartials_RngRngRate(X, statVis, pConst)
+function Htilde = MeasurementPartials_RngRngRate(X, statVis, pConst, measInclude)
 % Function that outputs the measurement partials matrix for orbital
 % measurements using range and range rate for spacecraft
 %   Inputs:
@@ -7,6 +7,9 @@ function Htilde = MeasurementPartials_RngRngRate(X, statVis, pConst)
 %                 stationPos_2; stationPos_3]
 %       - statVis: Which station index produced this measurement
 %       - pConst: Planetary constants vector as defined by getPlanetConst.m
+%       - measInclude: Boolean array indicating which measurements to
+%                      calculate partials for. If including both range and
+%                      range-rate, pass in true(1,2) for example
 %
 %   Outputs:
 %       - Htilde: Measurement partials matrix
@@ -51,10 +54,19 @@ delRhoDotDelXDot = delRhoDelX;
 delRhoDotDelYDot = delRhoDelY;
 delRhoDotDelZDot = delRhoDelZ;
 
-HBlock_1 = [
-                    delRhoDelX, delRhoDelY, delRhoDelZ, zeros(1,6);
-                    delRhoDotDelX, delRhoDotDelY, delRhoDotDelZ, delRhoDotDelXDot, delRhoDotDelYDot, delRhoDotDelZDot, zeros(1,3)
-                 ];
+
+HBlock_1 = [];
+if measInclude(1) % Include range partials
+    HBlock_1 = [HBlock_1; delRhoDelX, delRhoDelY, delRhoDelZ, zeros(1,6)];
+end
+if measInclude(2) % Include range rate partials
+    HBlock_1 = [HBlock_1; delRhoDotDelX, delRhoDotDelY, delRhoDotDelZ, delRhoDotDelXDot, delRhoDotDelYDot, delRhoDotDelZDot, zeros(1,3)];
+end
+
+% HBlock_1 = [
+%               delRhoDelX, delRhoDelY, delRhoDelZ, zeros(1,6);
+%               delRhoDotDelX, delRhoDotDelY, delRhoDotDelZ, delRhoDotDelXDot, delRhoDotDelYDot, delRhoDotDelZDot, zeros(1,3)
+%            ];
 
     % Station state block
 R = [x; y; z];
@@ -81,7 +93,16 @@ for k = 1:3
         stationPosPart = zeros(1,3);
         stationVelPart = zeros(1,3);
     end
-    HBlock_2 = [HBlock_2, [stationPosPart; stationVelPart]];
+    block = [];
+    if measInclude(1)
+        block = [block; stationPosPart];
+    end
+    if measInclude(2)
+        block = [block; stationVelPart];
+    end
+    HBlock_2 = [HBlock_2, block];
+
+    % HBlock_2 = [HBlock_2, [stationPosPart; stationVelPart]];
 end
 
 Htilde = [HBlock_1, HBlock_2];

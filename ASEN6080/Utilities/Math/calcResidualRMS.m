@@ -1,4 +1,4 @@
-function rms = calcResidualRMS(residuals, stations, vis)
+function rms = calcResidualRMS(residuals, stations, vis, measInclude)
 % Function that calculates the RMS error for residuals
 %   Inputs:
 %       - residuals: Filter residials as follows:
@@ -10,6 +10,9 @@ function rms = calcResidualRMS(residuals, stations, vis)
 %       - stations: Stations structure as defined by makeStations.m
 %       - vis: Station visibility cell array as defined by
 %              processStations.m
+%       - measInclude: boolean array indicating which measurements to
+%                      include in the residual calculation. To process both
+%                      range and range rate, pass in true(1,2) for example.
 %   Outputs:
 %       - rms: post-fit residual RMS error
 %
@@ -19,7 +22,15 @@ function rms = calcResidualRMS(residuals, stations, vis)
 rms_part = [];
 for kk = 1:size(residuals,2)
     stat = vis{kk}; % Find which station was visible and made the measurement
-    rms_part = [rms_part; residuals(:,kk)'*(stations(stat(1)).R{stat(1)}^-1)*residuals(:,kk)];
+    R = [];
+    measCov = stations(stat(1)).R{stat(1)};
+    if measInclude(1)
+        R = blkdiag(R, measCov(1,1));
+    end
+    if measInclude(2)
+        R = blkdiag(R, measCov(2,2));
+    end
+    rms_part = [rms_part; residuals(:,kk)'*(R^-1)*residuals(:,kk)];
 end
 rms = sqrt(sum(rms_part)/(size(residuals,1)*size(residuals,2)));
 

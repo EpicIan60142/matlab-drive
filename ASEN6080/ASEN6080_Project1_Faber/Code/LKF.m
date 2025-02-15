@@ -109,7 +109,7 @@ for k = 2:numMeas
         % Build Htilde_i
     Htilde_i = [];
     for kk = 1:meas
-        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate(Xstar_i, statVis, pConst)];
+        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate(Xstar_i, statVis, pConst, true(1,2))];
     end
 
         % Build K_i
