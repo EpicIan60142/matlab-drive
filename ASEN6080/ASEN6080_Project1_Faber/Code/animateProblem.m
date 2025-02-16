@@ -74,7 +74,8 @@ for k = 1:dTime:length(tMeas)
         set(earth,'FaceColor','texturemap','cdata',I,'edgecolor','none');
     
             % Format figure
-        view([30 35])
+        view([30+k/3, 35])
+        xlabel("X [m]"); ylabel("Y [m]"); zlabel("Z [m]");
         % xlim([-1.1*a, 1.1*a]);
         % ylim([-1.1*a, 1.1*a]);
         % zlim([-1.1*a, 1.1*a]);

@@ -83,13 +83,13 @@ if runQuestion == 1
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problems 2/3 - Batch";
-            movieTitle = "ASEN6080_Project1_P2-3_Batch";
-            saveMovie = false;
+            movieTitle = "../Videos/ASEN6080_Project1_P2-3_Batch";
+            saveMovie = true;
             animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
             titleText = "ASEN 6080 Project 1 Problems 2/3 - LKF";
-            movieTitle = "ASEN6080_Project1_P2-3_LKF";
-            saveMovie = false;
+            movieTitle = "../Videos/ASEN6080_Project1_P2-3_LKF";
+            saveMovie = true;
             animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
 
             fprintf("\n\nDone, have a great day!\n\n")
@@ -118,12 +118,12 @@ elseif runQuestion == 2
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 5 - Range Data Only";
-            movieTitle = "ASEN6080_Project1_P5_Range";
+            movieTitle = "../Videos/ASEN6080_Project1_P5_Range";
             saveMovie = false;
             animateProblem(batchRunRange.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
             titleText = "ASEN 6080 Project 1 Problem 5 - Range Rate Data Only";
-            movieTitle = "ASEN6080_Project1_P5_RangeRate";
+            movieTitle = "../Videos/ASEN6080_Project1_P5_RangeRate";
             saveMovie = false;
             animateProblem(batchRunRangeRate.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
@@ -156,12 +156,12 @@ elseif runQuestion == 3
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 6 - No fixed stations, Batch";
-            movieTitle = "ASEN6080_Project1_P6_NoFix_Batch";
+            movieTitle = "../Videos/ASEN6080_Project1_P6_NoFix_Batch";
             saveMovie = false;
             animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
             titleText = "ASEN 6080 Project 1 Problems 6 - No fixed stations, LKF";
-            movieTitle = "ASEN6080_Project1_P6_NoFix_LKF";
+            movieTitle = "../Videos/ASEN6080_Project1_P6_NoFix_LKF";
             saveMovie = false;
             animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
 
@@ -192,12 +192,12 @@ elseif runQuestion == 4
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 6 - Station 337 fixed, Batch";
-            movieTitle = "ASEN6080_Project1_P6_Fixed337_Batch";
+            movieTitle = "../Videos/ASEN6080_Project1_P6_Fixed337_Batch";
             saveMovie = false;
             animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
             titleText = "ASEN 6080 Project 1 Problems 6 - Station 337 fixed, LKF";
-            movieTitle = "ASEN6080_Project1_P6_Fixed337_LKF";
+            movieTitle = "../Videos/ASEN6080_Project1_P6_Fixed337_LKF";
             saveMovie = false;
             animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
 
@@ -228,12 +228,12 @@ elseif runQuestion == 5
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 6 - Station 394 fixed, Batch";
-            movieTitle = "ASEN6080_Project1_P6_Fixed394_Batch";
+            movieTitle = "../Videos/ASEN6080_Project1_P6_Fixed394_Batch";
             saveMovie = false;
             animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
             titleText = "ASEN 6080 Project 1 Problems 6 - Station 394 fixed, LKF";
-            movieTitle = "ASEN6080_Project1_P6_Fixed394_LKF";
+            movieTitle = "../Videos/ASEN6080_Project1_P6_Fixed394_LKF";
             saveMovie = false;
             animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
 
