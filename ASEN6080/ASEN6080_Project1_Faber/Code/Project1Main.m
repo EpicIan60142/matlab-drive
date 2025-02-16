@@ -84,12 +84,12 @@ if runQuestion == 1
         case 'y'
             titleText = "ASEN 6080 Project 1 Problems 2/3 - Batch";
             movieTitle = "../Videos/ASEN6080_Project1_P2-3_Batch";
-            saveMovie = true;
+            saveMovie = false;
             animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
 
             titleText = "ASEN 6080 Project 1 Problems 2/3 - LKF";
             movieTitle = "../Videos/ASEN6080_Project1_P2-3_LKF";
-            saveMovie = true;
+            saveMovie = false;
             animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
 
             fprintf("\n\nDone, have a great day!\n\n")
