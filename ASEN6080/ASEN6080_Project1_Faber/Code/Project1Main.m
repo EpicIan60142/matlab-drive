@@ -79,7 +79,25 @@ if runQuestion == 1
     % Run LKF - original P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
 
-    fprintf("\n\nDone, have a great day!\n\n")
+    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Problems 2/3 - Batch";
+            movieTitle = "ASEN6080_Project1_P2-3_Batch";
+            saveMovie = false;
+            animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Problems 2/3 - LKF";
+            movieTitle = "ASEN6080_Project1_P2-3_LKF";
+            saveMovie = false;
+            animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
 elseif runQuestion == 2
     fprintf("\n\nRunning Question 5!\n\n")
 
@@ -96,7 +114,25 @@ elseif runQuestion == 2
     measInclude = [false, true];
     batchRunRangeRate = runBatch(X0, zeros(size(X0)), P0, earthConst, scConst, stations, tspan, [], opt, 10, measInclude);
 
-    fprintf("\n\nDone, have a great day!\n\n")
+    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Problem 5 - Range Data Only";
+            movieTitle = "ASEN6080_Project1_P5_Range";
+            saveMovie = false;
+            animateProblem(batchRunRange.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Problem 5 - Range Rate Data Only";
+            movieTitle = "ASEN6080_Project1_P5_RangeRate";
+            saveMovie = false;
+            animateProblem(batchRunRangeRate.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
 elseif runQuestion == 3
     fprintf("\n\nRunning Question 6 - no fixed stations!\n\n")
 
@@ -116,7 +152,25 @@ elseif runQuestion == 3
     % Run LKF - new P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 6);
 
-    fprintf("\n\nDone, have a great day!\n\n")
+    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Problem 6 - No fixed stations, Batch";
+            movieTitle = "ASEN6080_Project1_P6_NoFix_Batch";
+            saveMovie = false;
+            animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Problems 6 - No fixed stations, LKF";
+            movieTitle = "ASEN6080_Project1_P6_NoFix_LKF";
+            saveMovie = false;
+            animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
 elseif runQuestion == 4
     % Set station 337 to be fixed
     P0 = diag([
@@ -134,7 +188,25 @@ elseif runQuestion == 4
     % Run LKF - new P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 7);
 
-    fprintf("\n\nDone, have a great day!\n\n")
+    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Problem 6 - Station 337 fixed, Batch";
+            movieTitle = "ASEN6080_Project1_P6_Fixed337_Batch";
+            saveMovie = false;
+            animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Problems 6 - Station 337 fixed, LKF";
+            movieTitle = "ASEN6080_Project1_P6_Fixed337_LKF";
+            saveMovie = false;
+            animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
 elseif runQuestion == 5
     % Set station 394 to be fixed
     P0 = diag([
@@ -152,5 +224,23 @@ elseif runQuestion == 5
     % Run LKF - new P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 8);
 
-    fprintf("\n\nDone, have a great day!\n\n")
+    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Problem 6 - Station 394 fixed, Batch";
+            movieTitle = "ASEN6080_Project1_P6_Fixed394_Batch";
+            saveMovie = false;
+            animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Problems 6 - Station 394 fixed, LKF";
+            movieTitle = "ASEN6080_Project1_P6_Fixed394_LKF";
+            saveMovie = false;
+            animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
 end
