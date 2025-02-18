@@ -46,6 +46,7 @@ choice = input(sprintf(...
                         "\t 4. Question 6 - Fix station 337 instead of 101\n" + ...
                         "\t 5. Question 6 - Fix station 394 instead of 101\n" + ...
                         "\t 6. Extra - Potter Algorithm Comparison to LKF\n" + ...
+                        "\t 7. Extra - Reasonable P0 Estimate\n" + ... 
                         ... "\t 6. Animate the problem based on the results of questions 2/3!" + ...
                         "\t Press 'Ctrl-C' to exit\n" + ...
                         "\tChoice:\t" ...
@@ -64,6 +65,8 @@ switch choice
         runQuestion = 5;
     case 6
         runQuestion = 6;
+    case 7
+        runQuestion = 7;
     otherwise
         fprintf("Invalid input, provide the number of the option you'd like to run!")
 end
@@ -80,7 +83,7 @@ if runQuestion == 1
     pause
 
     % Run LKF - original P0
-    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 1);
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
 
     choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
     switch choice
@@ -274,6 +277,42 @@ elseif runQuestion == 6
             movieTitle = "../Videos/ASEN6080_Project1_Extra_Potter";
             saveMovie = false;
             animateProblem(PotterRun.X_Potter(:,2:end), stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
+elseif runQuestion == 7
+    fprintf("\n\nRunning Extra code - Reasonable P0 estimates!\n\n")
+
+    % Make P0 on the order of meters and mm/s
+    P0 = diag([1 1 1 1e-3 1e-3 1e-3 10 1e-4 1e-2 ...
+               1 1 1 1 1 1 1 1 1]);
+
+    % Run Batch
+    measInclude = true(1,2);
+    batchRun = runBatch(X0, zeros(size(X0)), P0, earthConst, scConst, stations, tspan, [], opt, 10, measInclude);
+    
+    fprintf("\nPress 'Enter' to run the LKF.\n")
+    pause
+
+    % Run LKF
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Extra - Batch, reasonable P0";
+            movieTitle = "../Videos/ASEN6080_Project1_Extra_Batch_P0";
+            saveMovie = false;
+            animateProblem(batchRun.X_batchFilt(2:end,:)', stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Extra - LKF, reasonable P0";
+            movieTitle = "../Videos/ASEN6080_Project1_Extra_LKF_P0";
+            saveMovie = false;
+            animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
 
             fprintf("\n\nDone, have a great day!\n\n")
         case 'n'

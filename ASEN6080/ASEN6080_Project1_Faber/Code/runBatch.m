@@ -253,7 +253,6 @@ yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
 
 fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', [], [], boundLevel, titleText, xLabel, yLabel);
 % fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, sigma_batch, boundLevel, titleText, xLabel, yLabel);
-% fig_BatchError = plotStateError()
 
     %% Assign output
 batchRun = struct("batchOut", batchOut, "t_batchFilt", t_batchFilt, "X_batchFilt", X_batchFilt, ...
