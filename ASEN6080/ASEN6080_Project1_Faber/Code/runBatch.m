@@ -251,7 +251,8 @@ yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
           "X_{s,2} error [m]", "Y_{s,2} error [m]", "Z_{s,2} error [m]", ...
           "X_{s,3} error [m]", "Y_{s,3} error [m]", "Z_{s,3} error [m]"];
 
-fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, sigma_batch, boundLevel, titleText, xLabel, yLabel);
+fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', [], [], boundLevel, titleText, xLabel, yLabel);
+% fig_BatchError = plotStateError(t_batchFilt(2:end), relState_batch', t_sigma, sigma_batch, boundLevel, titleText, xLabel, yLabel);
 % fig_BatchError = plotStateError()
 
     %% Assign output

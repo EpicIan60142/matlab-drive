@@ -98,7 +98,10 @@ while LKFRuns < maxLKFRuns
             % Update initial state and perturbations for next run
         x0_LKF = (Phi_full_LKF^-1)*xEst_LKF(:,end);
         X0_LKF = X0_LKF + x0_LKF;
-        
+        % [~,backInt] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst), flipud([0; t_LKF]), X_LKF(:,end), odeset('RelTol',1e-12,'AbsTol',1e-12));
+        % x0_LKF = X0_LKF - backInt(end,:)';
+        % X0_LKF = backInt(end,:)';
+
             % Update counters
         k = k + 1;
         LKFRuns = LKFRuns + 1;
@@ -203,7 +206,8 @@ yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
           "X_{s,2} error [m]", "Y_{s,2} error [m]", "Z_{s,2} error [m]", ...
           "X_{s,3} error [m]", "Y_{s,3} error [m]", "Z_{s,3} error [m]"];
 
-fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
+fig_LKFError = plotStateError(t_LKF, relState_LKF', [], [], boundLevel, titleText, xLabel, yLabel);
+% fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
     %% Assign output
 LKFRun = struct("LKFOut", LKFOut, "t_LKF", t_LKF, "X_LKF", X_LKF, ...

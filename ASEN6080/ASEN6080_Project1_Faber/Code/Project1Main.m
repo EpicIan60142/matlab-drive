@@ -45,6 +45,7 @@ choice = input(sprintf(...
                         "\t 3. Question 6 - No fixed stations\n" + ...
                         "\t 4. Question 6 - Fix station 337 instead of 101\n" + ...
                         "\t 5. Question 6 - Fix station 394 instead of 101\n" + ...
+                        "\t 6. Extra - Potter Algorithm Comparison to LKF\n" + ...
                         ... "\t 6. Animate the problem based on the results of questions 2/3!" + ...
                         "\t Press 'Ctrl-C' to exit\n" + ...
                         "\tChoice:\t" ...
@@ -61,6 +62,8 @@ switch choice
         runQuestion = 4;
     case 5
         runQuestion = 5;
+    case 6
+        runQuestion = 6;
     otherwise
         fprintf("Invalid input, provide the number of the option you'd like to run!")
 end
@@ -77,9 +80,9 @@ if runQuestion == 1
     pause
 
     % Run LKF - original P0
-    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 1);
 
-    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problems 2/3 - Batch";
@@ -114,7 +117,7 @@ elseif runQuestion == 2
     measInclude = [false, true];
     batchRunRangeRate = runBatch(X0, zeros(size(X0)), P0, earthConst, scConst, stations, tspan, [], opt, 10, measInclude);
 
-    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 5 - Range Data Only";
@@ -152,7 +155,7 @@ elseif runQuestion == 3
     % Run LKF - new P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 6);
 
-    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 6 - No fixed stations, Batch";
@@ -172,6 +175,8 @@ elseif runQuestion == 3
             fprintf("\n\nDone, have a great day!\n\n")
     end
 elseif runQuestion == 4
+    fprintf("\n\nRunning Question 6 - Station 337 fixed!\n\n")
+
     % Set station 337 to be fixed
     P0 = diag([
                 1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e20, 1e6, 1e6, ...
@@ -188,7 +193,7 @@ elseif runQuestion == 4
     % Run LKF - new P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 7);
 
-    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 6 - Station 337 fixed, Batch";
@@ -208,6 +213,8 @@ elseif runQuestion == 4
             fprintf("\n\nDone, have a great day!\n\n")
     end
 elseif runQuestion == 5
+    fprintf("\n\nRunning Question 6 - Station 394 fixed!\n\n")
+
     % Set station 394 to be fixed
     P0 = diag([
                 1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e20, 1e6, 1e6, ...
@@ -224,7 +231,7 @@ elseif runQuestion == 5
     % Run LKF - new P0
     LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 8);
 
-    choice = input(sprintf("Animate problem? [y/n]\n\tChoice:\t"), "s");
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
     switch choice
         case 'y'
             titleText = "ASEN 6080 Project 1 Problem 6 - Station 394 fixed, Batch";
@@ -236,6 +243,37 @@ elseif runQuestion == 5
             movieTitle = "../Videos/ASEN6080_Project1_P6_Fixed394_LKF";
             saveMovie = false;
             animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
+
+            fprintf("\n\nDone, have a great day!\n\n")
+        case 'n'
+            fprintf("\n\nDone, have a great day!\n\n")
+        otherwise
+            fprintf("\n\nDone, have a great day!\n\n")
+    end
+elseif runQuestion == 6
+    fprintf("\n\nRunning Extra code - LKF vs. Potter!\n\n")
+
+    % Run LKF
+    LKFRun = runLKF(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+
+    fprintf("\nPress 'Enter' to run the Potter Algorithm.\n")
+    pause
+
+    % Run Potter
+    PotterRun = runPotter(X0, zeros(size(X0)), P0, earthConst, scConst, stations, 5);
+
+    choice = input(sprintf("Animate solution? [y/n]\n\tChoice:\t"), "s");
+    switch choice
+        case 'y'
+            titleText = "ASEN 6080 Project 1 Extra - LKF";
+            movieTitle = "../Videos/ASEN6080_Project1_Extra_LKF";
+            saveMovie = false;
+            animateProblem(LKFRun.X_LKF, stations, earthConst, titleText, movieTitle, saveMovie)
+
+            titleText = "ASEN 6080 Project 1 Extra - Potter";
+            movieTitle = "../Videos/ASEN6080_Project1_Extra_Potter";
+            saveMovie = false;
+            animateProblem(PotterRun.X_Potter(:,2:end), stations, earthConst, titleText, movieTitle, saveMovie)
 
             fprintf("\n\nDone, have a great day!\n\n")
         case 'n'
