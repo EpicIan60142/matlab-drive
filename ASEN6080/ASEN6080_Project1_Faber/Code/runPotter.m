@@ -205,6 +205,7 @@ yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
           "X_{s,3} error [m]", "Y_{s,3} error [m]", "Z_{s,3} error [m]"];
 
 fig_PotterError = plotStateError(t_Potter, relState_Potter', [], [], boundLevel, titleText, xLabel, yLabel);
+fig_PotterError = plotStateError(t_Potter, relState_Potter', t_Potter, sigma_Potter, boundLevel, titleText, xLabel, yLabel);
 
     %% Assign output
 PotterRun = struct("PotterOut", PotterOut, "t_Potter", t_Potter, "X_Potter", X_Potter, ...

@@ -207,7 +207,7 @@ yLabel = ["X error [m]", "Y error [m]", "Z error [m]", ...
           "X_{s,3} error [m]", "Y_{s,3} error [m]", "Z_{s,3} error [m]"];
 
 fig_LKFError = plotStateError(t_LKF, relState_LKF', [], [], boundLevel, titleText, xLabel, yLabel);
-% fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
+fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
     %% Assign output
 LKFRun = struct("LKFOut", LKFOut, "t_LKF", t_LKF, "X_LKF", X_LKF, ...
