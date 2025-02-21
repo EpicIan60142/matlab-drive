@@ -24,7 +24,7 @@ function fig = plotStateError(t_state, stateError, t_sigma, sigma, boundLevel, t
 %   By: Ian Faber, 02/01/2025
 %
 
-fig = figure; tl = tiledlayout(6,3); ax = [];
+fig = figure; tl = tiledlayout(2,3); ax = [];
 title(tl, titleText)
 for k = 1:size(stateError,2)
     nt = nexttile;

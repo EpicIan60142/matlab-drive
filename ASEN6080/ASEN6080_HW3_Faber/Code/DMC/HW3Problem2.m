@@ -6,7 +6,7 @@ clc; clear; close all;
 
 %% Setup
 addpath("..\")
-addpath(genpath("..\..\Utilities\"));
+addpath(genpath("..\..\..\Utilities\"));
 
     % Extract parameters for Earth
 earthConst = getPlanetConst();
@@ -17,18 +17,9 @@ stations = makeStations(earthConst);
     % Extract orbital elements
 orbital = getOrbitConst();
 
-%% Make Truth Data
-x0Perturb = 1*0.5*[1 1 1 1e-3 1e-3 1e-3]';
-numOrbits = 15;
-dt = 10; % sec
-filename = "HW3Problem1Data.mat";
+%% Load Truth Data
 
-    % Only generate data once
-if true
-    generateTruthData_MuJ2J3(earthConst, orbital, 0*x0Perturb, stations, filename, numOrbits, dt);
-end
-
-load("HW3Problem1Data.mat");
+load("..\Data\HW3Data.mat");
 
 titleText = sprintf("Measurement data");
 xLabel = "Time [sec]"; 
