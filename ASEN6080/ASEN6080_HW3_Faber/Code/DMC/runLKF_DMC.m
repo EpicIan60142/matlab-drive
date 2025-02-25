@@ -1,5 +1,6 @@
-function LKFRun = runLKF(X0, x0, P0, pConst, stations, X_ref, t_ref, numIter)
-% Function that runs an LKF on the given data for a stat OD problem. 
+function LKFRun = runLKF_DMC(X0, x0, P0, B, Qu, pConst, stations, X_ref, t_ref, numIter, plot)
+% Function that runs an LKF on the given data for a stat OD problem 
+% including dynamic model compensation. 
 % Iterates LKF runs until convergence, or the maximum number of iterations 
 % is met.
 %   - Inputs: 
@@ -9,12 +10,17 @@ function LKFRun = runLKF(X0, x0, P0, pConst, stations, X_ref, t_ref, numIter)
 %             organized as
 %             [x0; y0; z0; xDot0; yDot0; zDot0]
 %       - P0: Initial state covariance matrix for the filter to use
+%       - B: DMC time constant matrix organized as a 3x3 matrix:
+%            B = diag([tau_x^-1, tau_y^-1, tau_z^-1])
+%       - Qu: Process noise covariance matrix organized as a 3x3 matrix:
+%             Qu = diag([sigma_x^2, sigma_y^2, sigma_z^2])
 %       - pConst: Planetary constants structure as defined by
 %                 getPlanetConst.m
 %       - stations: Stations structure as defined by makeSations.m
 %       - X_ref: Reference orbit from truth data
 %       - t_ref: Reference time vector from truth data
 %       - numIter: Max number of times to iterate the filter
+%       - plot: Boolean indicating whether to plot results or not
 %   - Outputs:
 %       - LKFRun: LKF results structure organized as follows:
 %           - LKFOut: Filter output structure as defined in LKF.m
@@ -48,6 +54,14 @@ x0_LKF = x0;
 P0_LKF = P0;
 fprintf("\n\tRunning LKF:\n")
 
+if ~plot
+    fig_LKFPreRes = [];
+    fig_LKFPostRes = [];
+    fig_LKFPTrace = [];
+    fig_CovEllipsoids = [];
+    fig_LKFError = [];
+end
+
     %% Iterate LKF until residual RMS doesn't change
 RMS_prefit_LKF = 1e99;
 RMS_postfit_LKF = 1e99; % Start RMS with a bogus value
@@ -59,7 +73,7 @@ LKFRuns = 0;
 k = 2; % Start counter with bogus value
 while LKFRuns < maxLKFRuns
         % Run LKF
-    LKFOut = LKF(X0_LKF, stations, pConst, P0_LKF, x0_LKF);
+    LKFOut = LKF_DMC(X0_LKF, stations, pConst, P0_LKF, x0_LKF, B, Qu);
 
         % Extract LKF data
     xEst_LKF = LKFOut.xEst;
@@ -122,51 +136,53 @@ else
     fprintf("Final postfit RMS: %.4f. Hit maximum number of %.0f runs\n", RMS_postfit_LKF(end), maxLKFRuns)
 end
 
-    %% Plot residuals and covariance trace
-        % Residuals
-titleText = sprintf("LKF Pre-Fit Residuals - Run %.0f", LKFRuns); 
-xLabel = "Time [sec]"; 
-yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
-colors = ['b', 'r'];
-fig_LKFPreRes = plotResiduals(t_LKF, prefit_res_LKF, titleText, xLabel, yLabel, colors);
+if plot
+        %% Plot residuals and covariance trace
+            % Residuals
+    titleText = sprintf("LKF Pre-Fit Residuals - Run %.0f", LKFRuns); 
+    xLabel = "Time [sec]"; 
+    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    colors = ['b', 'r'];
+    fig_LKFPreRes = plotResiduals(t_LKF, prefit_res_LKF, titleText, xLabel, yLabel, colors);
+    
+    titleText = sprintf("LKF Post-Fit Residuals - Run %.0f", LKFRuns); 
+    xLabel = "Time [sec]"; 
+    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    colors = ['b', 'r'];
+    fig_LKFPostRes = plotResiduals(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors);
+            
+            % Covariance trace
+    titleText = sprintf("LKF R Covariance Trace - Run %.0f", LKFRuns); 
+    xLabel = "Time [sec]"; 
+    yLabel = "trace(P)";
+    colors = ['b', 'r'];
+    elements = 1:3; % Only plot trace of position
+    fig_LKFPTrace = plotPTrace(t_LKF, LKFOut.PEst, elements, titleText, xLabel, yLabel, colors);
+    
+    titleText = sprintf("LKF V Covariance Trace - Run %.0f", LKFRuns); 
+    xLabel = "Time [sec]"; 
+    yLabel = "trace(P)";
+    colors = ['b', 'r'];
+    elements = 4:6; % Only plot trace of velocity
+    fig_LKFPTrace = [fig_LKFPTrace; plotPTrace(t_LKF, LKFOut.PEst, elements, titleText, xLabel, yLabel, colors)];
+    
+        %% Plot covariance ellipsoids
+    fig_CovEllipsoids = [];
+    P_end = PEst_LKF{end};
+    
+    elements = 1:3;
+    P_pos = P_end(elements, elements); mu = X_LKF(elements,end);
+    titleText = sprintf("Final LKF Position Covariance Ellipsoid\n\\mu = [%.3e, %.3e, %.3e]^T km\n\\sigma_X = %.3e km, \\sigma_Y = %.3e km, \\sigma_Z = %.3e km", mu, sqrt(P_pos(1,1)), sqrt(P_pos(2,2)), sqrt(P_pos(3,3)));
+    xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]"; cBarText = "||R - \mu||_2 [km]";
+    fig_CovEllipsoids = [fig_CovEllipsoids; plotCovEllipsoid(P_pos, mu, titleText, xLabel, yLabel, zLabel, cBarText)];
+    
+    elements = 4:6;
+    P_vel = P_end(elements, elements); mu = X_LKF(elements,end);
+    titleText = sprintf("Final LKF Velocity Covariance Ellipsoid\n\\mu = [%.3e, %.3e, %.3e]^T km/s\n\\sigma_{Xdot} = %.3e km/s, \\sigma_{Ydot} = %.3e km/s, \\sigma_{Zdot} = %.3e km/s", mu, sqrt(P_vel(1,1)), sqrt(P_vel(2,2)), sqrt(P_vel(3,3)));
+    xLabel = "Xdot [km/s]"; yLabel = "Ydot [km/s]"; zLabel = "Zdot [km/s]"; cBarText = "||V - \mu||_2 [km/s]";
+    fig_CovEllipsoids = [fig_CovEllipsoids; plotCovEllipsoid(P_vel, mu, titleText, xLabel, yLabel, zLabel, cBarText)];
 
-titleText = sprintf("LKF Post-Fit Residuals - Run %.0f", LKFRuns); 
-xLabel = "Time [sec]"; 
-yLabel = ["Range Residuals [m]", "Range-Rate Residuals [m/s]"];
-colors = ['b', 'r'];
-fig_LKFPostRes = plotResiduals(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors);
-        
-        % Covariance trace
-titleText = sprintf("LKF R Covariance Trace - Run %.0f", LKFRuns); 
-xLabel = "Time [sec]"; 
-yLabel = "trace(P)";
-colors = ['b', 'r'];
-elements = 1:3; % Only plot trace of position
-fig_LKFPTrace = plotPTrace(t_LKF, LKFOut.PEst, elements, titleText, xLabel, yLabel, colors);
-
-titleText = sprintf("LKF V Covariance Trace - Run %.0f", LKFRuns); 
-xLabel = "Time [sec]"; 
-yLabel = "trace(P)";
-colors = ['b', 'r'];
-elements = 4:6; % Only plot trace of velocity
-fig_LKFPTrace = [fig_LKFPTrace; plotPTrace(t_LKF, LKFOut.PEst, elements, titleText, xLabel, yLabel, colors)];
-
-    %% Plot covariance ellipsoids
-fig_CovEllipsoids = [];
-P_end = PEst_LKF{end};
-
-elements = 1:3;
-P_pos = P_end(elements, elements); mu = X_LKF(elements,end);
-titleText = sprintf("Final LKF Position Covariance Ellipsoid\n\\mu = [%.3e, %.3e, %.3e]^T m\n\\sigma_X = %.3e m, \\sigma_Y = %.3e m, \\sigma_Z = %.3e m", mu, sqrt(P_pos(1,1)), sqrt(P_pos(2,2)), sqrt(P_pos(3,3)));
-xLabel = "X [m]"; yLabel = "Y [m]"; zLabel = "Z [m]"; cBarText = "||R - \mu||_2 [m]";
-fig_CovEllipsoids = [fig_CovEllipsoids; plotCovEllipsoid(P_pos, mu, titleText, xLabel, yLabel, zLabel, cBarText)];
-
-elements = 4:6;
-P_vel = P_end(elements, elements); mu = X_LKF(elements,end);
-titleText = sprintf("Final LKF Velocity Covariance Ellipsoid\n\\mu = [%.3e, %.3e, %.3e]^T m/s\n\\sigma_{Xdot} = %.3e m/s, \\sigma_{Ydot} = %.3e m/s, \\sigma_{Zdot} = %.3e m/s", mu, sqrt(P_vel(1,1)), sqrt(P_vel(2,2)), sqrt(P_vel(3,3)));
-xLabel = "Xdot [m/s]"; yLabel = "Ydot [m/s]"; zLabel = "Zdot [m/s]"; cBarText = "||V - \mu||_2 [m/s]";
-fig_CovEllipsoids = [fig_CovEllipsoids; plotCovEllipsoid(P_vel, mu, titleText, xLabel, yLabel, zLabel, cBarText)];
-
+end
     %% Extract nominal state from LKF deviation estimates
 X_ref_LKF = [];
 for k = 1:length(t_LKF)
@@ -174,7 +190,7 @@ for k = 1:length(t_LKF)
 end
 
     %% Calculate state error and uncertainty
-stateError_LKF = X_LKF' - X_ref_LKF;
+stateError_LKF = X_LKF(1:6,:)' - X_ref_LKF;
 
 sigma_LKF = [];
 for k = 1:length(PEst_LKF)
@@ -191,16 +207,18 @@ end
     %% Find state RMS error: component-wise and state-wise
 [RMS_state_comp_LKF, RMS_state_full_LKF] = calcStateErrorRMS(stateError_LKF);
 
-    %% Create state error plots
-boundLevel = 3; % Plot +/- boundLevel*sigma around state errors
-titleText = "LKF Estimated State Error (X_{filt} - X_{ref})";
-xLabel = "Time [sec]";
-yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
-          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
+if plot
+        %% Create state error plots
+    boundLevel = 3; % Plot +/- boundLevel*sigma around state errors
+    titleText = "LKF Estimated State Error (X_{filt} - X_{ref})";
+    xLabel = "Time [sec]";
+    yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
+              "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
+    
+    fig_LKFError = plotStateError(t_LKF, relState_LKF', [], [], boundLevel, titleText, xLabel, yLabel);
+    fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
-fig_LKFError = plotStateError(t_LKF, relState_LKF', [], [], boundLevel, titleText, xLabel, yLabel);
-fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
-
+end
     %% Assign output
 LKFRun = struct("LKFOut", LKFOut, "t_LKF", t_LKF, "X_LKF", X_LKF, ...
                 "RMS_prefit_LKF", RMS_prefit_LKF, "RMS_postfit_LKF", RMS_postfit_LKF, ...

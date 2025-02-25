@@ -1,5 +1,6 @@
-function filterOut = EKF(Xstar0, stations, pConst, P0, t_start)
-% Function that implements an EKF for stat OD problems
+function filterOut = EKF_DMC(Xstar0, stations, pConst, P0, B, Qu, t_start)
+% Function that implements an EKF with dynamic model compensation for stat 
+% OD problems
 %   Inputs:
 %       - Xstar0: Initial value of the reference trajectory, organized as
 %                 follows:
@@ -10,6 +11,10 @@ function filterOut = EKF(Xstar0, stations, pConst, P0, t_start)
 %       - pConst: Planetary constant structure as formatted by
 %                 getPlanetConst.m
 %       - P0: Initial state covariance estimate
+%       - B: DMC time constant matrix organized as a 3x3 matrix:
+%            B = diag([tau_x^-1, tau_y^-1, tau_z^-1])
+%       - Qu: Process noise covariance matrix organized as a 3x3 matrix:
+%             Qu = diag([sigma_x^2, sigma_y^2, sigma_z^2])
 %       - t_start: Time to start the filter, generally the time after some
 %                  number of LKF measurements have been taken
 %   Outputs:
@@ -61,15 +66,22 @@ for k = 2:length(Y)
     Y_i = Y{k};
     R_i = R{k};
 
+        % Generate white gaussian noise
+    u = randn(3,1);
+    u = chol(Qu)*u; % Scale noise properly
+
         % Integrate Xstar and Phi from t_im1 to t_i
     Phi_im1 = eye(n);
     XPhi_im1 = [Xstar_im1; reshape(Phi_im1,n^2,1)];
-    [~, XPhi_i] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_im1, opt);
+    [~, XPhi_i] = ode45(@(t,XPhi)STMEOM_J2_DMC(t,XPhi,B,u,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_im1, opt);
     Xstar_i = XPhi_i(end,1:n)';
     Phi_i = reshape(XPhi_i(end,n+1:end),size(Phi_im1));
 
+        % Make Q_i
+    Q_i = makeQ_DMC(B, Qu, t_i, t_im1);
+
         % Time update
-    P_i = Phi_i*P_im1*Phi_i';
+    P_i = Phi_i*P_im1*Phi_i' + Q_i;
 
         % Get number of measurements in Y, station states, and station 
         % visibility at this time
@@ -89,7 +101,7 @@ for k = 2:length(Y)
         % Build Htilde_i
     Htilde_i = [];
     for kk = 1:meas
-        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate_sc(Xstar_i, Xstat(:,meas))];
+        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate_sc_DMC(Xstar_i, Xstat(:,meas))];
     end
 
         % Build K_i

@@ -1,5 +1,6 @@
-function filterOut = LKF(Xstar0, stations, pConst, P0, x0, numMeas)
-% Function that implements an LKF for stat OD problems
+function filterOut = LKF_DMC(Xstar0, stations, pConst, P0, x0, B, Qu, numMeas)
+% Function that implements an LKF with dynamic model compensation for stat 
+% OD problems
 %   Inputs:
 %       - Xstar0: Initial value of the reference trajectory, organized as
 %                 follows:
@@ -11,6 +12,10 @@ function filterOut = LKF(Xstar0, stations, pConst, P0, x0, numMeas)
 %                 getPlanetConst.m
 %       - P0: Initial state covariance estimate
 %       - x0: Initial state deviation estimate
+%       - B: DMC time constant matrix organized as a 3x3 matrix:
+%            B = diag([tau_x^-1, tau_y^-1, tau_z^-1])
+%       - Qu: Process noise covariance matrix organized as a 3x3 matrix:
+%             Qu = diag([sigma_x^2, sigma_y^2, sigma_z^2])
 %       - numMeas: Number of measurements to process (optional). If not 
 %                  specified, defaults to all measurements
 %   Outputs:
@@ -33,8 +38,8 @@ function filterOut = LKF(Xstar0, stations, pConst, P0, x0, numMeas)
 %           - XEst: Estimated full state at each time in t:
 %                   [XEst_1, XEst_2, ..., XEst_t], where
 %                   XEst = [X; Y; Z; XDot; YDot; ZDot]
-%           - Phi_full: Integrated STM from t0 to tf, for iteration
-%                       purposes (Phi(t0, tf))
+%           - Phi: Cell array of STMs from t0 to each t_i in t: 
+%                  [{Phi(t_1, t0)}; {Phi(t_2,t0)}; ...; {Phi(t_f,t_0)}]
 %
 %   By: Ian Faber, 02/02/2025
 %
@@ -49,6 +54,7 @@ PEst = [];
 prefit_res = [];
 postfit_res = [];
 XEst = [];
+Phi = [];
 
     %% Process station data into a usable form
 [t, Y, R, Xs, vis] = processStations(stations);
@@ -71,21 +77,31 @@ for k = 2:numMeas
     Y_i = Y{k};
     R_i = R{k};
 
+        % Generate white gaussian noise
+    u = randn(3,1);
+    u = chol(Qu)*u; % Scale noise properly
+
         % Continue to integrate Phi(t0, tf) for iteration purposes
+    Phi_full(7:9,7:9) = eye(3); % Reset process noise part
     XPhi_full = [Xstar_im1; reshape(Phi_full,n^2,1)];
-    [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_full, opt);
+    [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_J2_DMC(t,XPhi,B,u,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_full, opt);
     Phi_full = reshape(XPhi_full(end,n+1:end), n, n);
+
+    Phi = [Phi; {Phi_full}];
 
         % Integrate Xstar and Phi from t_im1 to t_i
     Phi_im1 = eye(n);
     XPhi_im1 = [Xstar_im1; reshape(Phi_im1,n^2,1)];
-    [~, XPhi_i] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_im1, opt);
+    [~, XPhi_i] = ode45(@(t,XPhi)STMEOM_J2_DMC(t,XPhi,B,u,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_im1, opt);
     Xstar_i = XPhi_i(end,1:n)';
     Phi_i = reshape(XPhi_i(end,n+1:end),size(Phi_im1));
 
+        % Make Q_i
+    Q_i = makeQ_DMC(B, Qu, t_i, t_im1);
+
         % Time update
     x_i = Phi_i*x_im1;
-    P_i = Phi_i*P_im1*Phi_i';
+    P_i = Phi_i*P_im1*Phi_i' + Q_i;
 
         % Get number of measurements in Y, station states, and station 
         % visibility at this time
@@ -105,7 +121,7 @@ for k = 2:numMeas
         % Build Htilde_i
     Htilde_i = [];
     for kk = 1:meas
-        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate_sc(Xstar_i, Xstat(:,meas))];
+        Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate_sc_DMC(Xstar_i, Xstat(:,meas))];
     end
 
         % Build K_i
@@ -140,6 +156,6 @@ filterOut.postfit_res = postfit_res;
 filterOut.t = t(2:end); % t_0 not included in estimate
 filterOut.statVis = vis;
 filterOut.XEst = XEst;
-filterOut.Phi_full = Phi_full;
+filterOut.Phi = Phi;
 
 end
