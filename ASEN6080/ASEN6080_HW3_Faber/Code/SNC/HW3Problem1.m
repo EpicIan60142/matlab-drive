@@ -29,10 +29,10 @@ plotMeasurements(stations, titleText, xLabel, yLabel);
 sigR = 1; % km
 sigV = 1e-3; % km/s
 
-x0 = 0*0.5*[1 1 1 1e-3 1e-3 1e-3]';
+x0 = 1*0.5*[1 1 1 1e-3 1e-3 1e-3]';
 P0 = diag([sigR^2, sigR^2, sigR^2, sigV^2, sigV^2, sigV^2]);
 
-sigAccel = logspace(-15,-2,14); % Create test sigmas from 1e-15 to 1e-2 m/s^2
+sigAccel = logspace(-15,-2,14); % Create test sigmas from 1e-15 to 1e-2 km/s^2
 
 numMeas = 50; % Number of LKF measurements to initialize the EKF with
 
@@ -65,6 +65,8 @@ else
     load("SNCData.mat");
 end
 %% Problem 1b: Plot results vs. sigma
+fprintf("\nPlotting SNC filter results vs. sigma\n")
+
     % Compile RMS
 LKF_PostFitRMS = []; LKF_3DRMS = [];
 EKF_PostFitRMS = []; EKF_3DRMS = [];
@@ -81,7 +83,7 @@ loglog(sigAccel, LKF_PostFitRMS, 'b-');
 hold on; grid on;
 loglog(sigAccel, EKF_PostFitRMS, 'r-');
 title("Normalized Post-Fit RMS vs. \sigma_{accel}")
-xlabel("\sigma_{accel} [m/s^2]"); ylabel("Normalized Postfit RMS")
+xlabel("\sigma_{accel} [km/s^2]"); ylabel("Normalized Postfit RMS")
 legend("LKF", "EKF", 'location', 'eastoutside');
 
 figure; 
@@ -89,13 +91,15 @@ loglog(sigAccel, LKF_3DRMS, 'b-');
 hold on; grid on;
 loglog(sigAccel, EKF_3DRMS, 'r-');
 title("3-D RMS vs. \sigma_{accel}")
-xlabel("\sigma_{accel} [m/s^2]"); ylabel("3-D RMS")
+xlabel("\sigma_{accel} [km/s^2]"); ylabel("3-D RMS")
 legend("LKF", "EKF", 'location', 'eastoutside');
 drawnow;
 
 %% Problem 1b: Choose optimal sigma and show state errors
     % Based on plots, sigma = 1e-8 balances both postfit and 3D RMS
 sigOpt = find(sigAccel == 1e-8); 
+
+fprintf("\nPlotting state errors vs. time for sigma = %.3e km/s^2\n", sigAccel(sigOpt))
 
     % Define optimal Q0
 Q0 = diag(sigAccel(sigOpt)^2*ones(1,3));
@@ -106,4 +110,29 @@ LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 5, true)
 numMeas = 50; % Initialize with 50 LKF measurements
 X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);
 EKFOpt = runEKF_SNC(X0_EKF, P0_EKF, Q0, earthConst, stations, X_ref, t_ref, t_start, true);
+
+%% Problem 1c: Define Q in the RIC frame and run again
+fprintf("\nRunning filters again with Q defined in RIC frame\n")
+
+Q_RIC = Q0;
+
+r = X0(1:3);
+v = X0(4:6);
+rHat = r/norm(r); % define rHat - along radial vector (radial)
+hHat = cross(r,v)/norm(cross(r,v)); % define hHat - along angular momentum vector (cross-track)
+thetaHat = cross(hHat, rHat); % define thetaHat to make right handed coord system (in-track)
+
+RIC2ECI = [rHat'; thetaHat'; hHat']'; % Equivalent to "NH" from 5010
+
+Q_ECI = RIC2ECI*Q0*RIC2ECI';
+
+    % Run filters
+LKF_RIC = runLKF_SNC(X0, x0, P0, Q_ECI, earthConst, stations, X_ref, t_ref, 5, true);
+
+numMeas = 50; % Initialize with 50 LKF measurements
+X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);
+EKF_RIC = runEKF_SNC(X0_EKF, P0_EKF, Q_ECI, earthConst, stations, X_ref, t_ref, t_start, true);
+
+
+
 
