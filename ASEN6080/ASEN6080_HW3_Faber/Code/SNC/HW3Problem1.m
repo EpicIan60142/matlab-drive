@@ -111,8 +111,6 @@ numMeas = 50; % Initialize with 50 LKF measurements
 X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);
 EKFOpt = runEKF_SNC(X0_EKF, P0_EKF, Q0, earthConst, stations, X_ref, t_ref, t_start, true);
 
-return
-
 %% Problem 1c: Define Q in the RIC frame and run again
 fprintf("\nRunning filters again with Q defined in RIC frame\n")
 
