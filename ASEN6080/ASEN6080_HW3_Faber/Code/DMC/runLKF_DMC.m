@@ -215,8 +215,8 @@ if plot
     yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
               "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
     
-    fig_LKFError = plotStateError(t_LKF, relState_LKF', [], [], boundLevel, titleText, xLabel, yLabel);
-    fig_LKFError = plotStateError(t_LKF, relState_LKF', t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
+    fig_LKFError = plotStateError(t_LKF, stateError_LKF, [], [], boundLevel, titleText, xLabel, yLabel);
+    fig_LKFError = plotStateError(t_LKF, stateError_LKF, t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
 end
     %% Assign output
