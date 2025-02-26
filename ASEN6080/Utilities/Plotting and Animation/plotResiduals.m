@@ -28,13 +28,14 @@ for k = 1:size(residuals,1)
         hold on; grid on;
         plot(t, residuals(k,:), '.', 'Color', colors(k))
         xlabel(xLabel); ylabel(yLabel(k))
-    nexttile
+    hist = nexttile;
         hold on; grid on;
         mu = mean(residuals(k,:)); stdev = std(residuals(k,:));
         infoText = sprintf("\\mu = %.4e \n\\sigma = %.4e", mu, stdev);
         histogram(residuals(k,:), 'FaceColor', colors(k), 'Orientation', 'horizontal')
         yl = ylim; xl = xlim;
         text(0.5*xl(2),0.9*yl(2),infoText, "EdgeColor", 'k', 'BackgroundColor', 'w')
+    linkaxes([nt; hist], 'y');
 end
 linkaxes(ax, 'x')
 
