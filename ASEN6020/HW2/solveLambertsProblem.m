@@ -148,7 +148,7 @@ else
 end
 
 % Calculate eccentricity
-p = ((4*a*(s-r1)*(s-r2))/(c^2))*(sin(0.5*(alpha+beta)))^2;
+p = abs(((4*a*(s-r1)*(s-r2))/(c^2))*(sin(0.5*(alpha+beta)))^2);
 
 e = sqrt(1-(p/a));
 
@@ -254,9 +254,16 @@ h_vec = cross(R1,Vt1);
 e_vec = ((vt1^2 - (mu/r1))*R1 - dot(R1, Vt1)*Vt1)/mu;
 n_vec = cross([0;0;1],h_vec);
 
+% e = norm(e_vec);
+
 orbElems.inc = acos(dot(h_vec, [0;0;1])/norm(h_vec));
-orbElems.RAAN = acos(dot(n_vec, [1;0;0])/norm(n_vec))*sign(dot(n_vec,[0;1;0]));
-orbElems.argPeri = acos(dot(n_vec,e_vec)/(norm(n_vec)*norm(e_vec)))*sign(dot(e_vec, [0;0;1]));
+if norm(n_vec) ~= 0
+    orbElems.RAAN = acos(dot(n_vec, [1;0;0])/norm(n_vec))*sign(dot(n_vec,[0;1;0]));
+    orbElems.argPeri = acos(dot(n_vec,e_vec)/(norm(n_vec)*norm(e_vec)))*sign(dot(e_vec, [0;0;1]));
+else
+    orbElems.RAAN = 0;
+    orbElems.argPeri = acos(dot([1;0;0],e_vec)/norm(e_vec))*sign(dot(e_vec, [0; 1; 0]));
+end
 
 diagnostic.p = p;
 diagnostic.s = s;
@@ -264,6 +271,12 @@ diagnostic.c = c;
 diagnostic.n = n;
 diagnostic.alpha = alpha;
 diagnostic.beta = beta;
+diagnostic.r1 = r1;
+diagnostic.r2 = r2;
+diagnostic.f = f;
+diagnostic.fDot = fDot;
+diagnostic.g = g;
+diagnostic.gDot = gDot;
 
 % Assign outputs
 transfer.a = a;

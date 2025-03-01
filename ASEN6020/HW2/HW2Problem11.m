@@ -13,14 +13,14 @@ X_1 = [r1; 0; 0; 0; v_lc1; 0]; % Initial state is a constant with theta_1 = 0!
 
     % Solution space
 r = linspace(11.94,25,10);
-dTheta = linspace(0.001,2*pi,10); % rad
-TOF = linspace(0.1,24*3600,100); % sec, 0 - 1 day transfer time
+dTheta = linspace(0.001,2*pi-0.001,10); % rad
+TOF = linspace(0.1,4*24*3600,200); % sec, 0 - 4 day transfer time
 
 %% Solve Lambert's Problem for every r, dTheta combo
 
 fprintf("\nFinding transfers for solution space\n")
 
-if true
+if false
     transfers = [];
     for t = TOF
         for k = 1:length(r)
@@ -51,7 +51,7 @@ if true
             end
         end
     end
-    save("HW2Problem11Data.mat",'transfers','-mat');
+    save("HW2Problem11Data-new.mat",'transfers','-mat');
 else
     load("HW2Problem11Data.mat")
 end
@@ -74,42 +74,107 @@ drawnow;
 %% Plot transfers
 fprintf("\nPlotting Transfers\n")
     % DCM function handle
-% NO = @(theta, inc, RAAN)EA2DCM([-theta, -inc, -RAAN], [3, 1, 3]); % orbital -> inertial
+NO = @(theta, inc, RAAN)EA2DCM([-theta, -inc, -RAAN], [3, 1, 3]); % orbital -> inertial
 
     % Plot all transfers
-for T = TOF
-    figure; hold on; grid on; colors = 'jet';
-    titleText = sprintf("All Possible Transfers from r_1 = %.3e km to varying r_2, \n given TOF = %.3e sec", r1, rad2deg(T));
+for ratio = r
+    figure; hold on; grid on; axis equal; colors = 'jet';
+    titleText = sprintf("Elliptical Transfers from r_1 = %.3e km to r_2 = %.3e km \n given \\Delta\\theta* \\epsilon [%.3f, %.3f] and r \\epsilon [%.3f, %.3f]", r1, ratio*r1, dTheta(1), dTheta(end), r(1), r(end));
     title(titleText)
     for k = 1:length(transfers)
-        if abs(transfers(k).TOF_calc - T) < 1e-10
+        if abs(transfers(k).diagnostic.r2 - ratio*r1) < 1e-10 % Only plot transfers that don't hit Earth
             a = transfers(k).a;
             e = transfers(k).e;
-            % inc = transfers(k).orbElems.inc;
-            % RAAN = transfers(k).orbElems.RAAN;
-            % argPeri = transfers(k).orbElems.argPeri;
-            TA = deg2rad(real(transfers(k).TA1_deg):0.5:real(transfers(k).TA2_deg));
-            theta = TA;% + argPeri;
-            r = (a*(1-e^2))./(1+e*cos(TA));
-            % rhat-thetahat-hhat frame
-            R = [r;zeros(size(r));zeros(size(r))];
-            % rhat-thetahat-hhat -> Cartesian frame
+            inc = transfers(k).orbElems.inc;
+            RAAN = transfers(k).orbElems.RAAN;
+            argPeri = transfers(k).orbElems.argPeri;
+            if transfers(k).type == "Elliptical"
+                TA = deg2rad(real(transfers(k).TA1_deg):0.5:real(transfers(k).TA2_deg));
+                theta = TA + argPeri;
+            else
+                continue
+                % a = transfers(534).a;
+                % e = transfers(534).e;
+                % inc = transfers(534).orbElems.inc;
+                % RAAN = transfers(534).orbElems.RAAN;
+                % argPeri = transfers(534).orbElems.argPeri;
+                % TA1 = deg2rad(transfers(534).TA1_deg); %wrapTo2Pi(deg2rad(transfers(534).TA1_deg));
+                % TA2 = deg2rad(transfers(534).TA2_deg); %wrapTo2Pi(deg2rad(transfers(534).TA2_deg));
+                % TA = TA1:deg2rad(0.5):TA2;
+                % theta = wrapToPi(TA + argPeri);
+            end
+            
+            radius = (a*(1-e^2))./(1+e*cos(TA));
+            if any(radius < 6378) % Don't plot if the transfer intersects Earth
+                continue
+            end
+                % rhat-thetahat-hhat frame
+            R = [radius;zeros(size(radius));zeros(size(radius))];
+                % rhat-thetahat-hhat -> Cartesian frame
             for kk = 1:length(theta)
-                R(:,kk) = real(rotZ(theta(kk))*R(:,kk));
+                R(:,kk) = real(NO(theta(kk),inc,RAAN)*R(:,kk));
             end
             % plot3(R(1,:), R(2,:), R(3,:))
-            if transfers(k).dV_mag_total% < 80 % Limit plotting based on delta V's
-                color_line3d(transfers(k).dV_mag_total*ones(size(R(1,:))), R(1,:), R(2,:), R(3,:)); % Create colored line based on total delta V required
+            % if transfers(k).dV_mag_total% < 80 % Limit plotting based on delta V's
+                color_line3d(real(transfers(k).TOF_calc)*ones(size(R(1,:))), R(1,:), R(2,:), R(3,:)); % Create colored line based on total delta V required
                 startTrans = plot3(R(1,1), R(2,1), R(3,1), 'g.', 'markerSize', 15); % Start of transfer
                 stopTrans = plot3(R(1,end), R(2,end), R(3,end), 'r.', 'markerSize', 15); % End of transfer
-            end
+            % end
         end
     end
-    c = colorbar; c.Label.String = "Total Delta V [km/s]"; colormap(colors)
-    xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
-    xlim([-5e6, 5e6]), ylim([-5e6, 5e6]); zlim([-5e6, 5e6]); %view([30 35])
-    legend([startTrans, stopTrans], ["Start of transfer", "End of transfer"], "location", 'best')
-    drawnow
+
+        % Plot original orbits
+    for k = 1:2
+        TA = 0:0.01:2*pi;
+        switch k
+            case 1
+                e = 0;
+                a = r1;
+                radius = (a*(1-e^2))./(1+e*cos(TA));
+                theta = TA;
+                    % rhat-thetahat-hhat frame
+                R = [radius;zeros(size(radius));zeros(size(radius))];
+                    % rhat-thetahat-hhat -> Cartesian frame
+                for kk = 1:length(theta)
+                    R(:,kk) = real(NO(theta(kk),inc,RAAN)*R(:,kk));
+                end
+            case 2
+                e = 0;
+                a = ratio*r1;
+                radius = (a*(1-e^2))./(1+e*cos(TA));
+                theta = TA;
+                    % rhat-thetahat-hhat frame
+                R = [radius;zeros(size(radius));zeros(size(radius))];
+                    % rhat-thetahat-hhat -> Cartesian frame
+                for kk = 1:length(theta)
+                    R(:,kk) = real(NO(theta(kk),inc,RAAN)*R(:,kk));
+                end
+        end
+        plot3(R(1,:), R(2,:), R(3,:), 'k--')
+    end
+    
+        % Earth
+    e = 0;
+    a = 6378;
+    radius = (a*(1-e^2))./(1+e*cos(TA));
+    theta = TA;
+        % rhat-thetahat-hhat frame
+    R = [radius;zeros(size(radius));zeros(size(radius))];
+        % rhat-thetahat-hhat -> Cartesian frame
+    for kk = 1:length(theta)
+        R(:,kk) = real(NO(theta(kk),inc,RAAN)*R(:,kk));
+    end
+    plot3(R(1,:), R(2,:), R(3,:), 'k-')
+
+    try
+        c = colorbar; c.Label.String = "Time of Flight [sec]"; colormap(colors)
+        xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
+        xlim([-3e5, 3e5]), ylim([-3e5, 3e5]); %zlim([-5e6, 5e6]); %view([30 35])
+        legend([startTrans, stopTrans], ["Start of transfer", "End of transfer"], "location", 'best')
+        drawnow
+    catch
+        fprintf("\nTransfers couldn't match TOF to machine precision\n")
+    end
 end
 
 
