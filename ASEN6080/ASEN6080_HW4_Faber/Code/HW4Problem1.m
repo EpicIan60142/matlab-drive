@@ -36,7 +36,7 @@ xLabel = "Time [sec]";
 yLabel = ["\rho [km]", "\rhoDot [km/s]", "Elevation Angle [deg]"];
 plotMeasurements(stations, titleText, xLabel, yLabel);
 
-%% Problem 1b: Filter setup
+%% Problem 1a: Filter setup
 sigR = 1; % km
 sigV = 1e-3; % km/s
 
@@ -48,9 +48,9 @@ sigAccel = 1e-8; % Optimal SNC sigma from HW 3
 input("Press Enter to continue, 'Ctrl-C' to exit");
 
 
-%% Problem 1b: Choose optimal sigma and show state errors
+%% Problem 1a: Prove SNC works with optimal sigma
     % Based on plots, sigma = 1e-8 balances both postfit and 3D RMS
-fprintf("\nPlotting state errors vs. time for sigma = %.3e km/s^2\n", sigAccel)
+fprintf("\nRunning LKF with SNC for sigma = %.3e km/s^2\n", sigAccel)
 
     % Define optimal Q0
 if measNoise
@@ -61,6 +61,14 @@ end
 
     % Run filter
 LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, true);
+
+
+%% Problem 1b: Implement sequential filter smoothing algorithm
+smoothOut = Smoother(LKFOpt.LKFOut, Q0);
+
+%% Problem 1c: Smoothing without process noise
+
+
 
 
 

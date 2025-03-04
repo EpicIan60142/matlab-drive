@@ -19,11 +19,14 @@ function filterOut = LKF_SNC(Xstar0, stations, pConst, P0, x0, Q0, numMeas)
 %           - xEst: Estimated state deviation at each time processed from 
 %                   the station measurements in "stations" (t), organized
 %                   as follows:
-%                   [xEst_1, xEst_2, ..., x_t], where 
+%                   [xEst_1, xEst_2, ..., xEst_t], where 
 %                   xEst = [x; y; z; xDot; yDot; zDot]
 %           - PEst: Estimated state covariance at each time in t, organized 
 %                   as follows:
 %                   [{P_1}, {P_2}, ..., {P_t}]
+%           - PBarEst: Estimated time update state covariance at each time
+%                      in t, organized as follows:
+%                      [{PBar_1}, {PBar_2}, ..., {PBar_t}];
 %           - prefit_res: Pre-fit residuals (y_i) at each time in t:
 %                         [y_1, y_2, ..., y_t]
 %           - postfit_res: Postfit residuals (epsilon = y_i - Htilde_i*x_i)
@@ -31,11 +34,16 @@ function filterOut = LKF_SNC(Xstar0, stations, pConst, P0, x0, Q0, numMeas)
 %                          [epsilon_1, epsilon_2, ..., epsilon_t]
 %           - t: Measurement time vector for the LKF filter
 %           - statVis: Station visibility vector
-%           - XEst: Estimated full state at each time in t:
+%           - XStar: Nominal full state at each time in t:
+%                    [XStar_1, XStar_2, ..., XStar_t]
+%           - XEst: Estimated full state at each time in t, computed as 
+%                   XEst = XNom + xEst:
 %                   [XEst_1, XEst_2, ..., XEst_t], where
 %                   XEst = [X; Y; Z; XDot; YDot; ZDot]
-%           - Phi: Cell array of STMs from t0 to each t_i in t: 
-%                  [{Phi(t_1, t0)}; {Phi(t_2,t0)}; ...; {Phi(t_f,t_0)}]
+%           - Phi_total: Cell array of STMs from t0 to each t_i in t: 
+%                        [{Phi(t_1, t0)}; {Phi(t_2,t0)}; ...; {Phi(t_f,t_0)}]
+%           - Phi: Cell array of STMs from t_im1 to t_i:
+%                  [{Phi(t_1, t_0)}; {Phi(t_2,t_1)}; ...; {Phi(t_i,t_im1}]
 %
 %   By: Ian Faber, 02/02/2025
 %
@@ -47,9 +55,12 @@ opt = odeset('RelTol',1e-12,'AbsTol',1e-12);
 n = length(Xstar0);
 xEst = [];
 PEst = [];
+PBarEst = [];
 prefit_res = [];
 postfit_res = [];
+XStar = [];
 XEst = [];
+Phi_total = [];
 Phi = [];
 
 %% Define helper function
@@ -81,7 +92,7 @@ for k = 2:numMeas
     [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_full, opt);
     Phi_full = reshape(XPhi_full(end,n+1:end), n, n);
 
-    Phi = [Phi; {Phi_full}];
+    Phi_total = [Phi_total; {Phi_full}];
 
         % Integrate Xstar and Phi from t_im1 to t_i
     Phi_im1 = eye(n);
@@ -90,9 +101,11 @@ for k = 2:numMeas
     Xstar_i = XPhi_i(end,1:n)';
     Phi_i = reshape(XPhi_i(end,n+1:end),size(Phi_im1));
 
+    Phi = [Phi; {Phi_i}];
+
         % Propagate process noise
     delT = t_i - t_im1;
-    if delT <= 10 % deltaT is small enough to approximate Gamma
+    if delT <= 20 % deltaT is small enough to approximate Gamma
         Gamma_i = GammaFunc(delT);
         Q_i = delT^2*Gamma_i*Q0*Gamma_i';
     else % Integrate Gamma!
@@ -104,6 +117,7 @@ for k = 2:numMeas
         % Time update
     x_i = Phi_i*x_im1;
     P_i = Phi_i*P_im1*Phi_i' + Q_i;
+    PBarEst = [PBarEst, {P_i}];
 
         % Get number of measurements in Y, station states, and station 
         % visibility at this time
@@ -140,6 +154,7 @@ for k = 2:numMeas
     PEst = [PEst, {P_i}];
     prefit_res = [prefit_res, y_i];
     postfit_res = [postfit_res, y_i - Htilde_i*x_i];
+    XStar = [XStar, Xstar_i];
     XEst = [XEst, Xstar_i + x_i];
 
         % Update for next run
@@ -153,11 +168,14 @@ end
     %% Assign outputs
 filterOut.xEst = xEst;
 filterOut.PEst = PEst;
+filterOut.PBarEst = PBarEst;
 filterOut.prefit_res = prefit_res;
 filterOut.postfit_res = postfit_res;
 filterOut.t = t(2:end); % t_0 not included in estimate
 filterOut.statVis = vis;
+filterOut.XStar = XStar;
 filterOut.XEst = XEst;
+filterOut.Phi_total = Phi_total;
 filterOut.Phi = Phi;
 
 end

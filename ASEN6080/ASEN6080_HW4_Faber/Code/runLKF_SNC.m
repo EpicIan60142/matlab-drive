@@ -81,7 +81,7 @@ while LKFRuns < maxLKFRuns
     t_LKF = LKFOut.t;
     statVis_LKF = LKFOut.statVis;
     X_LKF = LKFOut.XEst;
-    Phi_full_LKF = LKFOut.Phi{end};
+    Phi_full_LKF = LKFOut.Phi_total{end};
     
         % Calculate residual RMS errors
     rms = calcResidualRMS(prefit_res_LKF, stations, statVis_LKF, true(1,2));
