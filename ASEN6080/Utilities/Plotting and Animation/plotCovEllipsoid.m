@@ -24,10 +24,16 @@ phi = linspace(0,pi,100); % Longitude/Elevation
 [eigVec, Lambda] = eig(C);
 
     % Take square root of eigenvalues
-Lambda = chol(Lambda);
-axes = [];
-for k = 1:size(Lambda,1)
-    axes = [axes; Lambda(k,k)];
+try
+    Lambda = chol(Lambda);
+    axes = [];
+    for k = 1:size(Lambda,1)
+        axes = [axes; Lambda(k,k)];
+    end
+catch
+    fprintf("\nFinal Covariance isn't positive definite! Can't plot covariance ellipsoid...\n")
+    fig = [];
+    return;
 end
 
     % Calculate ellipse coordinates

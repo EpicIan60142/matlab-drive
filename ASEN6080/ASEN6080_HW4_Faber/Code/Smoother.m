@@ -6,20 +6,19 @@ function smoothOut = Smoother(filterOut)
 %                    LKF_SNC.m
 %   - Outputs:
 %       - smoothOut: Smoother output structure with the following fields:
-%                    - xSmoothed: Smoothed deviation estimates:
-%                                 [xSmoothed_1, xSmoothed_2, ..., 
-%                                  xSmoothed_k]
-%                    - PSmoothed: Smoothed state covariance estimates:
-%                                 [{PSmoothed_1}, {PSmoothed_2}, ...
-%                                  {PSmoothed_k}]
-%                    - XSmoothed: Smoothed full state estimate, calculated
-%                                 as XSmoothed = Xstar + xSmoothed:
-%                                 [XSmoothed_1, XSmoothed_2, ..., 
-%                                  XSmoothed_k]
+%           - tSmoothed: Smoothed estimate time
+%           - xSmoothed: Smoothed deviation estimates:
+%                        [xSmoothed_1, xSmoothed_2, ..., xSmoothed_k]
+%           - PSmoothed: Smoothed state covariance estimates:
+%                        [{PSmoothed_1}, {PSmoothed_2}, ..., {PSmoothed_k}]
+%           - XSmoothed: Smoothed full state estimate, calculated as 
+%                        XSmoothed = Xstar + xSmoothed:
+%                        [XSmoothed_1, XSmoothed_2, ..., XSmoothed_k]
 %
 %   By: Ian Faber, 03/03/2025
 %
     % Process filterOut structure
+t = filterOut.t;
 xEst = filterOut.xEst;
 PBarEst = filterOut.PBarEst;
 PEst = filterOut.PEst;
@@ -27,6 +26,7 @@ XStar = filterOut.XStar;
 Phi = filterOut.Phi;
 
     % Initialize outputs
+tSmoothed = [];
 xSmoothed = [];
 PSmoothed = [];
 XSmoothed = [];
@@ -42,6 +42,7 @@ for k = (l-1):-1:1
     x_kk = xEst(:,k); % Deviation at t_k given measurements at t_k
     P_kp1k = PBarEst{k+1}; % Covariance at t_kp1 given measurements at t_k
     P_kk = PEst{k}; % Covariance at t_k given measurements at t_k
+    tSmoothed = [tSmoothed; t(k)];
 
         % Pull out Phi(t_kp1, t_k)
     Phi_kp1 = Phi{k+1};
@@ -66,9 +67,10 @@ for k = (l-1):-1:1
     
 end
 
-    % Assign smoother outputs
-smoothOut.xSmoothed = xSmoothed;
-smoothOut.PSmoothed = PSmoothed;
-smoothOut.XSmoothed = XSmoothed;
+    % Assign smoother outputs - need to flip them to be time ascending!
+smoothOut.tSmoothed = flipud(tSmoothed);
+smoothOut.xSmoothed = fliplr(xSmoothed);
+smoothOut.PSmoothed = flipud(PSmoothed);
+smoothOut.XSmoothed = fliplr(XSmoothed);
 
 end

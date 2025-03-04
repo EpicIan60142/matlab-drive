@@ -17,6 +17,9 @@ stations = makeStations(earthConst);
     % Extract orbital elements
 orbital = getOrbitConst();
 
+    % ODE45 options
+opt = odeset('AbsTol',1e-12,'RelTol',1e-12);
+
 %% Make Truth Data
 x0Perturb = 0*0.5*[1 1 1 1e-3 1e-3 1e-3]';
 numOrbits = 15;
@@ -50,7 +53,7 @@ input("Press Enter to continue, 'Ctrl-C' to exit");
 
 %% Problem 1a: Prove SNC works with optimal sigma
     % Based on plots, sigma = 1e-8 balances both postfit and 3D RMS
-fprintf("\nRunning LKF with SNC for sigma = %.3e km/s^2\n", sigAccel)
+fprintf("\nRunning LKF and Smoother with SNC for sigma = %.3e km/s^2\n", sigAccel)
 
     % Define optimal Q0
 if measNoise
@@ -59,17 +62,25 @@ else
     Q0 = zeros(3,3);
 end
 
-    % Run filter
-LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, true);
+    % Run LKF with SNC
+LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, false);
 
+%% Problem 1b/d+e: Implement sequential filter smoothing algorithm and compare RMS values
+    % Run Smoother algorithm
+SmoothOpt = runSmoother(LKFOpt.LKFOut, X_ref, t_ref, false);
 
-%% Problem 1b: Implement sequential filter smoothing algorithm
-smoothOut = Smoother(LKFOpt.LKFOut, Q0);
+fprintf("\nLKF w/ SNC State RMS Errors:\n\tComponent-wise: [%.3e, %.3e, %.3e, %.3e, %.3e, %.3e]\n\t3D: %.3e\n", LKFOpt.RMS_state_comp_LKF, LKFOpt.RMS_state_full_LKF);
+fprintf("\nSmoother w/ SNC State RMS Errors:\n\tComponent-wise: [%.3e, %.3e, %.3e, %.3e, %.3e, %.3e]\n\t3D: %.3e\n", SmoothOpt.RMS_state_comp_Smooth, SmoothOpt.RMS_state_full_Smooth);
 
 %% Problem 1c: Smoothing without process noise
+fprintf("\nRunning LKF w/ Smoother and Batch, both without Process noise\n")
+    
+    % LKF + Smoother
+LKFNoProcess = runLKF_SNC(X0, x0, P0, 0*Q0, earthConst, stations, X_ref, t_ref, 1, true);
+smoothNoProcess = runSmoother(LKFNoProcess.LKFOut, X_ref, t_ref, true);
 
-
-
+    % Batch
+BatchNoProcess = runBatch(X0, x0, P0, earthConst, stations, X_ref, t_ref, dt, opt, 1, []);
 
 
 

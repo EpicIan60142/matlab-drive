@@ -32,8 +32,8 @@ for k = 1:size(stateError,2)
         hold on; grid on;
         plot(t_state, stateError(:,k),'.');
         if ~isempty(sigma)
-            plot(t_sigma, -boundLevel*sigma(:,k), 'k--')
-            plot(t_sigma, boundLevel*sigma(:,k), 'k--')
+            plot(t_sigma, -boundLevel*real(sigma(:,k)), 'k--')
+            plot(t_sigma, boundLevel*real(sigma(:,k)), 'k--')
         end
         xlabel(xLabel); ylabel(yLabel(k))
         % ylim([-4*max(sigma(:,k)) 4*max(sigma(:,k))]);
