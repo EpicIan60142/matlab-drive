@@ -53,7 +53,7 @@ input("Press Enter to continue, 'Ctrl-C' to exit");
 
 %% Problem 1a: Prove SNC works with optimal sigma
     % Based on plots, sigma = 1e-8 balances both postfit and 3D RMS
-fprintf("\nRunning LKF and Smoother with SNC for sigma = %.3e km/s^2\n", sigAccel)
+fprintf("\n1a. Running LKF and Smoother with SNC for sigma = %.3e km/s^2\n", sigAccel)
 
     % Define optimal Q0
 if measNoise
@@ -66,14 +66,16 @@ end
 LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, false);
 
 %% Problem 1b/d+e: Implement sequential filter smoothing algorithm and compare RMS values
-    % Run Smoother algorithm
-SmoothOpt = runSmoother(LKFOpt.LKFOut, X_ref, t_ref, false);
+fprintf("\n1b/d/e. Smoothing LKF SNC results\n")
 
-fprintf("\nLKF w/ SNC State RMS Errors:\n\tComponent-wise: [%.3e, %.3e, %.3e, %.3e, %.3e, %.3e]\n\t3D: %.3e\n", LKFOpt.RMS_state_comp_LKF, LKFOpt.RMS_state_full_LKF);
-fprintf("\nSmoother w/ SNC State RMS Errors:\n\tComponent-wise: [%.3e, %.3e, %.3e, %.3e, %.3e, %.3e]\n\t3D: %.3e\n", SmoothOpt.RMS_state_comp_Smooth, SmoothOpt.RMS_state_full_Smooth);
+    % Run Smoother algorithm
+SmoothOpt = runSmoother(LKFOpt.LKFOut, X_ref, t_ref, true);
+
+fprintf("\n\tLKF w/ SNC State RMS Errors:\n\t\tComponent-wise: [%.3e, %.3e, %.3e, %.3e, %.3e, %.3e]\n\t\t3D: %.3e\n", LKFOpt.RMS_state_comp_LKF, LKFOpt.RMS_state_full_LKF);
+fprintf("\n\tSmoother w/ SNC State RMS Errors:\n\t\tComponent-wise: [%.3e, %.3e, %.3e, %.3e, %.3e, %.3e]\n\t\t3D: %.3e\n", SmoothOpt.RMS_state_comp_Smooth, SmoothOpt.RMS_state_full_Smooth);
 
 %% Problem 1c: Smoothing without process noise
-fprintf("\nRunning LKF w/ Smoother and Batch, both without Process noise\n")
+fprintf("\n1c. Running LKF w/ Smoother and Batch, both without Process noise\n")
     
     % LKF + Smoother
 LKFNoProcess = runLKF_SNC(X0, x0, P0, 0*Q0, earthConst, stations, X_ref, t_ref, 1, true);
