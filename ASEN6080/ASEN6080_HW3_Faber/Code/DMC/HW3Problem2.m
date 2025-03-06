@@ -70,7 +70,7 @@ if false
         EKFRuns = [EKFRuns; runEKF_DMC(X0_EKF, P0_EKF, B, Qu, earthConst, stations, X_ref, t_ref, t_start, false)];
     end
 
-    save("DMCData.mat", "LKFRuns", "EKFRuns", '-mat');
+    save("DMCData-new.mat", "LKFRuns", "EKFRuns", '-mat');
 else
     load("DMCData.mat")
 end
@@ -108,7 +108,7 @@ drawnow;
 
 %% Problem 2b: Choose optimal sigma
     % Based on plots, sigma = 1e-10 balances both postfit and 3D RMS
-sigOpt = find(round(sigAccel,20) == 1e-10);
+sigOpt = find(round(sigAccel,20) == 1e-9);
 
 fprintf("\nPlotting state errors vs. time for sigma = %.3e km/s^2\n", sigAccel(sigOpt))
 
@@ -122,7 +122,7 @@ P0_new = blkdiag(P0,Pw0);
 Qu = diag([sig_u^2, sig_u^2, sig_u^2]);
 
     % Run filters
-LKFOpt = runLKF_DMC(X0, x0, P0_new, B, Qu, earthConst, stations, X_ref, t_ref, 5, true);
+LKFOpt = runLKF_DMC(X0, x0, P0_new, B, Qu, earthConst, stations, X_ref, t_ref, 1, true);
 
 numMeas = 157;
 X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);
@@ -185,7 +185,7 @@ for k = 1:3
         plot(t_ref, J3Accel(k,:), 'k-');
         xlabel("Time [sec]"); ylabel(yLabels(k));
 end
-legend("LKF Estimated", "EKF Estimated", "True J_3", 'Location', 'bestoutside')
+legend("LKF Estimated", "EKF Estimated", "True J_3", 'Location', 'northeastoutside')
 linkaxes(ax,'x')
 
     % Plot J3 differences with covariance bounds
@@ -229,6 +229,8 @@ titleText = "EKF Estimated Unmodeled J_3 Error (J_{3,true} - J_{3,EKF})";
 xLabel = "Time [sec]";
 yLabel = ["J_{3,X} error [km/s^2]", "J_{3,Y} error [km/s^2]", "J_{3,Z} error [km/s^2]"];
 plotStateError(EKFOpt.t_EKF, EKFOpt.J3Diff', EKFOpt.t_EKF, sigma_EKF, 3, titleText, xLabel, yLabel);
+
+return
 
 %% Problem 2b: Different value of tau
 tau_x = T/30; tau_y = T/30; tau_z = T/600;

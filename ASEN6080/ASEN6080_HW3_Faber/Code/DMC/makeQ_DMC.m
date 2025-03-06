@@ -13,7 +13,9 @@ function Qw = makeQ_DMC(B,Qu,t,t0)
 %   By: Ian Faber, 02/24/2025
 %
 
+    % Make Qw components
 Qw = [];
+% Qw = zeros(size(B,1)^2);
 for k = 1:size(B,1)
     beta_i = B(k,k);
     sigSqrd_i = Qu(k,k);
@@ -40,8 +42,12 @@ for k = 1:size(B,1)
             Q31, Q32, Q33
           ];
     
-    Qw = blkdiag(Qw, Q_i);
+    % Qw = blkdiag(Qw, Q_i);
+    Qw(k,[k,k+3,k+6]) = Q_i(1,:);
+    Qw(k+3,[k,k+3,k+6]) = Q_i(2,:);
+    Qw(k+6,[k,k+3,k+6]) = Q_i(3,:);
 end
+
 
 end
 

@@ -45,11 +45,11 @@ Aprime = DynamicsPartials_MuJ2_DMC(X_a, B, mu, J2, Ri);
 dPhi_mat = Aprime*Phi;
 dPhi = reshape(dPhi_mat,81,1); % Need to convert back to a column vector...
 
-X0 = [x;y;z;xDot;yDot;zDot;wX;wY;wZ];
+X0 = [x;y;z; xDot;yDot;zDot; wX;wY;wZ];
 dX = orbitEOM_MuJ2_DMC(t,X0,B,mu,J2,Ri);
 
 C = [zeros(6,3); eye(3)];
-dX = dX + C*u;
+dX = dX + 0*C*u;
 
 dXPhi = [dX; dPhi];
 
