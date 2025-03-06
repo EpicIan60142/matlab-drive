@@ -98,7 +98,7 @@ for k = 2:numMeas
     else % Integrate Gamma!
         B = [zeros(3,3);eye(3)]; % Only add process noise to accelerations
         Gamma_i = Phi_i*B; % Already integrated Phi... and B is a constant!
-        Q_i = Gamma_i*Q0*Gamma_i';
+        Q_i = 0*Gamma_i*Q0*Gamma_i';
     end
     
         % Time update
