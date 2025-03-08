@@ -33,7 +33,7 @@ function filterOut = SRIF(Xstar0, stations, pConst, P0, x0, Q0, uBar, forceUpper
 %                 [{Ru_1}, {Ru_2}, ... {Ru_t}]
 %           - Rux: Square root state noise covariance matrix for smoothing:
 %                  [{Rux_1}, {Rux_2}, ..., {Rux_t}]
-%           - bTildeu: State noise vector for smoothing:
+%           - bTildeu: Noise information vector for smoothing:
 %                       [bTildeu_1, bTildeu_2, ..., bTildeu_t]
 %           - uHat: Process noise vector at each time in t until t_tm1:
 %                   [uHat_0, uHat_1, ..., uHat_tm1]
@@ -103,6 +103,7 @@ end
 %% Loop through each observation
 t_im1 = t(1);
 Xstar_im1 = Xstar0;
+x_im1 = x0;
 R_im1 = chol(P0^-1,"upper"); % Find Rbar_0 -> P0^-1 = Lambda = R'*R
 b_im1 = R_im1*x0; % Find bbar_0
 u_im1 = uBar;
@@ -123,7 +124,7 @@ for k = 2:length(Y)
     Phi = [Phi; {Phi_i}];
 
         % Time update
-    if any(Q0 > 0) && (t_i - t_im1) <= 10 % Time update with process noise
+    if any(any(Q0 > 0) & ((t_i - t_im1) <= 10)) % Time update with process noise
             % Find size of noise
         p = length(uBar);
 
@@ -194,21 +195,21 @@ for k = 2:length(Y)
         % Build Htilde_i
     Htilde_i = [];
     for kk = 1:meas
-        Htile = MeasurementPartials_RngRngRate_sc(Xstar_i, Xstat(:,meas));
+        Htilde = MeasurementPartials_RngRngRate_sc(Xstar_i, Xstat(:,meas));
         Htilde_i = [Htilde_i; (V_i^-1)*Htilde]; % Whiten the Htilde matrix
     end
 
         % Measurement update
-    if any(Q0 > 0) % Measurement update with process noise
-
-    else % Measurement update without process noise
-        mat = [R_i, b_i; Htile_i, y_i];
+    % if any(Q0 > 0) % Measurement update with process noise
+        
+    % else % Measurement update without process noise
+        mat = [R_i, b_i; Htilde_i, y_i];
         out = Householder(mat);
 
         R_i = out(1:n,1:n);
         b_i = out(1:n,n+1);
-        e = out((size(out,1)-size(y_i,1)):end, size(out,2));
-    end
+        e = out(n+1:end,n+1);
+    % end
 
         % Intermediate variable for xHat
     xHat = (R_i^-1)*b_i;
