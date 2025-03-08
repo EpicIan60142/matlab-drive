@@ -25,14 +25,14 @@ x0Perturb = 0*0.5*[1 1 1 1e-3 1e-3 1e-3]';
 numOrbits = 15;
 measNoise = true;
 dt = 10; % sec
-filename = "..\Data\HW5Data_J2J3.mat";
+filename = "..\Data\HW5Data_J2.mat";
 
     % Only generate data once
 if true
-    generateTruthData_MuJ2J3(earthConst, orbital, x0Perturb, stations, filename, numOrbits, measNoise, dt);
+    generateTruthData_MuJ2(earthConst, orbital, x0Perturb, stations, filename, numOrbits, measNoise, dt);
 end
 
-load("..\Data\HW5Data_J2J3.mat");
+load("..\Data\HW5Data_J2.mat");
 
 titleText = sprintf("Measurement data");
 xLabel = "Time [sec]"; 
@@ -43,7 +43,7 @@ plotMeasurements(stations, titleText, xLabel, yLabel);
 sigR = 1; % km
 sigV = 1e-3; % km/s
 
-x0 = 0*0.5*[1 1 1 1e-3 1e-3 1e-3]';
+x0 = 1*0.5*[1 1 1 1e-3 1e-3 1e-3]';
 P0 = diag([sigR^2, sigR^2, sigR^2, sigV^2, sigV^2, sigV^2]);
 
 uBar = zeros(3,1);
@@ -52,11 +52,20 @@ sigAccel = 1e-8; % Optimal SNC sigma from HW 3
 
 input("Press Enter to continue, 'Ctrl-C' to exit");
 
-%% Problem 1a. Compare SRIF to LKF without process noise
+%% Problem 1b. Compare SRIF to LKF without process noise
+fprintf("\n1b. Comparing SRIF to LKF\n")
 
 Q0 = 0*diag(sigAccel^2*ones(1,3));
 
-SRIFOut = SRIF(X0, stations, earthConst, P0, x0, Q0, uBar, true);
+SRIFRun = runSRIF(X0, x0, P0, Q0, uBar, true, earthConst, stations, X_ref, t_ref, 1, true);
+LKFRun = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, true);
+
+%% Problem 1c. Run SRIF without forcing Rbar to be upper triangular
+fprintf("\n1c. Running SRIF without forcing Rbar to be upper triangular\n")
+
+Q0 = 0*diag(sigAccel^2*ones(1,3));
+
+SRIFRunNotTriangular = runSRIF(X0, x0, P0, Q0, uBar, false, earthConst, stations, X_ref, t_ref, 1, true);
 
 
 

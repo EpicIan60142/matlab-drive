@@ -56,6 +56,8 @@ function filterOut = SRIF(Xstar0, stations, pConst, P0, x0, Q0, uBar, forceUpper
 %                   XEst = XNom + xEst:
 %                   [XEst_1, XEst_2, ..., XEst_t], where
 %                   XEst = [X; Y; Z; XDot; YDot; ZDot]
+%           - Phi_total: Cell array of STMs from t0 to each t_i in t: 
+%                        [{Phi(t_1, t0)}; {Phi(t_2,t0)}; ...; {Phi(t_f,t_0)}]
 %           - Phi: Cell array of STMs from t_im1 to t_i:
 %                  [{Phi(t_1, t_0)}; {Phi(t_2,t_1)}; ...; {Phi(t_i,t_im1}]
 %
@@ -85,6 +87,7 @@ prefit_res = [];
 postfit_res = [];
 XStar = [];
 XEst = [];
+Phi_total = [];
 Phi = [];
 
 %% Define helper function
@@ -113,6 +116,13 @@ for k = 2:length(Y)
     t_i = t(k);
     Y_i = Y{k};
     V_i = chol(measCov{k},'lower');
+
+        % Continue to integrate Phi(t0, tf) for iteration purposes
+    XPhi_full = [Xstar_im1; reshape(Phi_full,n^2,1)];
+    [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,pConst.mu, pConst.J2, pConst.Ri), [t_im1 t_i], XPhi_full, opt);
+    Phi_full = reshape(XPhi_full(end,n+1:end), n, n);
+
+    Phi_total = [Phi_total; {Phi_full}];
 
         % Integrate Xstar and Phi from t_im1 to t_i
     Phi_im1 = eye(n);
@@ -249,6 +259,7 @@ filterOut.t = t(2:end); % t_0 not included in estimate
 filterOut.statVis = vis;
 filterOut.XStar = XStar;
 filterOut.XEst = XEst;
+filterOut.Phi_total = Phi_total;
 filterOut.Phi = Phi;
 
 
