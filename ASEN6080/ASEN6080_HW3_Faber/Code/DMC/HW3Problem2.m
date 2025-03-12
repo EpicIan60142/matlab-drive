@@ -124,7 +124,7 @@ Qu = diag([sig_u^2, sig_u^2, sig_u^2]);
     % Run filters
 LKFOpt = runLKF_DMC(X0, x0, P0_new, B, Qu, earthConst, stations, X_ref, t_ref, 1, true);
 
-numMeas = 157;
+numMeas = 100;
 X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);
 EKFOpt = runEKF_DMC(X0_EKF, P0_EKF, B, Qu, earthConst, stations, X_ref, t_ref, t_start, true);
 

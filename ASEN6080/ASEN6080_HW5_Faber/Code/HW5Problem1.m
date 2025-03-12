@@ -50,7 +50,7 @@ uBar = zeros(3,1);
 
 sigAccel = 1e-8; % Optimal SNC sigma from HW 3
 
-input("Press Enter to continue, 'Ctrl-C' to exit");
+% input("Press Enter to continue, 'Ctrl-C' to exit");
 
 %% Problem 1b. Compare SRIF to LKF without process noise
 fprintf("\n1b. Comparing SRIF to LKF\n")
@@ -60,6 +60,15 @@ Q0 = 0*diag(sigAccel^2*ones(1,3));
 SRIFRun = runSRIF(X0, x0, P0, Q0, uBar, true, earthConst, stations, X_ref, t_ref, 1, true);
 LKFRun = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, true);
 
+    % Plot difference between SRIF and LKF
+titleText = sprintf("SRIF vs. LKF State Difference - no process noise (X_{SRIF} - X_{LKF})");
+xLabel = sprintf("Time [sec]"); 
+yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
+          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
+plotStateError(SRIFRun.t_SRIF, SRIFRun.X_SRIF' - LKFRun.X_LKF', [], [], [], titleText, xLabel, yLabel);
+
+% return
+
 %% Problem 1c. Run SRIF without forcing Rbar to be upper triangular
 fprintf("\n1c. Running SRIF without forcing Rbar to be upper triangular\n")
 
@@ -67,5 +76,10 @@ Q0 = 0*diag(sigAccel^2*ones(1,3));
 
 SRIFRunNotTriangular = runSRIF(X0, x0, P0, Q0, uBar, false, earthConst, stations, X_ref, t_ref, 1, true);
 
-
+    % Plot difference between SRIF and SRIF not triangular
+titleText = sprintf("Normal SRIF vs. SRIF w/o upper triangular Rbar");
+xLabel = sprintf("Time [sec]"); 
+yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
+          "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
+plotStateError(SRIFRun.t_SRIF, SRIFRun.X_SRIF' - SRIFRunNotTriangular.X_SRIF', [], [], [], titleText, xLabel, yLabel);
 
