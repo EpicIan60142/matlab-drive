@@ -1,4 +1,4 @@
-function data = generateTruthData_MuJ2(pConst, oConst, x0Perturb, stations, filename, numOrbits, dt)
+function data = generateTruthData_MuJ2(pConst, oConst, x0Perturb, stations, filename, numOrbits, measNoise, dt)
 % Function that generates truth orbit and measurement data based on a set
 % of planetary constants, orbital parameters, and potential initial orbital
 % perturbations including only dynamics from Mu and J2.
@@ -13,6 +13,8 @@ function data = generateTruthData_MuJ2(pConst, oConst, x0Perturb, stations, file
 %       - filename: Name of the file to save truth data to. 
 %                   Ex: "HW2Problem1Data.mat"
 %       - numOrbits: Number of orbits to generate data for
+%       - measNoise: Boolean indicating whether measurement noise is
+%                    included or not
 %       - dt: Timestep separation for generating measurements (optional).
 %             If not provided, defaults to dt = T/1000, where T is the
 %             period calculated from oConst
@@ -62,7 +64,12 @@ end
 tspan = 0:dt:(numOrbits*T);
 opt = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 
+% XPhi0 = [X0+x0Perturb; reshape(eye(length(X0)),length(X0)^2,1)];
+
 [t_ref, X_ref] = ode45(@(t,X)orbitEOM_MuJ2(t,X,planetConst.mu,planetConst.J2,planetConst.Ri), tspan, X0+x0Perturb, opt);
+% [t_ref, XPhi_ref] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,planetConst.mu,planetConst.J2,planetConst.Ri),tspan,XPhi0,opt);
+
+% X_ref = XPhi_ref(:,1:length(X0));
 
     % Propagate station states and generate clean measurements
 for k = 1:length(t_ref)
@@ -80,17 +87,24 @@ for k = 1:length(t_ref)
             stations(kk).rhoDot = [stations(kk).rhoDot; y(2)];
             stations(kk).elAngle = [stations(kk).elAngle; y(3)];
             stations(kk).tMeas = [stations(kk).tMeas; t_ref(k)];
-            R = diag([stations(kk).sigRho^2, stations(kk).sigRhoDot^2]);
-            stations(kk).R = [stations(kk).R; {R}];
+            if measNoise
+                R = diag([stations(kk).sigRho^2, stations(kk).sigRhoDot^2]);
+                stations(kk).R = [stations(kk).R; {R}];
+            else
+                R = zeros(2,2);
+                stations(kk).R = [stations(kk).R; {R}];
+            end
         end
     end
 end
 
     % Add noise to measurements based on measurement uncertainties
-for k = 1:length(stations)
-    noise = 1*randn(length(stations(k).rho),2);
-    stations(k).rho = stations(k).rho + stations(k).sigRho*noise(:,1);
-    stations(k).rhoDot = stations(k).rhoDot + stations(k).sigRhoDot*noise(:,2);
+if measNoise
+    for k = 1:length(stations)
+        noise = randn(length(stations(k).rho),2);
+        stations(k).rho = stations(k).rho + stations(k).sigRho*noise(:,1);
+        stations(k).rhoDot = stations(k).rhoDot + stations(k).sigRhoDot*noise(:,2);
+    end
 end
 
     % Save data to file
