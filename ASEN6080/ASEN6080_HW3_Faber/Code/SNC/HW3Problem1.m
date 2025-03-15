@@ -105,7 +105,7 @@ fprintf("\nPlotting state errors vs. time for sigma = %.3e km/s^2\n", sigAccel(s
 Q0 = diag(sigAccel(sigOpt)^2*ones(1,3));
 
     % Run filters
-LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 5, true);
+LKFOpt = runLKF_SNC(X0, x0, P0, Q0, earthConst, stations, X_ref, t_ref, 1, true);
 
 numMeas = 50; % Initialize with 50 LKF measurements
 X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);
@@ -127,7 +127,7 @@ RIC2ECI = [rHat'; thetaHat'; hHat']'; % Equivalent to "NH" from 5010
 Q_ECI = RIC2ECI*Q0*RIC2ECI';
 
     % Run filters
-LKF_RIC = runLKF_SNC(X0, x0, P0, Q_ECI, earthConst, stations, X_ref, t_ref, 5, true);
+LKF_RIC = runLKF_SNC(X0, x0, P0, Q_ECI, earthConst, stations, X_ref, t_ref, 1, true);
 
 numMeas = 50; % Initialize with 50 LKF measurements
 X0_EKF = LKFOpt.X_LKF(:,numMeas); P0_EKF = LKFOpt.LKFOut.PEst{numMeas}; t_start = LKFOpt.t_LKF(numMeas);

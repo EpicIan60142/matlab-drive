@@ -125,7 +125,6 @@ while batchRuns < maxBatchRuns
     else
         break;
     end
-    
 
 end
 RMS_prefit_batch = RMS_prefit_batch(2:end); % Get rid of bogus starting RMS value
