@@ -36,7 +36,7 @@ rhoDot = dot(R-Rs, V-Vs)/rho;
 elAngle = asin(dot(rhoVec, Rs)/(rho*norm(Rs)));
 
 if (abs(elAngle) >= elMask && elAngle > 0) || ignoreMask
-    Y = [rho; rhoDot; elAngle];
+    Y = [rho; rhoDot; rad2deg(elAngle)];
 else
     Y = [NaN; NaN; NaN];
 end
