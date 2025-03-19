@@ -59,6 +59,10 @@ W_0c = lambda/(L + lambda) + (1 - alpha^2 + beta);
 W_im = [W_0m, (1/(2*(L + lambda)))*ones(1,2*L)];
 W_ic = [W_0c, (1/(2*(L + lambda)))*ones(1,2*L)];
 
+if alpha == 1e-4
+    alpha;
+end
+
 %% Loop through all observations
     % Initialize UKF variables
 X_im1 = X0;
