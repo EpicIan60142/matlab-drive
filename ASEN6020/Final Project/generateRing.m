@@ -45,13 +45,13 @@ thetaNew = deg2rad(lastRing.params.theta) + dTheta;
 % thetaNew = theta;
 phiNew = deg2rad(lastRing.params.phi) + dPhi;
 % phiNew = phi;
-n_x = d*cos(phiNew)*cos(thetaNew);
-n_y = d*cos(phiNew)*sin(thetaNew);
-n_z = d*sin(phiNew);
+n_x = abs(d)*cos(phiNew)*cos(thetaNew);
+n_y = abs(d)*cos(phiNew)*sin(thetaNew);
+n_z = abs(d)*sin(phiNew);
 ring.normal = [n_x; n_y; n_z]/norm([n_x; n_y; n_z]);
 
     % Ring center
-ring.center = lastRing.center + d*ring.normal;
+ring.center = lastRing.center + d*lastRing.normal;
 
 %% Assign params structure
 ring.params = struct("a", a, "b", b, "theta", rad2deg(thetaNew), "phi", rad2deg(phiNew), "d", d, "lastRing", lastRing);

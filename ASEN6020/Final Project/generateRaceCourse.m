@@ -55,14 +55,14 @@ for k = 1:l
     if k <= l/2 % First half of the rings should turn left and down
         dTheta = min(azAng) + (0*max(azAng) - min(azAng))*rand(1);
         dPhi = min(elAng) + (0*max(elAng) - min(elAng))*rand(1);
-    else % Second hald of the rings should turn right and up
+    else % Second half of the rings should turn right and up
         dTheta = 0*min(azAng) + (max(azAng) - 0*min(azAng))*rand(1);
         dPhi = 0*min(elAng) + (max(elAng) - 0*min(elAng))*rand(1);
     end
 
         % Make rings
     if k == 1 % initial ring
-        init = struct("center", [0; 1; 0], "normal", [0; 1; 0], "S", diag([max(semiMaj),max(semiMin)])); % Start first ring along the +y axis as the largest allowed ellipse
+        init = struct("center", [0; min(dist); 0], "normal", [0; 1; 0], "S", diag([max(semiMaj),max(semiMin)])); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
         init.params = struct("a", max(semiMaj), "b", max(semiMin), "theta", rad2deg(pi/2), "phi", rad2deg(0), "d", 0, "lastRing", init);
 
         rings = [rings; init];
