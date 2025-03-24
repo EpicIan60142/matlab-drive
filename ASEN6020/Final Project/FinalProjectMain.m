@@ -4,6 +4,10 @@
 %% Housekeeping
 clc; clear; close all;
 
+%% Logistics
+addpath(genpath(".\CubeSats"));
+addpath(genpath(".\RaceCourse"));
+
 %% Setup Problem Parameters
     % Define ring semi-major and minor axis ranges
 semiMaj = [1, 5]; % m
@@ -17,14 +21,18 @@ elevationAngle = deg2rad([-90, 90]); % deg -> rad
     % Define number of rings range
 numRings = [15, 25];
 
-    % Define ring parameters structure
+    % Define course parameters structure
 courseParams = struct("semiMaj", semiMaj, "semiMin", semiMin, "dist", interRingDist, ...
                       "azAng", azimuthAngle, "elAng", elevationAngle, "numRings", numRings);
+
+    % Define course origin orbit
+T = 180*60; % 180 minute circular orbit
+n = 2*pi/T;
 
 %% Generate race course
     % Set rng seed for testing
 if true
-    seed = 2*69420;
+    seed = 3*69420; % cool options: 0, 2, 3, 4
     rng(seed);
 end
 
@@ -40,7 +48,7 @@ startRing = generateRing(50*max(semiMaj), 50*max(semiMin), 0, 0, -max(interRingD
 endRing = generateRing(min(semiMaj),min(semiMin),0,0,min(interRingDist),rings(end));
 rings = [rings; endRing];
 
-    % Plot course
+    % Plot race course
 figure
 hold on; grid on; axis equal
 title("Generated Race Course")
@@ -53,7 +61,7 @@ cubeStart = plotRing(startRing, 'g-');
 quiver3(startRing.center(1), startRing.center(2), startRing.center(3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 10, 'filled', 'k-')
 cubeEnd = plotRing(endRing, 'r-');
 
-courseCenter = scatter3(0, 0, 0, 10, 'k', 'filled');
+courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
 
 xlabel("X [m]"); ylabel("Y [m]"); zlabel("Z [m]"); cBar = colorbar;
 cBar.Label.String = "Ring Number"; colormap("cool");
@@ -64,3 +72,12 @@ for k = 0:360
     view(-30 + k, 35);
     drawnow
 end
+
+%% Generate CubeSats
+
+
+
+
+
+
+
