@@ -72,11 +72,6 @@ for k = 1:l
 
 end
 
-
-
-
-
-
 end
 
 
