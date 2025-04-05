@@ -43,7 +43,7 @@ plotMeasurements(stations, titleText, xLabel, yLabel);
 sigR = 1; % km
 sigV = 1e-3; % km/s
 
-x0 = 1*0.5*[1 1 1 1e-3 1e-3 1e-3]';
+x0 = 0*0.5*[1 1 1 1e-3 1e-3 1e-3]';
 P0 = diag([sigR^2, sigR^2, sigR^2, sigV^2, sigV^2, sigV^2]);
 
 uBar = zeros(3,1);
