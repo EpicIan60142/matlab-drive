@@ -27,6 +27,6 @@ sc.X0_cart = [
                 -8.94;
                 -3.88;
              ]; % km, km/s
-sc.Phi = 1357*(1000^2); % W/m^2 -> W/km^2
+sc.Phi = 1357; % W/m^2 -> kg/s^3, no need for unit conversion...
 
 end

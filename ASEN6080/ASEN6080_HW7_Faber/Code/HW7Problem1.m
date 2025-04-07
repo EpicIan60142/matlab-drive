@@ -25,14 +25,14 @@ x0Perturb = 0*0.5*[1 1 1 1e-3 1e-3 1e-3]';
 numOrbits = 15;
 measNoise = true;
 dt = 10; % sec
-filename = "..\Data\HW6Data_J2J3.mat";
+filename = "..\Data\HW7Data_J2J3.mat";
 
     % Only generate data once
 if true
     generateTruthData_MuJ2J3(earthConst, orbital, x0Perturb, stations, filename, numOrbits, measNoise, dt);
 end
 
-load("..\Data\HW6Data_J2J3.mat"); % Source of X0, updated stations, X_ref, and t_ref
+load("..\Data\HW7Data_J2J3.mat"); % Source of X0, updated stations, X_ref, and t_ref
 
 titleText = sprintf("Measurement data");
 xLabel = "Time [sec]"; 
@@ -53,7 +53,7 @@ c = earthConst.J3 - C;
     % Plotting
 plot = [true; true; false; false; false; false; true; true]; % Only plot residuals and state errors
 
-%% Problem 1b/c.
+%% Problem 1b/c. Run Consider Covariance filter
 
 
 

@@ -1,9 +1,13 @@
-function stations = makeStations(pConst)
+function stations = makeStations(pConst, part)
 % Function that returns relevant station constants for OD problems. 
 % Update as necessary!
 %   Inputs:
 %       - pConst: Planetary constant structure, generated with
 %                 getPlanetConst.m
+%       - part: Which situation to assign station locations as. For
+%               example, in Project 2 the truth data is generated
+%               differently in part 2 and part 3. Thus, to make stations
+%               for part 2, pass in 2 for part and for part 3, pass in 3.
 %   Outputs:
 %       - stations: Structure array of stations with the following
 %                   information:
@@ -39,9 +43,13 @@ elMask = deg2rad([10; 10; 10]);
 sigRho = [5e-3; 5e-3; 5e-3]; % 5 m uncertainty in range, km
 sigRhoDot = [0.5e-6; 0.5e-6; 0.5e-6]; % 0.5 mm/s uncertainty in range rate, km/s
 latitudes = deg2rad([-35.398333; 40.427222; 35.247164]); % phi
-longitudes = deg2rad([148.981944; 355.749444; 243.205]); % lambda
+if part == 2
+    longitudes = deg2rad([148.981944; -355.749444; 243.205]); % lambda
+else
+    longitudes = deg2rad([148.981944; 355.749444; 243.205]); % lambda
+end
 altitudes = [0.691750; 0.834539; 1.07114904]; % km
-ids = ['DSS 34', 'DSS 65', 'DSS 13'];
+ids = ["DSS 34", "DSS 65", "DSS 13"];
 colors = ['b', 'r', 'k'];
 
     % Initial spin angle of planet relative to the positive inertial z-axis
