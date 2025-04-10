@@ -80,10 +80,10 @@ title("Initial time situation")
 hold on; grid on; axis equal;
 plot3(0,0,0,'y.','MarkerSize', 50);
 plot3(X_test(1,1)+R_Earth(1), X_test(1,2)+R_Earth(2), X_test(1,3)+R_Earth(3),'m.','MarkerSize',30);
-plot3(truthTraj.Xt_50(:,1)+R_Earth(1), truthTraj.Xt_50(:,2)+R_Earth(2), truthTraj.Xt_50(:,3)+R_Earth(3), 'm--', 'LineWidth', 2)
+plot3(truthTraj.Xt_50(:,1)+R_Earth(1), truthTraj.Xt_50(:,2)+R_Earth(2), truthTraj.Xt_50(:,3)+R_Earth(3), 'm-.', 'LineWidth', 3)
 plot3(X_test(:,1)+R_Earth(1), X_test(:,2)+R_Earth(2), X_test(:,3)+R_Earth(3), 'm:', 'LineWidth', 2)
 plot3(R_Earth(1), R_Earth(2), R_Earth(3),'b.','MarkerSize',40);
-plot3(R_E_t(1,:), R_E_t(2,:), R_E_t(3,:), 'b--', 'LineWidth', 2)
+plot3(R_E_t(1,:), R_E_t(2,:), R_E_t(3,:), 'b-.', 'LineWidth', 2)
 plot3(R_E_t_2(1,:), R_E_t_2(2,:), R_E_t_2(3,:), 'k:')
 xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]")
 legend("Sun", "SC", "SC Truth Orbit", "SC Modeled Orbit", "Earth", "Earth Orbit")
