@@ -30,14 +30,16 @@ for k = 1:size(stateError,2)
     nt = nexttile;
         ax = [ax; nt];
         hold on; grid on;
-        plot(t_state, stateError(:,k),'.');
+        a = plot(t_state, stateError(:,k),'.');
         if ~isempty(sigma)
-            plot(t_sigma, -boundLevel*real(sigma(:,k)), 'k--')
-            plot(t_sigma, boundLevel*real(sigma(:,k)), 'k--')
+            b = plot(t_sigma, -boundLevel*real(sigma(:,k)), 'k.', 'MarkerSize', 1);
+            plot(t_sigma, boundLevel*real(sigma(:,k)), 'k.', 'MarkerSize', 1);
         end
         xlabel(xLabel); ylabel(yLabel(k))
         % ylim([-4*max(sigma(:,k)) 4*max(sigma(:,k))]);
 end
 linkaxes(ax, 'x');
+uncertLabel = sprintf("+/- %.0f\\sigma Uncertainty", boundLevel);
+legend([a, b], ["State Error", uncertLabel], 'Location', 'best')
 
 end
