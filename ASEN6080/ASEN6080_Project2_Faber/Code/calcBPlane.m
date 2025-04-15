@@ -1,4 +1,4 @@
-function [BdotR, BdotT, B] = calcBPlane(XPhi_3SOI, t_3SOI, P_3SOI, pConst, DynFunc, opt)
+function [BdotR, BdotT, X_crossing, P_Bplane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI, t_3SOI, P_3SOI, pConst, DynFunc, opt)
 % Function that calculates the expected Bplane crossing based on when a S/C
 % passes the 3 SOI mark of a given planet.
 %   Inputs:
@@ -20,7 +20,12 @@ function [BdotR, BdotT, B] = calcBPlane(XPhi_3SOI, t_3SOI, P_3SOI, pConst, DynFu
 %                the Bplane frame
 %       - BdotT: Component of the B plane crossing in the That direction of
 %                the Bplane frame
-%       - B: Calculated B plane vector
+%       - X_crossing: State at the B plane crossing in ECI coordinates
+%       - P_Bplane: Propagated state covariance at the B plane in STR
+%                   coordinates
+%       - STR2ECI: DCM that converts STR coordinates to ECI coordinates
+%       - XPhi_BPlane: Trajectory during the Bplane calculation
+%       - t_BPlane: Time during the Bplane calculation
 %
 %   By: Ian Faber, 04/14/2025
 %
@@ -89,12 +94,18 @@ LTOF = (pConst.mu_Earth/(v_inf^3))*(sinh(f) - f);
     % Integrate EOM to B-plane crossing
 tspan = [t_3SOI, t_3SOI + LTOF];
 XPhi_0 = [XPhi_3SOI(1:n); reshape(eye(n),n^2,1)];
-[t_Bplane, XPhi_Bplane] = ode45(@(t,X)DynFunc(t,X), tspan, XPhi_0, opt);
+[t_BPlane, XPhi_BPlane] = ode45(@(t,X)DynFunc(t,X), tspan, XPhi_0, opt);
 
     % Extract state and STM at Bplane crossing
-X_crossing = XPhi_Bplane(end,1:n);
-Phi_crossing = reshape(XPhi_Bplane(end,n+1:end), n, n);
+X_crossing = XPhi_BPlane(end,1:n);
+Phi_crossing = reshape(XPhi_BPlane(end,n+1:end), n, n);
 
+    % Propagate covariance to B plane
+P_Bplane = Phi_crossing*P_3SOI*Phi_crossing'; % In ECI coords!
+
+    % Rotate covariance to STR frame
+blkRot = blkdiag(STR2ECI', STR2ECI', 0);
+P_Bplane = blkRot*P_Bplane*blkRot';
 
     % Assign outputs
 BdotR = dot(B,Rhat);

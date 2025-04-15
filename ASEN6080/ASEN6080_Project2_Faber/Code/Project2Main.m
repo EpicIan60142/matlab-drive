@@ -30,7 +30,7 @@ aTest = orbitEOM_MuSunSRP(0, X0, pConst, scConst);
 truthTraj = load("..\Data\Project2_Prob2_truth_traj_50days.mat");
 
     % Integrate X0 to verify EOM function
-tspan = [truthTraj.Tt_50; (truthTraj.Tt_50(end)+1000:1000:200*24*60*60)']; % Add time up to 200 days in sec
+tspan = [truthTraj.Tt_50; (truthTraj.Tt_50(end)+1000:1000:279*24*60*60)']; % Add time up to 200 days in sec
 [t_test, X_test] = ode45(@(t,X)orbitEOM_MuSunSRP(t,X,pConst,scConst), tspan, truthTraj.Xt_50(1,1:7)', opt);
 
     % Plot error between modeled and true trajectory
@@ -162,20 +162,31 @@ DynFunc = @(t,XPhi)STMEOM_MuSunSRP(t,XPhi,pConst,scConst);
 
     % Integrate to 3 SOI
 XPhi_0 = [truthTraj.Xt_50(1,1:7)'; reshape(eye(7), 49, 1)];
-P0 = eye(7); % Test covariance - not physical
+P0 = 1e-11*eye(7); % Test covariance - not physical
 tspan_3SOI = [truthTraj.Tt_50; (truthTraj.Tt_50(end)+1000:1000:300*24*60*60)']; % Add time up to 300 days in sec
 [t_3SOI, XPhi_3SOI] = ode45(@(t,XPhi)DynFunc(t,XPhi), tspan_3SOI, XPhi_0, opt);
 Phi_3SOI = reshape(XPhi_3SOI(end, 8:end),7,7);
 P_3SOI = Phi_3SOI*P0*Phi_3SOI';
 
     % Calculate Bplane without SOI checker
-[BdotR, BdotT, ~] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+[BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+
+    % Plot BdotR and BdotT location + uncertainty ellipse
+titleText = sprintf("B Plane Crossing Estimate");
+xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]";
+plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, 3, titleText, xLabel, yLabel, zLabel, 420);
+
+figure(420)
+hold on;
+idx = length(t_BPlane); offset = 1000;
+orbit = plot3(XPhi_BPlane(idx-offset:end,1), XPhi_BPlane(idx-offset:end,2), XPhi_BPlane(idx-offset:end,3), 'm--', 'DisplayName', "Modeled Orbit");
 
 return
 
 %% Part 2: Estimate State with Known Target and Models
     % Set initial state estimate and deviation
-X0 = [scConst.X0_cart; scConst.C_R];
+% X0 = [scConst.X0_cart; scConst.C_R];
+X0 = truthTraj.Xt_50(end,1:7)';
 x0 = zeros(size(X0));
 
     % Set initial covariances
@@ -211,7 +222,7 @@ kEnd = find(tMeas <= 50*24*60*60, 1, 'last');
 
     % Run UKF on 50 days of data
 tSpan = [0, 50*24*60*60]; % 0 to 50 days in seconds
-alpha = 1e-2; beta = 2;
+alpha = 1; beta = 2;
 plot = [true; true; false; false; false; false; true; true]; % Only plot residuals and state errors
 UKFRun = runUKF(X0, P0, zeros(3,3), tSpan, pConst, scConst, stations, X_50, t_50, alpha, beta, opt, plot);
 
