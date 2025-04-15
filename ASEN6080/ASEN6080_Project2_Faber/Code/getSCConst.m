@@ -7,7 +7,7 @@ function sc = getSCConst()
 %       - sc: Structure of spacecraft paremeters at the start of an OD 
 %             problem. Made of the following fields:
 %           - AtoM: Spacecraft area to mass ratio [m^2/kg]
-%           - C_R: Coefficient of reflectivity [n.d.]
+%           - C_R: Expected coefficient of reflectivity [n.d.]
 %           - X0_cart: Initial cartesian state in km and km/s:
 %                      [X0; Y0; Z0; Xdot0; Ydot0; Zdot0]
 %           - Phi: Solar pressure flux at the location of the spacecraft's
