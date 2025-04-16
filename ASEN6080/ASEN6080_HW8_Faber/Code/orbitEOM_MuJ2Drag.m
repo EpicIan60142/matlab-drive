@@ -30,6 +30,7 @@ m = scConst.m;
 dragConst = Cd*Asc/m;
 Ri = pConst.Ri;
 mu = pConst.mu;
+J2 = pConst.J2;
 
     % Calculate itermediate values
 r = sqrt(x^2 + y^2 + z^2);

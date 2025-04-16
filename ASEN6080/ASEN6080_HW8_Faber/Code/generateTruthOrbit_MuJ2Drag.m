@@ -1,4 +1,4 @@
-function data = generateTruthOrbit_MuJ2Drag(pConst, oConst, scConst, x0Perturb, filename, dt)
+function data = generateTruthOrbit_MuJ2Drag(pConst, oConst, scConst, x0Perturb, filename, tspan)
 % Function that generates truth orbit and measurement data based on a set
 % of planetary constants, orbital parameters, and potential initial orbital
 % perturbations including only dynamics from Mu and J2.
@@ -13,9 +13,7 @@ function data = generateTruthOrbit_MuJ2Drag(pConst, oConst, scConst, x0Perturb, 
 %                    [dX; dY; dZ; dXdot; dYdot; dZdot]
 %       - filename: Name of the file to save truth data to. 
 %                   Ex: "HW2Problem1Data.mat"
-%       - dt: Timestep separation for generating measurements (optional).
-%             If not provided, defaults to dt = T/1000, where T is the
-%             period calculated from oConst
+%       - tspan: Time period to generate data over as a vector
 %   Outputs:
 %       - data: Data structure with the following fields:
 %               - X0: Initial cartesian state based on the orbital elements
@@ -42,26 +40,16 @@ function data = generateTruthOrbit_MuJ2Drag(pConst, oConst, scConst, x0Perturb, 
 %   By: Ian Faber, 02/01/2025
 %
 
-planetConst = pConst;
 orbital = oConst;
-sc = scConst;
 
     % Convert orbital elements to cartesian for the initial orbit state
-X0 = convOrbitalToCartesian([planetConst.mu; orbital.a; orbital.e; orbital.i; orbital.RAAN; orbital.argPeri; orbital.truAnom]);
+X0 = convOrbitalToCartesian([pConst.mu; orbital.a; orbital.e; orbital.i; orbital.RAAN; orbital.argPeri; orbital.truAnom]);
 
-    % Propagate reference orbit
-T = 2*pi*sqrt(orbital.a^3/planetConst.mu);
-
-if ~exist("dt", "var")
-    dt = T/1000;
-end
-
-tspan = 0:dt:24*60*60;%(numOrbits*T);
 opt = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 
 % XPhi0 = [X0+x0Perturb; reshape(eye(length(X0)),length(X0)^2,1)];
 
-[t_ref, X_ref] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,planetConst, scConst), tspan, X0+x0Perturb, opt);
+[t_ref, X_ref] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst, scConst), tspan, X0+x0Perturb, opt);
 % [t_ref, XPhi_ref] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,planetConst.mu,planetConst.J2,planetConst.Ri),tspan,XPhi0,opt);
 
 % X_ref = XPhi_ref(:,1:length(X0));

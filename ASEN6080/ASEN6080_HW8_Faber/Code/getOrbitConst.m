@@ -16,7 +16,7 @@ function orbital = getOrbitConst()
 %   By: Ian Faber, 01/30/2025
 %
 
-orbital.a = 10000;
+orbital.a = 6800; % km
 orbital.e = 0.001;
 orbital.i = deg2rad(40);
 orbital.RAAN = deg2rad(80);

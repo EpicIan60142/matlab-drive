@@ -23,4 +23,9 @@ constants.J2 = 1.08264e-3; % Earth
 constants.Ri = 6378; % Earth
 constants.wPlanet = (2*pi)/(24*60*60); % Earth
 
+    % Atmospheric parameters
+constants.rho0 = 3.614e-13;
+constants.r0 = 700e3 + constants.Ri;
+constants.H = 88667.0;
+
 end
