@@ -17,12 +17,12 @@ function fig = cornerPlot(nomTraj, monteTraj, mu, sigma, P, time)
 %   By: Ian Faber, 04/15/2025   
 %
 
-    % Calculate mean and standard deviation of trajectories
-mu = mean(monteTraj,2);
-sigma = std(monteTraj,0,2);
-
-    % Construct covariance matrix
-P = cov(monteTraj'); % Need input to be structured with observations (runs) as rows and variables as columns
+%     % Calculate mean and standard deviation of trajectories
+% mu = mean(monteTraj,2);
+% sigma = std(monteTraj,0,2);
+% 
+%     % Construct covariance matrix
+% P = cov(monteTraj'); % Need input to be structured with observations (runs) as rows and variables as columns
 
     % Extract valid covariances for corner plotting
 Ps = {}; % Cell array for holding valid covariances
@@ -68,7 +68,7 @@ for k = 1:length(validTiles)
                 % Plot nominal state coordinate
             nomSingle = xline(nomTraj(stateIdx(1,k)), 'k--', 'LineWidth', 2);
                 % Labels
-            xlabel(labels(stateIdx(1,k))); ylabel("Probability Density");
+            xlabel(labels(stateIdx(1,k)));
         else % This is a covariance - need ellipse
                 % Find eigenvectors and values
             [eigVec, Lambda] = eig(Ps{k});

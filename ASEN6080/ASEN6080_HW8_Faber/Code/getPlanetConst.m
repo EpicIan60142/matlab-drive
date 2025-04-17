@@ -24,8 +24,8 @@ constants.Ri = 6378; % Earth
 constants.wPlanet = (2*pi)/(24*60*60); % Earth
 
     % Atmospheric parameters
-constants.rho0 = 3.614e-13;
-constants.r0 = 700e3 + constants.Ri;
-constants.H = 88667.0;
+constants.rho0 = 3.614e-13*(1000^3); % kg/m^3 -> kg/km^3
+constants.r0 = 700 + constants.Ri;
+constants.H = 88667.0/1000; % m -> km
 
 end

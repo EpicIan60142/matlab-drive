@@ -14,7 +14,7 @@ function sc = getSCConst()
 %
 
     % Physical Parameters
-sc.A = 3;
+sc.A = 3/(1000^2); % m^2 -> km^2
 sc.m = 970;
 sc.Cd = 2;
 

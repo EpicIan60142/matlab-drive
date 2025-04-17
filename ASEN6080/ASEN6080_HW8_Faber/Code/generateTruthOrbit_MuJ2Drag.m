@@ -49,7 +49,7 @@ opt = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 
 % XPhi0 = [X0+x0Perturb; reshape(eye(length(X0)),length(X0)^2,1)];
 
-[t_ref, X_ref] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X,pConst, scConst), tspan, X0+x0Perturb, opt);
+[t_ref, X_ref] = ode45(@(t,X)orbitEOM_MuJ2Drag(t,X, pConst, scConst), tspan, X0+x0Perturb, opt);
 % [t_ref, XPhi_ref] = ode45(@(t,XPhi)STMEOM_J2(t,XPhi,planetConst.mu,planetConst.J2,planetConst.Ri),tspan,XPhi0,opt);
 
 % X_ref = XPhi_ref(:,1:length(X0));

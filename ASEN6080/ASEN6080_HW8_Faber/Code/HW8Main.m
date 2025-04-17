@@ -40,7 +40,7 @@ earthZ = pConst.Ri*earthZ_s;
 earthMap = imread('2k_earth_daymap.jpg'); % Image from https://www.solarsystemscope.com/textures/
 
 %% Part 1a/b. Generate Monte Carlo orbit data
-rng(69420); % Set rng seed for consistency
+% rng(69420); % Set rng seed for consistency
 
     % Generate new data by changing the boolean below to true
 if false
@@ -90,7 +90,7 @@ for k = 1:length(analysisTimes)
         % Find the index corresponding to the desired analysis time
     idx = find(tspan == analysisTimes(k));
 
-        % Pull out nominal trajectory at this time
+        % Pull out trajectories at this time
     monteTraj = [];
     for kk = 1:length(runs)
         monteTraj = [monteTraj, runs(kk).X_ref(idx,:)'];
@@ -105,7 +105,7 @@ for k = 1:length(analysisTimes)
     P = cov(monteTraj'); % Need input to be structured with observations (runs) as rows and variables (X, Y, etc.) as columns
 
         % Make corner plot
-    cornerPlot(nom, monteTraj, analysisTimes(k));
+    cornerPlot(nom, monteTraj, mu, sigma, P, analysisTimes(k));
 
         % Save nominal, mean, std, and covariance matrix
     nomTraj = [nomTraj, nom];
