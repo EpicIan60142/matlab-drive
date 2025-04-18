@@ -1,29 +1,32 @@
-function fig = cornerPlot(nomTraj, monteTraj, mu, sigma, P, time)
+function fig = cornerPlot(nomTraj, monteTraj, P, titleText)
 % Function that makes a corner plot of a set of monte carlo runs at a given
 % time. 
 %   Inputs:
-%       - nomTraj: Nominal trajectory at the specified time, i.e. without
-%                  an initial deviation, organized as follows:
+%       - nomTraj: Modeled trajectory at the specified time, i.e. via 
+%                  nonlinear/LKF/UKF propagation, organized as follows:
 %                  [X; Y; Z; Xdot; Ydot; Zdot]
 %       - monteTraj: Set of N monte carlo trajectories at the specified
 %                    time, given a random initial deviation from nomTraj,
 %                    organized as follows:
 %                    [monteTraj_1, monteTraj_2, ..., monteTraj_N], where
 %                    monteTraj_N = [X; Y; Z; Xdot; Ydot; Zdot]
-%       - time: Specified analysis time for plot title purposes
+%       - titleText: Title text for this corner plot
 %   Outputs:
 %       - fig: Corner plot figure handle
 %
 %   By: Ian Faber, 04/15/2025   
 %
 
-%     % Calculate mean and standard deviation of trajectories
-% mu = mean(monteTraj,2);
-% sigma = std(monteTraj,0,2);
-% 
-%     % Construct covariance matrix
-% P = cov(monteTraj'); % Need input to be structured with observations (runs) as rows and variables as columns
+    % Calculate mean of monte carlo trajectories
+mu = mean(monteTraj,2);
 
+% if isempty(sigma)
+%     sigma = std(monteTraj,0,2);
+% end
+    % Construct covariance matrix from monte carlo trajectories
+if isempty(P)
+    P = cov(monteTraj'); % Need input to be structured with observations (runs) as rows and variables as columns
+end
     % Extract valid covariances for corner plotting
 Ps = {}; % Cell array for holding valid covariances
 stateIdx = []; % Valid states for the saved covariances, i.e. whether they belong to X, ZYdot, etc.
@@ -52,7 +55,6 @@ circle.y = sin(theta);
     % Create corner plots
 validTiles = [1, 7, 8, 13, 14, 15, 19, 20, 21, 22, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36]; % Valid plotting tiles
 labels = ["X [km]", "Y [km]", "Z [km]", "Xdot [km/s]", "Ydot [km/s]", "Zdot [km/s]"];
-titleText = sprintf("Corner Plot at t = %.3f sec", time);
 fig = figure; tl = tiledlayout(6,6); tiles = [];
 title(tl, titleText)
 for k = 1:length(validTiles)
@@ -61,7 +63,7 @@ for k = 1:length(validTiles)
         if size(Ps{k},1) == 1 && size(Ps{k},2) == 1 % This is a single variable variance - need histogram
                 % Create pdf
             x = linspace(min(monteTraj(stateIdx(1,k),:)),max(monteTraj(stateIdx(1,k),:)),100);
-            px = normpdf(x, mu(stateIdx(1,k)), sigma(stateIdx(1,k)));
+            px = normpdf(x, mu(stateIdx(1,k)), sqrt(Ps{k}));%sigma(stateIdx(1,k)));
                 % Plot histogram and pdf
             histogram(monteTraj(stateIdx(1,k),:),'FaceColor','b','Normalization','pdf');
             pdf = plot(x, px, 'm--', 'LineWidth', 2);
