@@ -11,6 +11,9 @@ function constants = getPlanetConst()
 %                   - Ri: Planetary radius, assuming a sphere [km]
 %                   - wPlanet: Planet angular velocity about the positive 
 %                              inertial z-axis [rad/s]
+%                   - rho0: Reference atmospheric density [kg/km^3]
+%                   - r0: Reference atmospheric radius [km]
+%                   - H: Atmospheric altitude cutoff [km]
 %
 %   By: Ian Faber, 01/30/2025
 %

@@ -30,7 +30,7 @@ aTest = orbitEOM_MuSunSRP(0, X0, pConst, scConst);
 truthTraj = load("..\Data\Project2_Prob2_truth_traj_50days.mat");
 
     % Integrate X0 to verify EOM function
-tspan = [truthTraj.Tt_50; (truthTraj.Tt_50(end)+1000:1000:279*24*60*60)']; % Add time up to 200 days in sec
+tspan = [truthTraj.Tt_50; (truthTraj.Tt_50(end)+1000:1000:200*24*60*60)']; % Add time up to 200 days in sec
 [t_test, X_test] = ode45(@(t,X)orbitEOM_MuSunSRP(t,X,pConst,scConst), tspan, truthTraj.Xt_50(1,1:7)', opt);
 
     % Plot error between modeled and true trajectory

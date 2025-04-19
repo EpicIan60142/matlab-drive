@@ -6,7 +6,7 @@ function sc = getSCConst()
 %   Outputs:
 %       - sc: Structure of spacecraft paremeters at the start of an OD 
 %             problem. Made of the following fields:
-%           - A: Cross-sectional area [m^2]
+%           - A: Cross-sectional area [km^2]
 %           - m: Mass [kg]
 %           - Cd: Drag coefficient [n.d.]
 %

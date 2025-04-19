@@ -34,6 +34,9 @@ earthX = earthX_s*cos(theta0) - earthY_s*sin(theta0);
 earthY = earthX_s*sin(theta0) + earthY_s*cos(theta0);
 earthZ = pConst.Ri*earthZ_s;
 
+    % Convert B vector to ECI coordinates
+BVec = STR2ECI'*[0; BdotT; BdotR];
+
     % Define helper variables
 theta = linspace(0, 2*pi, 100);
 
@@ -62,16 +65,25 @@ ellipseRot.r = rot(2,:);
 ellipseRot.s = zeros(size(ellipseRot.t));
 
     % Convert ellipse to ECI coordinates and center around the Bplane
-    % crossing
+    % target
 coords = [ellipseRot.s; ellipseRot.t; ellipseRot.r];
 coords = STR2ECI*coords;
-coords = coords + X_crossing(1:3)';
+coords = coords + BVec;%X_crossing(1:3)';
 ellipse.x = coords(1,:);
 ellipse.y = coords(2,:);
 ellipse.z = coords(3,:);
 
-    % Convert B vector to ECI coordinates
-B = STR2ECI'*[0; BdotT; BdotR];
+    % Make Bplane object
+N = 10;
+s = zeros(1,N);
+t = linspace(0,2*BdotT,N);
+r = linspace(0,2*BdotR,N);
+
+% points = [s;t;r];
+% points = STR2ECI*points;
+% A = STR2ECI(1,1); B = STR2ECI(2,1); C = STR2ECI(3,1); D = 0;
+% [X_Bplane, Y_Bplane] = meshgrid(points(1,:),points(2,:));
+% Z_Bplane = -1./C*(A*X_Bplane + B*Y_Bplane + D);
 
     % Make labels
 BVecLabel = sprintf("B Plane Target: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR, BdotT);
@@ -86,12 +98,18 @@ title(titleText, 'FontSize', 12)
 earth = surf(earthX, earthY, earthZ, 'FaceAlpha', 0.5);
 set(earth,'FaceColor','texturemap','cdata',I,'edgecolor','none');
     % Plot B plane target
-BVec = quiver3(0,0,0,B(1),B(2),B(3),1,'Filled','b-','LineWidth',2);
+Bvec = quiver3(0,0,0,BVec(1),BVec(2),BVec(3),1,'Filled','b-','LineWidth',2);
+    % Plot STR axes
+Svec = quiver3(0,0,0,STR2ECI(1,1),STR2ECI(2,1),STR2ECI(3,1), pConst.Ri, 'filled', 'b--', 'LineWidth', 2);
+Tvec = quiver3(0,0,0,STR2ECI(1,2),STR2ECI(2,2),STR2ECI(3,2), pConst.Ri, 'filled', 'r--', 'LineWidth', 2);
+Rvec = quiver3(0,0,0,STR2ECI(1,3),STR2ECI(2,3),STR2ECI(3,3), pConst.Ri, 'filled', 'k--', 'LineWidth', 2);
     % Plot B plane crossing and uncertainty
 crossing = plot3(X_crossing(1), X_crossing(2), X_crossing(3),'kx', 'MarkerSize', 10);
 uncert = plot3(ellipse.x, ellipse.y, ellipse.z, 'r-');
+    % Plot B plane
+Bplane = surf(X_Bplane, Y_Bplane, Z_Bplane, 'EdgeColor', 'k', 'FaceColor', 'g', 'FaceAlpha', 0.4);
     % Labels and legend
 xlabel(xLabel); ylabel(yLabel); zlabel(zLabel); view([30 35]);
-legend([BVec, crossing, uncert], [BVecLabel, crossingLabel, uncertLabel], 'location', 'northwest');
+legend([Bvec, crossing, uncert, Svec, Tvec, Rvec, Bplane], [BVecLabel, crossingLabel, uncertLabel, "S Vector", "T Vector", "R Vector", "Bplane"], 'location', 'northwest');
 
 end

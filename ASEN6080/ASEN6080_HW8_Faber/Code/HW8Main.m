@@ -40,7 +40,10 @@ earthY = earthX_s*sin(theta0) + earthY_s*cos(theta0);
 earthZ = pConst.Ri*earthZ_s;
 earthMap = imread('2k_earth_daymap.jpg'); % Image from https://www.solarsystemscope.com/textures/
 
-%% Part 1a/b. Generate Monte Carlo orbit data
+    % Dynamics function handle for UKF
+DynFunc = @(t,X)orbitEOM_MuJ2Drag(t,X,pConst,scConst);
+
+%% Part 1a/b. Generate Monte Carlo orbit data (nonlinear propagation)
 % rng(69420); % Set rng seed for consistency
 
     % Generate new data by changing the boolean below to true
@@ -85,7 +88,7 @@ view([30 35]);
 %% Part 1c. Analyze runs at 6 hour intervals
 fprintf("\nAnalyzing Monte Carlo Data via Nonlinear Propagation...\n")
 
-nomTraj_nl = [];
+propTraj_nl = [];
 meanTraj_nl = [];
 stdTraj_nl = [];
 PTraj_nl = {};
@@ -111,29 +114,43 @@ for k = 1:length(analysisTimes)
     titleText = sprintf("Corner Plot at t = %.3f sec, Nonlinear propagation", analysisTimes(k));
     cornerPlot(nom, monteTraj, [], titleText);
 
-        % Save nominal, mean, std, and covariance matrix
-    nomTraj_nl = [nomTraj_nl, nom];
+        % Save propagated, mean, std, and covariance matrix
+    propTraj_nl = [propTraj_nl, nom];
     meanTraj_nl = [meanTraj_nl, mu];
     stdTraj_nl = [stdTraj_nl, sigma];
     PTraj_nl = [PTraj_nl, {P}];
 
+        % Report results
+    fprintf("\n\tSummary at t = %.3f, nl prop:\n", analysisTimes(k));
+            % Standard Deviations
+    fprintf("\t\tState component standard deviations:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", stdTraj_nl(:,k))
+            % Means
+    fprintf("\t\tState component means:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", meanTraj_nl(:,k))
+            % Nominals
+    fprintf("\t\tState component propagated nonlinear values:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", propTraj_nl(:,k))
 end
 
 
-%% Part 2a. Generate STM to Propagate CKF Estimate and Covariance
-fprintf("\nAnalyzing Monte Carlo Data via CKF Propagation...\n")
+%% Part 2. Propagate Uncertainty Using LKF
+fprintf("\nAnalyzing Monte Carlo Data via LKF Propagation...\n")
 
+    % Propagate STM
 X0 = runs(1).X0 - runs(1).x0Perturb;
 XPhi_0 = [X0; reshape(eye(6),36,1)];
 [t_LKF, XPhi_LKF] = ode45(@(t,XPhi)STMEOM_MuJ2Drag(t,XPhi,pConst,scConst), analysisTimes, XPhi_0, odeset('AbsTol',1e-12,'RelTol',1e-12));
 
+    % Process STM
 Phi_LKF = {};
 for k = 1:length(t_LKF)
     Phi = reshape(XPhi_LKF(k,7:end),6,6);
     Phi_LKF = [Phi_LKF; {Phi}];
 end
 
-nomTraj_LKF = [];
+    % Make corner plots and statistics
+propTraj_LKF = [];
 meanTraj_LKF = [];
 stdTraj_LKF = [];
 PTraj_LKF = {};
@@ -148,18 +165,144 @@ for k = 1:length(analysisTimes)
     end
     nom = nominal.X_ref(idx,:)';
 
+        % Calculate mean at this time
+    mu = mean(monteTraj,2);
+
         % Calculate Covariance and standard deviation of trajectories
     P = Phi_LKF{k}*P0*Phi_LKF{k}';
+    sigma = [];
+    for kk = 1:size(P,1)
+        sigma = [sigma; sqrt(P(kk,kk))];
+    end
 
         % Make corner plot
     titleText = sprintf("Corner Plot at t = %.3f sec, LKF propagation", analysisTimes(k));
     cornerPlot(nom, monteTraj, P, titleText);
 
-        % Save nominal, mean, std, and covariance matrix
-    nomTraj_LKF = [nomTraj_LKF, nom];
+        % Save propagated, mean, std, and covariance matrix
+    propTraj_LKF = [propTraj_LKF, nom];
     meanTraj_LKF = [meanTraj_LKF, mu];
     stdTraj_LKF = [stdTraj_LKF, sigma];
     PTraj_LKF = [PTraj_LKF, {P}];
 
+        % Report results
+    fprintf("\n\tSummary at t = %.3f, LKF prop:\n", analysisTimes(k));
+            % Standard Deviations
+    fprintf("\t\tState component standard deviations:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", stdTraj_LKF(:,k))
+            % Means
+    fprintf("\t\tState component means:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", meanTraj_LKF(:,k))
+            % Nominals
+    fprintf("\t\tState component propagated LKF values:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", propTraj_LKF(:,k))
 end
+
+%% Part 3. Propagate Uncertainty using UKF
+fprintf("\nAnalyzing Monte Carlo Data via UKF Propagation...\n")
+
+    % Compute UKF weights
+alpha = 0.5; beta = 2; 
+L = length(X0);
+
+kappa = 3 - L;
+lambda = (alpha^2)*(L + kappa) - L;
+gamma = sqrt(L + lambda);
+
+W_0m = lambda/(L + lambda);
+W_0c = lambda/(L + lambda) + (1 - alpha^2 + beta);
+W_im = [W_0m, (1/(2*(L + lambda)))*ones(1,2*L)];
+W_ic = [W_0c, (1/(2*(L + lambda)))*ones(1,2*L)];
+    
+    % Propagate sigma points and covariance
+X_im1 = X0;
+P_im1 = P0;
+propTraj_UKF = X0;
+PTraj_UKF = P0;
+for k = 2:length(analysisTimes)
+        % Calculate previous sigma points
+    sqrtP_im1 = sqrtm(P_im1); % Used to be chol()
+    Chi_im1 = [X_im1, X_im1 + gamma*sqrtP_im1, X_im1 - gamma*sqrtP_im1]; % L x (2L + 1) matrix
+    
+        % Propagate previous sigma points through dynamics
+    ChiVec_im1 = reshape(Chi_im1, L*(2*L+1), 1);
+    tspan_UKF = [analysisTimes(k-1), analysisTimes(k)];
+    [~,ChiVec] = ode45(@(t,ChiVec)sigPointEOM(t,ChiVec,DynFunc), tspan_UKF, ChiVec_im1, odeset('AbsTol',1e-12,'RelTol',1e-12));
+    Chi_i = reshape(ChiVec(end,:), L, 2*L + 1);
+    
+        % Time update
+    X_i = 0;
+    for kk = 1:2*L+1
+        X_i = X_i + W_im(kk)*Chi_i(:,kk);
+    end
+    
+    P_i = zeros(size(P0));
+    for kk = 1:2*L+1
+        P_i = P_i + W_ic(kk)*(Chi_i(:,kk) - X_i)*(Chi_i(:,kk) - X_i)';
+    end
+
+        % Save values
+    propTraj_UKF = [propTraj_UKF, X_i];
+    PTraj_UKF = [PTraj_UKF, {P_i}];
+
+        % Update for next time
+    X_im1 = X_i;
+    P_im1 = P_i;
+end
+
+    % Make corner plots and statistics
+meanTraj_UKF = [];
+stdTraj_UKF = [];
+for k = 1:length(analysisTimes)
+        % Find the index corresponding to the desired analysis time
+    idx = find(tspan == analysisTimes(k));
+
+        % Pull out trajectories at this time
+    monteTraj = [];
+    for kk = 1:length(runs)
+        monteTraj = [monteTraj, runs(kk).X_ref(idx,:)'];
+    end
+
+        % Calculate mean at this time
+    mu = mean(monteTraj,2);
+
+        % Pull out covariance and propagated trajectory at this time
+    nom = propTraj_UKF(:,k);
+    P = PTraj_UKF{k};
+
+        % Calculate standard deviations
+    sigma = [];
+    for kk = 1:size(P,1)
+        sigma = [sigma; sqrt(P(kk,kk))];
+    end
+
+        % Make corner plot
+    titleText = sprintf("Corner Plot at t = %.3f sec, UKF propagation", analysisTimes(k));
+    cornerPlot(nom, monteTraj, P, titleText);
+
+        % Save nominal, mean, std, and covariance matrix
+    meanTraj_UKF = [meanTraj_UKF, mu];
+    stdTraj_UKF = [stdTraj_UKF, sigma];
+
+        % Report results
+    fprintf("\n\tSummary at t = %.3f, UKF prop:\n", analysisTimes(k));
+            % Standard Deviations
+    fprintf("\t\tState component standard deviations:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", stdTraj_UKF(:,k))
+            % Means
+    fprintf("\t\tState component means:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", meanTraj_UKF(:,k))
+            % Nominals
+    fprintf("\t\tState component propagated UKF values:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", propTraj_UKF(:,k))
+end
+
+%% Part 4. Propagate Uncertainty using Gaussian Sums
+fprintf("\nAnalyzing Monte Carlo Data via Gaussian Sums...\n")
+
+
+
+
+
+
 

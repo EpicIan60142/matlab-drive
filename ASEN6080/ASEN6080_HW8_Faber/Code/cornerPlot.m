@@ -1,8 +1,8 @@
-function fig = cornerPlot(nomTraj, monteTraj, P, titleText)
+function fig = cornerPlot(propTraj, monteTraj, P, titleText)
 % Function that makes a corner plot of a set of monte carlo runs at a given
 % time. 
 %   Inputs:
-%       - nomTraj: Modeled trajectory at the specified time, i.e. via 
+%       -propTraj: Propagated trajectory at the specified time, i.e. via 
 %                  nonlinear/LKF/UKF propagation, organized as follows:
 %                  [X; Y; Z; Xdot; Ydot; Zdot]
 %       - monteTraj: Set of N monte carlo trajectories at the specified
@@ -62,13 +62,15 @@ for k = 1:length(validTiles)
         hold on; grid on;
         if size(Ps{k},1) == 1 && size(Ps{k},2) == 1 % This is a single variable variance - need histogram
                 % Create pdf
-            x = linspace(min(monteTraj(stateIdx(1,k),:)),max(monteTraj(stateIdx(1,k),:)),100);
+            % x = linspace(min(monteTraj(stateIdx(1,k),:)),max(monteTraj(stateIdx(1,k),:)),100);
+            sig = sqrt(Ps{k});
+            x = linspace(mu(stateIdx(1,k)) - 3*sig, mu(stateIdx(1,k)) + 3*sig, 1000);
             px = normpdf(x, mu(stateIdx(1,k)), sqrt(Ps{k}));%sigma(stateIdx(1,k)));
                 % Plot histogram and pdf
             histogram(monteTraj(stateIdx(1,k),:),'FaceColor','b','Normalization','pdf');
             pdf = plot(x, px, 'm--', 'LineWidth', 2);
-                % Plot nominal state coordinate
-            nomSingle = xline(nomTraj(stateIdx(1,k)), 'k--', 'LineWidth', 2);
+                % Plot propagated state coordinate
+            nomSingle = xline(propTraj(stateIdx(1,k)), 'k--', 'LineWidth', 2);
                 % Labels
             xlabel(labels(stateIdx(1,k)));
         else % This is a covariance - need ellipse
@@ -92,8 +94,8 @@ for k = 1:length(validTiles)
             montePoint = scatter(monteTraj(stateIdx(1,k),:), monteTraj(stateIdx(2,k),:), 3, 'black', 'filled', 'o', 'MarkerFaceAlpha', 0.25);
                 % Plot mean coordinate
             meanPoint = scatter(mu(stateIdx(1,k)), mu(stateIdx(2,k)), 25, 'black', 'filled' , 'square');
-                % Plot nominal coordinate
-            nomPoint = scatter(nomTraj(stateIdx(1,k)), nomTraj(stateIdx(2,k)), 25, 'black', 'filled', '^');
+                % Plot propagated coordinate
+            nomPoint = scatter(propTraj(stateIdx(1,k)), propTraj(stateIdx(2,k)), 25, 'black', 'filled', '^');
                 % Labels
             xlabel(labels(stateIdx(1,k))); ylabel(labels(stateIdx(2,k)));
         end
@@ -101,7 +103,7 @@ for k = 1:length(validTiles)
 end
 
 lgnd = legend([pdf, nomSingle, Sig_1, Sig_2, Sig_3, montePoint, meanPoint, nomPoint], ...
-              ["State Component pdf", "State Component Nominal value", "1\sigma Ellipse", "2\sigma Ellipse", "3\sigma Ellipse", "MC Points", "MC Mean", "Nominal Trajectory Point"], ...
+              ["State Component pdf", "State Component Nominal value", "1\sigma Ellipse", "2\sigma Ellipse", "3\sigma Ellipse", "MC Points", "MC Mean", "Propagated Trajectory Point"], ...
                'Location', 'layout');
 lgnd.Layout.Tile = 11;
 
