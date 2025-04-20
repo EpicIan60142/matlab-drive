@@ -14,7 +14,7 @@ semiMaj = [1, 5]; % m
 semiMin = [1, 5]; % m
 
     % Define inter-ring parameter ranges
-interRingDist = [100, 150]; % m
+interRingDist = [300, 350]; % m
 azimuthAngle = deg2rad([-90, 90]); % deg -> rad
 elevationAngle = deg2rad([-90, 90]); % deg -> rad
 
@@ -52,6 +52,23 @@ startRing = generateRing(50*max(semiMaj), 50*max(semiMin), 0, 0, -max(interRingD
 endRing = generateRing(min(semiMaj),min(semiMin),0,0,min(interRingDist),rings(end));
 rings = [rings; endRing];
 
+    % Move race course so origin is the mean of all ring centers
+centers = [];
+for k = 1:length(rings)
+    centers = [centers, rings.center];
+end
+
+newOrigin = mean(centers, 2);
+
+startRing.center = startRing.center - newOrigin;
+startRing.params.lastRing.center = startRing.params.lastRing.center - newOrigin;
+for k = 1:length(rings)
+    rings(k).center = rings(k).center - newOrigin;
+    rings(k).params.lastRing.center = rings(k).params.lastRing.center - newOrigin;
+end
+endRing.center = endRing.center - newOrigin;
+endRing.params.lastRing.center = endRing.params.lastRing.center - newOrigin;
+
     % Plot race course
 figure(420)
 hold on; grid on; axis equal
@@ -76,7 +93,7 @@ numSats = 4;
 names = ["Eeny", "Meeny", "Miny", "Mo"]; % Names :P Mo has attitude control system problems, and can only use x-y-z thrusters!
 markers = ["o", "^", "square", "diamond"]; % Markers for plotting
 colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E"]; % Colors for plotting
-thrusts = [100, 250, 500, 500]*(10^-3); % Maximum thrust values
+thrusts = [500, 250, 500, 500]*(10^-3); % Maximum thrust values
 thrustConfigs = [false, false, false, true]; % Whether thrust is split amongst x-y-z thrusters or a general direction
 
     % Make CubeSats
@@ -112,7 +129,7 @@ X0 = [cubesats(1).X0; 1e-3*ones(6,1)];
 % return;
 
 %% Run the race course!
-for k = 1:length(cubesats)
+for k = 1:0*length(cubesats)+1
     fprintf("\nCubesat %s is starting the race course!\n", cubesats(k).name)
     for kk = 1:length(rings)-1 % Intermediate ring problem
             % Solve trajectory
@@ -127,7 +144,7 @@ for k = 1:length(cubesats)
             % Plot segment
         figure
         title(sprintf("Cubesat %s trajectory segment: Ring %.0f to %.0f", cubesats(k).name, kk-1, kk));
-        hold on; grid on;
+        hold on; grid on; axis equal
         if kk == 1
             plotRing(startRing, 'g-');
         else
@@ -136,16 +153,29 @@ for k = 1:length(cubesats)
         plot3(X(1,1), X(1,2), X(1,3), 'k', 'Marker', cubesats(k).marker);
         plotRing(rings(kk), 'r-');
         plot3(X(:,1), X(:,2), X(:,3), 'm--');
-        plot3(X(:,7), X(:,8), X(:,9), 'k--');
         view([30 35]);
 
             % Report progress
         fprintf("\n\tCubesat %s passed through ring %.0f in %.3f sec!", cubesats(k).name, kk, t(end) - t(1));
     end
+    fprintf("\n\tCubesat %s finished the course in %.3f sec!\n", cubesats(k).name, cubesats(k).t(end)-cubesats(k).t(1));
         % Add trajectory to race plot
     figure(420)
     % title(sprintf("Cubesat %s Race Course Trajectory", cubesats(k).name));
     plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), '-', 'Color', cubesats(k).color, 'DisplayName', sprintf("Cubesat %s trajectory", cubesats(k).name));
+
+    figure; tl = tiledlayout(1,2);
+    title(tl, sprintf("Cubesat %s Adjoints", cubesats(k).name))
+    nexttile
+        title(sprintf("Cubesat %s Position Adjoints", cubesats(k).name))
+        hold on; grid on; axis equal;
+        plot3(cubesats(k).X(:,7), cubesats(k).X(:,8), cubesats(k).X(:,9), 'k.');
+        view([30 35])
+    nexttile
+        title(sprintf("Cubesat %s Velocity Adjoints", cubesats(k).name))
+        hold on; grid on; axis equal;
+        plot3(cubesats(k).X(:,10), cubesats(k).X(:,11), cubesats(k).X(:,12), 'k.');
+        view([30 35])
 end
 
 

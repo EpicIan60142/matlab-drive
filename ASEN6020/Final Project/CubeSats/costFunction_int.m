@@ -17,7 +17,7 @@ function K_int = costFunction_int(x, ring, cubesat, courseParams, opt)
 
     % Pull out p0 and tf
 p0 = x(1:6);
-tf = x(11);
+tf = x(12);
 
     % Propagate [X0; p0] through CHW equations
 X0 = [cubesat.X0; p0];
