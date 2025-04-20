@@ -93,7 +93,7 @@ numSats = 4;
 names = ["Eeny", "Meeny", "Miny", "Mo"]; % Names :P Mo has attitude control system problems, and can only use x-y-z thrusters!
 markers = ["o", "^", "square", "diamond"]; % Markers for plotting
 colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E"]; % Colors for plotting
-thrusts = [500, 250, 500, 500]*(10^-3); % Maximum thrust values
+thrusts = [100, 250, 500, 500]*(10^-3); % Maximum thrust values
 thrustConfigs = [false, false, false, true]; % Whether thrust is split amongst x-y-z thrusters or a general direction
 
     % Make CubeSats
@@ -129,21 +129,24 @@ X0 = [cubesats(1).X0; 1e-3*ones(6,1)];
 % return;
 
 %% Run the race course!
-for k = 1:0*length(cubesats)+1
+for k = 1:length(cubesats)
     fprintf("\nCubesat %s is starting the race course!\n", cubesats(k).name)
     for kk = 1:length(rings)-1 % Intermediate ring problem
             % Solve trajectory
-        [t,X] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt);
+        [t,X,optParams] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt);
         cubesats(k).X = [cubesats(k).X; X];
         cubesats(k).t = [cubesats(k).t; t];
+        cubesats(k).optParams = [cubesats(k).optParams, optParams]; % Parameters solved by fmincon
+        cubesats(k).ringSeg = [cubesats(k).ringSeg, [kk-1; kk]]; % Ring segment of this trajectory (from kk-1 to kk)
+        cubesats(k).tSeg = [cubesats(k).tSeg, [t(1); t(end)]]; % Time this ring segment started and ended
 
             % Update t0 and X0
         cubesats(k).X0 = X(end,1:6)';
         cubesats(k).t0 = t(end);
 
             % Plot segment
-        figure
-        title(sprintf("Cubesat %s trajectory segment: Ring %.0f to %.0f", cubesats(k).name, kk-1, kk));
+        figure(kk+1)
+        title(sprintf("Cubesat trajectory segment: Ring %.0f to %.0f", kk-1, kk));
         hold on; grid on; axis equal
         if kk == 1
             plotRing(startRing, 'g-');
@@ -152,11 +155,11 @@ for k = 1:0*length(cubesats)+1
         end
         plot3(X(1,1), X(1,2), X(1,3), 'k', 'Marker', cubesats(k).marker);
         plotRing(rings(kk), 'r-');
-        plot3(X(:,1), X(:,2), X(:,3), 'm--');
+        plot3(X(:,1), X(:,2), X(:,3), '--', 'Color', cubesats(k).color);
         view([30 35]);
 
             % Report progress
-        fprintf("\n\tCubesat %s passed through ring %.0f in %.3f sec!", cubesats(k).name, kk, t(end) - t(1));
+        fprintf("\tCubesat %s passed through ring %.0f in %.3f sec!\n", cubesats(k).name, kk, t(end) - t(1));
     end
     fprintf("\n\tCubesat %s finished the course in %.3f sec!\n", cubesats(k).name, cubesats(k).t(end)-cubesats(k).t(1));
         % Add trajectory to race plot
@@ -178,5 +181,11 @@ for k = 1:0*length(cubesats)+1
         view([30 35])
 end
 
-
+    % Save run!
+time = datetime('now');
+runName = sprintf("Run_%s", time);
+runName = replace(runName, " ", "_");
+runName = replace(runName, ":", "");
+runName = sprintf(".\\Runs\\%s.mat", runName);
+save(runName, "cubesats", "rings", "courseParams", '-mat');
 

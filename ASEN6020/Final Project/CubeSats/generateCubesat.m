@@ -22,7 +22,29 @@ function cubesat = generateCubesat(uMax, axialThrust, startRing, name, marker, c
 %                 X0 = [X_sampled; Y_sampled; Z_sampled; 0; 0; 0]
 %           - t0: Initial time for the current trajectory. At ring 1, 
 %                 t0 = 0
-%           
+%           - X: Trajectory of this Cubesat for the race course, organized
+%                as follows:
+%                X = [X; Y; Z; Xdot; Ydot; Zdot; px; py; pz; pxDot; pyDot;
+%                     pzDot]
+%           - t: Time at each point of this Cubesat's trajectory for the 
+%                race course
+%           - optParams: Parameters solved for this Cubesat during each
+%                        course segment, organized as follows:
+%                        optParams = [x_01, x_12, ..., x_lm1l], 
+%                        where l is the number of rings in the course and 
+%                        x = [p0; lambda_t; lambda_v; lambda_rf; tf]
+%           - ringSeg: Stores what segment each set of parameters
+%                      corresponds to, organized as follows:
+%                      ringSeg = [ringSeg_1, ringSeg_2, ..., ringSeg_l], 
+%                      where 
+%                      ringSeg_i = [fromRingNum; toRingNum]
+%           - tSeg: Stores the time that the cubesat started and finished
+%                   each ring segment, organized as follows:
+%                   tSeg = [tSeg_1, tSeg_2, ..., tSeg_l], where
+%                   tSeg_i = [startRingSegTime; endRingSegTime]
+%           - name: Specified cubesat name
+%           - marker: Specified cubesat marker
+%           - color: Specified cubesat color
 %
 %   By: Ian Faber, 04/19/2025
 %
@@ -48,6 +70,6 @@ X0_vel = zeros(3,1);
 X0 = [X0_pos; X0_vel];
 
     % Assign outputs
-cubesat = struct("uMax", uMax, "X0", X0, "t0", 0, "X", [], "t", [], "name", name, "marker", marker, "color", color);
+cubesat = struct("uMax", uMax, "X0", X0, "t0", 0, "X", [], "t", [], "optParams", [], "ringSeg", [], "tSeg", [], "name", name, "marker", marker, "color", color);
 
 end
