@@ -62,8 +62,29 @@ for k = 1:l
 
         % Make rings
     if k == 1 % initial ring
-        init = struct("center", [0; min(dist); 0], "normal", [0; 1; 0], "S", diag([max(semiMaj),max(semiMin)])); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
-        init.params = struct("a", max(semiMaj), "b", max(semiMin), "theta", rad2deg(pi/2), "phi", rad2deg(0), "d", 0, "lastRing", init);
+            % Initial ring center
+        center = [0; min(dist); 0];
+
+            % Initial ring size
+        a = max(semiMaj);
+        b = max(semiMin);
+        S = diag([a, b]);
+
+            % Initial ring angles
+        theta = pi/2;
+        phi = 0;
+
+            % Calculate initial normal vector and make DCM
+        normal = [cos(phi)*cos(theta); cos(phi)*sin(theta); sin(phi)];
+        normalPrime = [sin(phi)*cos(theta); sin(phi)*sin(theta); -cos(phi)];
+        normalDPrime = cross(normal, normalPrime);
+
+        NR = [normalPrime, normalDPrime, normal];
+
+            % Create ring
+        init = struct("center", center, "normal", normal, "S", S, "NR", NR); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
+        init.params = struct("a", a, "b", b, "theta", rad2deg(theta), "phi", rad2deg(phi), ...
+                             "d", 0, "normalPrime", normalPrime, "normalDPrime", normalDPrime, "lastRing", init);
 
         rings = [rings; init];
     else % All other rings

@@ -23,6 +23,9 @@ function ring = generateRing(a, b, dTheta, dPhi, d, lastRing)
 %           - S: Diagonal matrix encoding the shape of the generated ring
 %                like so:
 %                S = diag([a, b]);
+%           - NR: DCM from ring frame to inertial frame, constructed as
+%                 follows:
+%                 NR = [normalPrime, normalDPrime, normal]
 %           - params: Parameter structure with parameters that generated
 %                     this ring, with the following fields from the 
 %                     function input:
@@ -31,6 +34,8 @@ function ring = generateRing(a, b, dTheta, dPhi, d, lastRing)
 %               - theta = lastTheta + dTheta (converted to degrees)
 %               - phi = lastPhi + dPhi (converted to degrees)
 %               - d
+%               - normalPrime
+%               - normalDPrime
 %               - lastRing
 %
 %   By: Ian Faber, 03/22/2025
@@ -50,11 +55,24 @@ n_y = abs(d)*cos(phiNew)*sin(thetaNew);
 n_z = abs(d)*sin(phiNew);
 ring.normal = [n_x; n_y; n_z]/norm([n_x; n_y; n_z]);
 
+normalPrime = [
+                        sin(phiNew)*cos(thetaNew);
+                        sin(phiNew)*sin(thetaNew);
+                        -cos(phiNew)
+                   ];
+
+normalDPrime = cross(ring.normal, normalPrime);
+
     % Ring center
 ring.center = lastRing.center + d*lastRing.normal;
 
+    % DCM from ring frame to inertial frame
+ring.NR = [normalPrime, normalDPrime, ring.normal];
+
 %% Assign params structure
-ring.params = struct("a", a, "b", b, "theta", rad2deg(thetaNew), "phi", rad2deg(phiNew), "d", d, "lastRing", lastRing);
+ring.params = struct("a", a, "b", b, "theta", rad2deg(thetaNew), "phi", rad2deg(phiNew), ...
+                     "d", d, "normalPrime", normalPrime, "normalDPrime", normalDPrime, "lastRing", lastRing);
+
 
 end
 

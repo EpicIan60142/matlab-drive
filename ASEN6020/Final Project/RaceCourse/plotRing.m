@@ -35,20 +35,21 @@ circleScaled = (eigVec*sqrt(Lambda))*circle;
 circleScaled = [circleScaled; zeros(size(thetaCirc))];
 
 %% Rotate the z axis to coincide with the normal vector
-    % Define DCM from normal frame to circle frame, where the normal vector
-    % is the new z axis
-theta = deg2rad(ring.params.theta);
-phi = deg2rad(ring.params.phi);
-
-NC = ...
-    [
-        sin(phi)*cos(theta), sin(phi)*sin(theta), -cos(phi); % normalPrime
-        -sin(theta),         cos(theta),          0          % normalDoublePrime
-        cos(phi)*cos(theta), cos(phi)*sin(theta), sin(phi);  % normal
-    ];
+%     % Define DCM from circle frame to normal frame, where the normal vector
+%     % is the new z axis
+% theta = deg2rad(ring.params.theta);
+% phi = deg2rad(ring.params.phi);
+% 
+% NC = ...
+%     [
+%         sin(phi)*cos(theta), sin(phi)*sin(theta), -cos(phi); % normalPrime
+%         -sin(theta),         cos(theta),          0          % normalDoublePrime
+%         cos(phi)*cos(theta), cos(phi)*sin(theta), sin(phi);  % normal
+%     ];
 
     % Apply transform
-circleRotated = NC'*circleScaled;
+% circleRotated = NC'*circleScaled;
+circleRotated = ring.NR*circleScaled;
 
 %% Move center to coincide with the ring
 circleTranslated = circleRotated + center;
