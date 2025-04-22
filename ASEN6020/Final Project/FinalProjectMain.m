@@ -106,7 +106,7 @@ switch choice
         names = ["Eeny", "Meeny", "Miny", "Mo"]; % Names :P Mo has attitude control system problems, and can only use x-y-z thrusters!
         markers = ["o", "^", "square", "diamond"]; % Markers for plotting
         colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E"]; % Colors for plotting
-        thrusts = [100, 250, 500, 500]*(10^-3); % Maximum thrust values
+        thrusts = [500, 250, 500, 500]*(10^-3); % Maximum thrust values
         thrustConfigs = [false, false, false, true]; % Whether thrust is split amongst x-y-z thrusters or a general direction
         
             % Make CubeSats

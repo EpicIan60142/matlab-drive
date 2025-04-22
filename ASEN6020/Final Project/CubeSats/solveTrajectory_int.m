@@ -29,9 +29,13 @@ uMax = cubesat.uMax;
 if norm(v0) == 0 % Initial ring - cubesat at rest
     p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_rf*ring.params.lastRing.normal; 
           (eye(3) - ring.params.lastRing.normal*ring.params.lastRing.normal')*lambda_v];
+    % p0 = [(1+lambda_rf)*((r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center)); 
+    %       (eye(3) - ring.params.lastRing.normal*ring.params.lastRing.normal')*lambda_v];
 else
     p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_rf*ring.params.lastRing.normal; 
           (eye(3) - vHat0*vHat0')*lambda_v];
+    % p0 = [(1+lambda_rf)*((r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center)); 
+    %       (eye(3) - vHat0*vHat0')*lambda_v];
 end
 
             % tf

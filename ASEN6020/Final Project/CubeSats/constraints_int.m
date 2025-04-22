@@ -87,7 +87,7 @@ g_0 = [2*courseParams.n*v0(2) + 3*courseParams.n^2*r0(1); -2*courseParams.n*v0(1
 g_f = [2*courseParams.n*vf(2) + 3*courseParams.n^2*rf(1); -2*courseParams.n*vf(1); -courseParams.n^2*rf(3)];
 
     % H_0 transversality
-ceq_H0 = p0(1:3)'*v0 + p0(4:6)'*g_0 - norm(p0(4:6))*norm(uMax0) - lambda_t; % H_0 + 1 - lambda_t = 0
+ceq_H0 = p0(1:3)'*v0 + p0(4:6)'*g_0 - norm(p0(4:6))*norm(uMax0) - lambda_t; % H_0 - lambda_t = 0
 
     % H_f transversality
 % ceq_Hf = (1/norm(vf))*(2*(rf - ring.center)'*M*nHat + lambda_v'*(eye(3) - nHat*nHat')*g_f ...
@@ -97,22 +97,27 @@ ceq_H0 = p0(1:3)'*v0 + p0(4:6)'*g_0 - norm(p0(4:6))*norm(uMax0) - lambda_t; % H_
 ceq_Hf = (((rf-ring.center)/norm(rf-ring.center)) + lambda_rf*nHat)'*vf + ...
          ((eye(3)-vfHat*vfHat')*lambda_v/norm(vf))'*g_f - ...
          (1/norm(vf))*sqrt(lambda_v'*(eye(3)-vfHat*vfHat')^2*lambda_v) + 1; % H_f + 1 = 0
+% ceq_Hf = ((1+lambda_rf)*((rf-ring.center)/norm(rf-ring.center)))'*vf + ...
+%          ((eye(3)-vfHat*vfHat')*lambda_v/norm(vf))'*g_f - ...
+%          (1/norm(vf))*sqrt(lambda_v'*(eye(3)-vfHat*vfHat')^2*lambda_v) + 1; % H_f + 1 = 0
 
     % P_f transversality
 % ceq_pf = X(end,7:end)' - [2*M*(rf - ring.center); (1/norm(vf))*(eye(3)-nHat*nHat')*lambda_v]; % p_f = condition
 ceq_pf = pf - [(rf - ring.center)/norm(rf - ring.center) + lambda_rf*nHat; (1/norm(vf))*(eye(3)-vfHat*vfHat')*lambda_v]; % p_f = condition
+% ceq_pf = pf - [(1+lambda_rf)*((rf - ring.center)/norm(rf - ring.center)); (1/norm(vf))*(eye(3)-vfHat*vfHat')*lambda_v]; % p_f = condition
 
     % g constraints
 ceq_X0 = [r0; v0] - cubesat.X0;
 ceq_t0 = t(1) - cubesat.t0;
 ceq_vHatf = vfHat - nHat;
 ceq_rf = dot((rf - ring.center),nHat);
+% ceq_rf = norm(rf - ring.center) - max(ring.S, [], 'all');
 
     % ring constraints
 c_rf = norm(rf - ring.center) - max(ring.S, [], 'all'); % Want final intersection to be close to the ring, i.e. |r_f - r_r,i| <= largest size of S
 
     % Assign outputs
-ceq = [ceq_H0; ceq_Hf; ceq_X0; ceq_t0; ceq_pf; ceq_vHatf; ceq_rf];
+ceq = [ceq_H0; ceq_Hf; ceq_X0; ceq_t0; ceq_pf; ceq_vHatf; ceq_rf]
 c = c_rf;
 
 end
