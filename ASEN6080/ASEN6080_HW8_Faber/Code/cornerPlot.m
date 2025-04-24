@@ -56,6 +56,7 @@ circle.y = sin(theta);
 validTiles = [1, 7, 8, 13, 14, 15, 19, 20, 21, 22, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36]; % Valid plotting tiles
 labels = ["X [km]", "Y [km]", "Z [km]", "Xdot [km/s]", "Ydot [km/s]", "Zdot [km/s]"];
 fig = figure; tl = tiledlayout(6,6); tiles = [];
+fig.WindowState = "maximized";
 title(tl, titleText)
 for k = 1:length(validTiles)
     nt = nexttile(validTiles(k));

@@ -87,7 +87,7 @@ r = linspace(0,2*BdotR,N);
 
     % Make labels
 BVecLabel = sprintf("B Plane Target: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR, BdotT);
-crossingLabel = sprintf("Estimated B Plane Crossing");
+crossingLabel = sprintf("Trajectory propagated to LTOF");
 uncertLabel = sprintf("+/- %.0f\\sigma B plane crossing uncertainty", boundLevel);
 
     % Plot the Bplane!
@@ -107,9 +107,9 @@ Rvec = quiver3(0,0,0,STR2ECI(1,3),STR2ECI(2,3),STR2ECI(3,3), pConst.Ri, 'filled'
 crossing = plot3(X_crossing(1), X_crossing(2), X_crossing(3),'kx', 'MarkerSize', 10);
 uncert = plot3(ellipse.x, ellipse.y, ellipse.z, 'r-');
     % Plot B plane
-Bplane = surf(X_Bplane, Y_Bplane, Z_Bplane, 'EdgeColor', 'k', 'FaceColor', 'g', 'FaceAlpha', 0.4);
+% Bplane = surf(X_Bplane, Y_Bplane, Z_Bplane, 'EdgeColor', 'k', 'FaceColor', 'g', 'FaceAlpha', 0.4);
     % Labels and legend
 xlabel(xLabel); ylabel(yLabel); zlabel(zLabel); view([30 35]);
-legend([Bvec, crossing, uncert, Svec, Tvec, Rvec, Bplane], [BVecLabel, crossingLabel, uncertLabel, "S Vector", "T Vector", "R Vector", "Bplane"], 'location', 'northwest');
+legend([Bvec, crossing, uncert, Svec, Tvec, Rvec], [BVecLabel, crossingLabel, uncertLabel, "S Vector", "T Vector", "R Vector"], 'location', 'northwest');
 
 end

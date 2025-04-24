@@ -24,6 +24,8 @@ function fig = plotStateError(t_state, stateError, t_sigma, sigma, boundLevel, t
 %   By: Ian Faber, 02/01/2025
 %
 
+n = size(stateError,2);
+
 fig = figure; tl = tiledlayout(3,3); ax = [];
 title(tl, titleText)
 for k = 1:size(stateError,2)
@@ -42,7 +44,8 @@ linkaxes(ax, 'x');
 
 if ~isempty(sigma)
     uncertLabel = sprintf("+/- %.0f\\sigma Uncertainty", boundLevel);
-    legend([a, b], ["State Error", uncertLabel], 'Location', 'best')
+    lgnd = legend([a, b], ["State Error", uncertLabel], 'Location', 'layout');
+    lgnd.Layout.Tile = n + 1;
 end
 
 end

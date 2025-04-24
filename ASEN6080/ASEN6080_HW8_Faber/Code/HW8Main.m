@@ -300,9 +300,97 @@ end
 %% Part 4. Propagate Uncertainty using Gaussian Sums
 fprintf("\nAnalyzing Monte Carlo Data via Gaussian Sums...\n")
 
+alpha_GMM = [0.25, 0.5, 0.25];
+mu_GMM = [0.75*X0, 0.8125*X0, 1.25*X0];
+P0_GMM = [{0.25*P0}, {2*(0.875*P0 + 0.138871875*(X0*X0'))}, {0.25*P0}];
 
+X_GMM = {};
+Phi_GMM = {};
+for k = 1:length(alpha_GMM)
+    XPhi_0 = [mu_GMM(:,k); reshape(eye(6),36,1)];
+    [t_LKF, XPhi_LKF] = ode45(@(t,XPhi)STMEOM_MuJ2Drag(t,XPhi,pConst,scConst), analysisTimes, XPhi_0, odeset('AbsTol',1e-12,'RelTol',1e-12));
+    
+        % Process STM and X
+    X_LKF = {};
+    Phi_LKF = {};
+    for kk = 1:length(t_LKF)
+        Phi = reshape(XPhi_LKF(kk,7:end),6,6);
+        Phi_LKF = [Phi_LKF; {Phi}];
 
+        X = XPhi_LKF(kk,1:6);
+        X_LKF = [X_LKF; {X}];
+    end
 
+        % Save X and STM for each Gaussian
+    X_GMM = [X_GMM, {X_LKF}];
+    Phi_GMM = [Phi_GMM, {Phi_LKF}];
+end
 
+propTraj_GMM = [];
+meanTraj_GMM = [];
+stdTraj_GMM = [];
+PTraj_GMM = {};
+for k = 1:length(analysisTimes)
+        % Find the index corresponding to the desired analysis time
+    idx = find(tspan == analysisTimes(k));
 
+    % Pull out trajectories at this time
+    monteTraj = [];
+    for kk = 1:length(runs)
+        monteTraj = [monteTraj, runs(kk).X_ref(idx,:)'];
+    end
+    % nom = nominal.X_ref(idx,:)';
+
+        % Calculate monte carlo mean at this time
+    mu = mean(monteTraj,2);
+
+        % Propagate Gaussian uncertainties
+    nom = 0;
+    P = 0;
+    for kk = 1:length(alpha_GMM)
+            % Pull out this Gaussian's P0 and propagated X
+        nom_i = X_GMM{kk};
+        nom_i = nom_i{k}';
+        P0_i = P0_GMM{kk};
+
+            % Calculate Covariance and standard deviation of trajectories
+        Phi = Phi_GMM{kk};
+        Phi = Phi{k};
+        P_i = Phi*P0_i*Phi';
+        sigma = [];
+        for elem = 1:size(P,1)
+            sigma = [sigma; sqrt(P_i(elem,elem))];
+        end
+
+            % Accumulate results
+        nom = nom + alpha_GMM(kk)*nom_i;
+        P = P + alpha_GMM(kk)*(P_i + nom_i*nom_i');
+    end
+
+        % % Adjust P
+
+    % P = P - propTraj_LKF(:,k)*propTraj_LKF(:,k)';
+
+        % Make corner plot
+    titleText = sprintf("Corner Plot at t = %.3f sec, GMM propagation", analysisTimes(k));
+    cornerPlot(nom, monteTraj, P, titleText);
+
+        % Save propagated, mean, std, and covariance matrix
+    propTraj_GMM = [propTraj_GMM, nom];
+    meanTraj_GMM = [meanTraj_GMM, mu];
+    stdTraj_GMM = [stdTraj_GMM, sigma];
+    PTraj_GMM = [PTraj_GMM, {P}];
+
+        % Report results
+    fprintf("\n\tSummary at t = %.3f, GMM prop:\n", analysisTimes(k));
+            % Standard Deviations
+    fprintf("\t\tState component standard deviations:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", stdTraj_GMM(:,k))
+            % Means
+    fprintf("\t\tState component means:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", meanTraj_GMM(:,k))
+            % Nominals
+    fprintf("\t\tState component propagated LKF values:\n")
+    fprintf("\t\t\tX: %.3f,\tY: %.3f,\tZ: %.3f,\tXdot: %.3f,\tYdot: %.3f,\tZdot: %.3f\t\n", propTraj_GMM(:,k))
+end
 

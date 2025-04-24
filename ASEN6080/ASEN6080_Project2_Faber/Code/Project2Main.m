@@ -172,7 +172,7 @@ P_3SOI = Phi_3SOI*P0*Phi_3SOI';
 [BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
 
     % Plot BdotR and BdotT location + uncertainty ellipse
-titleText = sprintf("B Plane Crossing Estimate");
+titleText = sprintf("Part 1: B Plane Crossing Estimate from Truth Data");
 xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]";
 plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, 3, titleText, xLabel, yLabel, zLabel, 420);
 
@@ -181,12 +181,12 @@ hold on;
 idx = length(t_BPlane); offset = 1000;
 orbit = plot3(XPhi_BPlane(idx-offset:end,1), XPhi_BPlane(idx-offset:end,2), XPhi_BPlane(idx-offset:end,3), 'm--', 'DisplayName', "Modeled Orbit");
 
-return
+% return
 
 %% Part 2: Estimate State with Known Target and Models
     % Set initial state estimate and deviation
-% X0 = [scConst.X0_cart; scConst.C_R];
-X0 = truthTraj.Xt_50(end,1:7)';
+X0 = [scConst.X0_cart; scConst.C_R];
+% X0 = truthTraj.Xt_50(end,1:7)';
 x0 = zeros(size(X0));
 
     % Set initial covariances
@@ -200,14 +200,20 @@ opt = odeset('RelTol', 1e-13, 'AbsTol', 1e-13);
 
     % Remake and populate stations structure
         % Make structure
-stations = makeStations(pConst, 2);
+stations = makeStations(pConst, 3);
         % Read and populate observations
 data2a = readmatrix('..\Data\Project2a_Obs.txt');
 [tMeas, stations] = readObsData(stations, data2a);
 
+    % Plot measurements
+titleText = sprintf("Part 2: Provided Measurement Data");
+xLabel = "Time [sec]"; 
+yLabel = ["\rho [km]", "\rhoDot [km/s]"];
+plotMeasurements(stations, titleText, xLabel, yLabel);
+
         % Propagate station states
 for k = 1:length(tMeas)
-    dTheta = pConst.wEarth*t_test(k);
+    dTheta = pConst.wEarth*tMeas(k);
     for kk = 1:length(stations)
         r = rotZ(dTheta)*stations(kk).X0;
         v = cross([0;0;pConst.wEarth], r);
@@ -217,13 +223,70 @@ for k = 1:length(tMeas)
 end
 
     % Create new truth data for first 50 days
-kEnd = find(tMeas <= 50*24*60*60, 1, 'last'); 
-[t_50, X_50] = ode45(@(t,X)orbitEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd), truthTraj.Xt_50(1,1:7),opt);
+kEnd_truth = find(tMeas <= 50*24*60*60, 1, 'last'); 
+[t_50, X_50] = ode45(@(t,X)orbitEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd_truth), truthTraj.Xt_50(1,1:7)', opt);
 
-    % Run UKF on 50 days of data
-tSpan = [0, 50*24*60*60]; % 0 to 50 days in seconds
-alpha = 1; beta = 2;
-plot = [true; true; false; false; false; false; true; true]; % Only plot residuals and state errors
-UKFRun = runUKF(X0, P0, zeros(3,3), tSpan, pConst, scConst, stations, X_50, t_50, alpha, beta, opt, plot);
+    % Determine cutoffs between LKF and EKF, i.e. when a large measurement
+    % gap happens
+dt = diff(tMeas); % Find time between measurements
+med_dt = median(dt); % Find median time gap
+kSec = find(dt > med_dt); % Pull out when time gaps are larger than the median
+
+    % Configure plotting
+        % Only plot residuals and state errors
+plot = [true; true; false; false; false; false; true; true];     
+
+    % Run LKF/EKF, initializing with LKF after a large gap
+LKFRuns = [];
+EKFRuns = [];
+kStart = 1;
+for k = 1:length(kSec)
+    kEnd = kSec(k);
+
+    fprintf("Analyzing from t = %.3f to t  = %.3f", tMeas(kStart), tMeas(kEnd));
+
+        % Determine when to turn on EKF
+    if kEnd - kStart < 100 % Use only LKF
+        numMeas = kEnd - kStart;
+    else % Initialize with 100 LKF measurements, then switch to EKF
+        numMeas = 100;
+    end
+
+        % Run LKF
+    LKFRun = runLKF(X0, x0, P0, pConst, scConst, stations, X_50(kStart:kEnd,:), t_50(kStart:kEnd), tMeas(kStart), numMeas, 10, plot);
+    LKFRuns = [LKFRuns; LKFRun];
+    P0 = LKFRun.LKFOut.PEst{end};
+
+        % Run LKF if we have enough measurments to start
+    if numMeas == 100
+        t_start = LKFRun.t_LKF(end); t_end = tMeas(kEnd);
+        P_start = LKFRun.LKFOut.PEst{end}; X_start = LKFRun.X_LKF(:,end);
+
+        EKFRun = runEKF(X_start, P_start, pConst, scConst, stations, X_50(kStart:kEnd,:), t_50(kStart:kEnd), t_start, t_end, plot);
+        EKFRuns = [EKFRuns; EKFRun];
+
+        P0 = EKFRun.EKFOut.PEst{end};
+    end
+
+        % Reset for next set of measurements
+    kStart = kEnd + 1;
+    X0 = X_50(kStart,:)';
+    x0 = zeros(size(X0));
+    % Keep P0 unchanged, want to start with same uncertainty after each gap
+end
+
+return;
+
+        % Initialize with 100 measurements of an LKF
+LKFRun = runLKF(X0, x0, P0, pConst, scConst, stations, X_50, t_50, 0, 100, 10, plot);
+
+t_start = LKFRun.t_LKF(end); P_start = LKFRun.LKFOut.PEst{end}; 
+X_start = LKFRun.X_LKF(:,end);
+kEnd_EKF = find(tMeas <= 10*24*60*60, 1, 'last'); t_end = tMeas(kEnd_EKF);
+EKFRun = runEKF(X_start, P_start, pConst, scConst, stations, X_50, t_50, t_start, t_end, plot);
+
+
+
+
 
 
