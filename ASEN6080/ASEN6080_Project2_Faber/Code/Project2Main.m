@@ -169,21 +169,26 @@ Phi_3SOI = reshape(XPhi_3SOI(end, 8:end),7,7);
 P_3SOI = Phi_3SOI*P0*Phi_3SOI';
 
     % Calculate Bplane without SOI checker
-[BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+[BdotR_truth, BdotT_truth, X_crossing_truth, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
 
     % Plot BdotR and BdotT location + uncertainty ellipse
-titleText = sprintf("Part 1: B Plane Crossing Estimate from Truth Data");
-xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]";
-plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, 3, titleText, xLabel, yLabel, zLabel, 420);
+boundLevel = 3;
+titleText = sprintf("Part 1: B Plane Target Estimate from Truth Data");
+xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]"; 
+ellipseLabel = sprintf("\\pm %.0f\\sigma B plane target uncertainty, dummy P_0", boundLevel);
+ellipseColor = 'b';
+BVecLabel = sprintf("B Plane Target after propagating truth data: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR_truth, BdotT_truth);
+plotBPlane(BdotR_truth, BdotT_truth, X_crossing_truth, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 420, true);
 
 figure(420)
-hold on;
-idx = length(t_BPlane); offset = 1000;
-orbit = plot3(XPhi_BPlane(idx-offset:end,1), XPhi_BPlane(idx-offset:end,2), XPhi_BPlane(idx-offset:end,3), 'm--', 'DisplayName', "Modeled Orbit");
+nexttile(1)
+    hold on;
+    idx = length(t_BPlane); offset = 1000;
+    orbit = plot3(XPhi_BPlane(idx-offset:end,1), XPhi_BPlane(idx-offset:end,2), XPhi_BPlane(idx-offset:end,3), 'm--', 'DisplayName', "Modeled Orbit");
 
 % return
 
-%% Part 2: Estimate State with Known Target and Models
+%% Part 2: Estimate State with Known Target and Models with varying amounts of data
     % Set initial state estimate and deviation
 X0 = [scConst.X0_cart; scConst.C_R];
 % X0 = truthTraj.Xt_50(end,1:7)';
@@ -200,16 +205,10 @@ opt = odeset('RelTol', 1e-13, 'AbsTol', 1e-13);
 
     % Remake and populate stations structure
         % Make structure
-stations = makeStations(pConst, 3);
+stations = makeStations(pConst, 2);
         % Read and populate observations
 data2a = readmatrix('..\Data\Project2a_Obs.txt');
 [tMeas, stations] = readObsData(stations, data2a);
-
-    % Plot measurements
-titleText = sprintf("Part 2: Provided Measurement Data");
-xLabel = "Time [sec]"; 
-yLabel = ["\rho [km]", "\rhoDot [km/s]"];
-plotMeasurements(stations, titleText, xLabel, yLabel);
 
         % Propagate station states
 for k = 1:length(tMeas)
@@ -222,71 +221,250 @@ for k = 1:length(tMeas)
     end
 end
 
-    % Create new truth data for first 50 days
-kEnd_truth = find(tMeas <= 50*24*60*60, 1, 'last'); 
-[t_50, X_50] = ode45(@(t,X)orbitEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd_truth), truthTraj.Xt_50(1,1:7)', opt);
+    % Plot measurements
+titleText = sprintf("Part 2: Provided Measurement Data");
+xLabel = "Time [sec]"; 
+yLabel = ["\rho [km]", "\rhoDot [km/s]"];
+plotMeasurements(stations, titleText, xLabel, yLabel);
 
-    % Determine cutoffs between LKF and EKF, i.e. when a large measurement
-    % gap happens
-dt = diff(tMeas); % Find time between measurements
-med_dt = median(dt); % Find median time gap
-kSec = find(dt > med_dt); % Pull out when time gaps are larger than the median
-
-    % Configure plotting
-        % Only plot residuals and state errors
-plot = [true; true; false; false; false; false; true; true];     
-
-    % Run LKF/EKF, initializing with LKF after a large gap
+    % Loop over days of interest
+days = [50; 100; 150; 200];
+dayColors = ['b', 'r', 'c', 'k'];
 LKFRuns = [];
 EKFRuns = [];
-kStart = 1;
-for k = 1:length(kSec)
-    kEnd = kSec(k);
+t_Combined = [];
+X_Combined = [];
+PEst_Combined = {};
+prefits_Combined = [];
+postfits_Combined = [];
+for k = 1:length(days)
+    fprintf("\n--- Analyzing %.0f days of data ---\n", days(k));
 
-    fprintf("Analyzing from t = %.3f to t  = %.3f", tMeas(kStart), tMeas(kEnd));
+        % Create new truth data for the specified number of days
+    if k == 1
+        kStart = 1;   
+    else
+        kStart = kEnd + 1;
+    end
+    kEnd_truth = find(tMeas <= days(k)*24*60*60, 1, 'last'); 
 
-        % Determine when to turn on EKF
-    if kEnd - kStart < 100 % Use only LKF
-        numMeas = kEnd - kStart;
-    else % Initialize with 100 LKF measurements, then switch to EKF
-        numMeas = 100;
+    XPhi_0 = [truthTraj.Xt_50(1,1:7)'; reshape(eye(length(X0)),length(X0)^2,1)];
+    [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd_truth), XPhi_0, opt);
+    X_days = XPhi_days(:,1:7);
+
+        % Properly initialize filters
+    if k == 1
+        X0_i = X0;
+        x0_i = x0;
+        P0_i = P0;
+    else
+        X0_i = X_days(kStart, :)';
+        x0_i = x0;
+        P0_i = 0.5*P0; % Start new segment with high uncertainty to avoid saturation
     end
 
-        % Run LKF
-    LKFRun = runLKF(X0, x0, P0, pConst, scConst, stations, X_50(kStart:kEnd,:), t_50(kStart:kEnd), tMeas(kStart), numMeas, 10, plot);
-    LKFRuns = [LKFRuns; LKFRun];
-    P0 = LKFRun.LKFOut.PEst{end};
-
-        % Run LKF if we have enough measurments to start
-    if numMeas == 100
-        t_start = LKFRun.t_LKF(end); t_end = tMeas(kEnd);
-        P_start = LKFRun.LKFOut.PEst{end}; X_start = LKFRun.X_LKF(:,end);
-
-        EKFRun = runEKF(X_start, P_start, pConst, scConst, stations, X_50(kStart:kEnd,:), t_50(kStart:kEnd), t_start, t_end, plot);
-        EKFRuns = [EKFRuns; EKFRun];
-
-        P0 = EKFRun.EKFOut.PEst{end};
+        % Determine cutoffs between LKF and EKF, i.e. when a large measurement
+        % gap happens
+    dt = diff(t_days); % Find time between measurements
+    med_dt = median(dt); % Find median time gap
+    kSec = [find(dt > med_dt); kEnd_truth]; % Pull out when time gaps are larger than the median
+    
+        % Configure plotting
+            % Only plot residuals and state errors w/ bounds
+    plotBool = [false; false; false; false; false; false; false; false];     
+    
+        % Run LKF/EKF, initializing with LKF after a large gap
+    % LKFRuns = [];
+    % EKFRuns = [];
+    % t_Combined = [];
+    % X_Combined = [];
+    % PEst_Combined = {};
+    % prefits_Combined = [];
+    % postfits_Combined = [];
+    % X0_i = X0;
+    % x0_i = x0;
+    % P0_i = P0;
+    n = 100;
+    % kStart = 1;
+    if k == 1
+        start = 1;
+    else
+        start = sec + 1;
     end
 
-        % Reset for next set of measurements
-    kStart = kEnd + 1;
-    X0 = X_50(kStart,:)';
-    x0 = zeros(size(X0));
-    % Keep P0 unchanged, want to start with same uncertainty after each gap
+    for sec = start:length(kSec)
+        kEnd = kSec(sec);
+    
+        if tMeas(kStart) == tMeas(kEnd) % Only 1 measurement
+            continue;
+        end
+
+        fprintf("\n---- Filtering from t = %.3f to t  = %.3f ----\n", tMeas(kStart), tMeas(kEnd));
+    
+            % Determine when to turn on EKF
+        if kEnd - kStart < n % Use only LKF
+            numMeas = kEnd - kStart;
+        else % Initialize with n LKF measurements, then switch to EKF
+            numMeas = n;
+        end
+    
+        % if k == 3
+        %     buh = 1;
+        % end
+    
+            % Run LKF
+        LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days(kStart:kEnd,:), t_days(kStart:kEnd), tMeas(kStart), numMeas, 10, plotBool);
+        LKFRuns = [LKFRuns; LKFRun];
+        P0_i = LKFRun.LKFOut.PEst{end};
+    
+            % Accumulate data
+        t_Combined = [t_Combined; LKFRun.t_LKF];
+        X_Combined = [X_Combined, LKFRun.X_LKF];
+        PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
+        prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
+        postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+    
+            % Run LKF if we have enough measurments to start
+        if numMeas == n
+            t_start = LKFRun.t_LKF(end); t_end = tMeas(kEnd);
+
+            if t_start == t_end % Only 1 measurement
+                continue;
+            end
+            
+            P_start = LKFRun.LKFOut.PEst{end}; X_start = LKFRun.X_LKF(:,end);
+    
+            EKFRun = runEKF(X_start, P_start, pConst, scConst, stations, X_days(kStart:kEnd,:), t_days(kStart:kEnd), t_start, t_end, plotBool);
+            EKFRuns = [EKFRuns; EKFRun];
+    
+            P0_i = EKFRun.EKFOut.PEst{end};
+    
+                    % Accumulate data
+            t_Combined = [t_Combined; EKFRun.t_EKF];
+            X_Combined = [X_Combined, EKFRun.X_EKF];
+            PEst_Combined = [PEst_Combined, EKFRun.EKFOut.PEst];
+            prefits_Combined = [prefits_Combined, EKFRun.EKFOut.prefit_res];
+            postfits_Combined = [postfits_Combined, EKFRun.EKFOut.postfit_res];
+        end
+    
+            % Reset for next set of measurements
+        if sec < length(kSec)
+                % Update starting index
+            kStart = kEnd + 1;
+    
+                % Get starting covariance for next time
+            Phi = eye(length(X0));
+            XPhi_0 = [X_Combined(:,end); reshape(Phi, length(X0)^2,1)];
+            [~,XPhi] = ode45(@(t,XPhi)STMEOM_MuSunSRP(t,XPhi,pConst,scConst), [t_Combined(end), t_days(kStart)], XPhi_0, opt);
+            Phi = reshape(XPhi(end,(length(X0)+1):end), length(X0), length(X0));
+    
+            P0_i = Phi*PEst_Combined{end}*Phi';
+    
+                % Update X0 and x0
+            X0_i = X_days(kStart,:)';
+            x0_i = zeros(size(X0));
+        end
+    end
+    
+        % Calculate new X_ref vector
+    X_ref_Combined = [];
+    for kk = 1:length(t_Combined)
+        X_ref_Combined = [X_ref_Combined; X_days(t_days == t_Combined(kk),:)];
+    end
+    
+        % Calculate state error and uncertainty
+    stateError_Combined = X_Combined' - X_ref_Combined;
+    
+    sigma_Combined = [];
+    for kk = 1:length(PEst_Combined)
+        P = PEst_Combined{kk};
+    
+        sigPart = [];
+        for elem = 1:size(P,1)
+            sigPart = [sigPart, sqrt(P(elem,elem))];
+        end
+    
+        sigma_Combined = [sigma_Combined; sigPart];
+    end
+    
+    titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
+    xLabel = "Time [sec]"; 
+    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    colors = ['b', 'r'];
+    plotResiduals(t_Combined, prefits_Combined, titleText, xLabel, yLabel, colors);
+
+    titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
+    xLabel = "Time [sec]"; 
+    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    colors = ['b', 'r'];
+    plotResiduals(t_Combined, postfits_Combined, titleText, xLabel, yLabel, colors);
+
+    titleText = sprintf("Part 2: State error over %.0f days", days(k));
+    xLabel = "Time [sec]";
+    yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
+              "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]", ...
+              "C_R error [n.d.]"];
+    plotStateError(t_Combined, stateError_Combined, t_Combined, sigma_Combined, 3, titleText, xLabel, yLabel);
+    
+    titleText = sprintf("Part 2: Nominal vs. Estimated State over %.3f days", t_Combined(end)/(24*60*60));
+    xLabel = "Time [sec]";
+    yLabel = ["X [km]", "Y [km]", "Z [km]", ...
+              "Xdot [km/s]", "Ydot [km/s]", "Zdot [km/s]", ...
+              "C_R [n.d.]"];
+    plotStateError(t_Combined, X_Combined', [], [], [], titleText, xLabel, yLabel);
+    for kk = 1:size(X_days,2)
+        nt = nexttile(kk);
+            hold on; grid on;
+            plot(t_days, X_days(:,kk),'k--','DisplayName',"Nominal Orbit");
+    end
+    
+    %% Part 2: Bplane Implementation
+    fprintf("\n---- Calculating B Plane ----\n")
+    
+        % Set up ODE events for sphere of influence
+    opt.Events = @(t,X)SOICheck(t,X,pConst);
+    
+        % Define function handle for integration
+    DynFunc = @(t,XPhi)STMEOM_MuSunSRP(t,XPhi,pConst,scConst);
+    
+        % Integrate to 3 SOI
+    XPhi_0 = [X_Combined(:,end); reshape(eye(7), 49, 1)];
+    P0_Bplane = PEst_Combined{end};
+    tspan_3SOI = (t_Combined(end):1000:300*24*60*60)'; % Add time up to 300 days in sec
+    [t_3SOI, XPhi_3SOI] = ode45(@(t,XPhi)DynFunc(t,XPhi), tspan_3SOI, XPhi_0, opt);
+    Phi_3SOI = reshape(XPhi_3SOI(end, 8:end),7,7);
+    P_3SOI = Phi_3SOI*P0_Bplane*Phi_3SOI';
+    
+        % Calculate Bplane without SOI checker
+    [BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+    
+        % Plot BdotR and BdotT location + uncertainty ellipse
+    if k == 1
+        newFig = true;
+    else
+        newFig = false;
+    end
+
+    boundLevel = 3;
+    titleText = sprintf("Part 2: B Plane Target Estimate from Estimated State");
+    xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]"; 
+    ellipseLabel = sprintf("\\pm %.0f\\sigma B plane target uncertainty, %.3f days of data", boundLevel, t_Combined(end)/(24*60*60));
+    ellipseColor = dayColors(k);
+    BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \n\tBdotR = %.4e km,\n\tBdotT = %.4e km", t_Combined(end)/(24*60*60), BdotR, BdotT);
+    plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig);
+    
+    % figure(69)
+    % hold on;
+    % idx = length(t_BPlane); offset = 200;
+    % orbit = plot3(XPhi_BPlane(idx-offset:end,1), XPhi_BPlane(idx-offset:end,2), XPhi_BPlane(idx-offset:end,3), 'm--', 'DisplayName', "Propagated Orbit");
+
 end
 
-return;
-
-        % Initialize with 100 measurements of an LKF
-LKFRun = runLKF(X0, x0, P0, pConst, scConst, stations, X_50, t_50, 0, 100, 10, plot);
-
-t_start = LKFRun.t_LKF(end); P_start = LKFRun.LKFOut.PEst{end}; 
-X_start = LKFRun.X_LKF(:,end);
-kEnd_EKF = find(tMeas <= 10*24*60*60, 1, 'last'); t_end = tMeas(kEnd_EKF);
-EKFRun = runEKF(X_start, P_start, pConst, scConst, stations, X_50, t_50, t_start, t_end, plot);
-
-
-
-
+% titleText = sprintf("Part 2: B Plane Target Estimate from Truth Data");
+xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]"; 
+ellipseLabel = sprintf("\\pm %.0f\\sigma B plane target uncertainty, 200 days of data", boundLevel);
+ellipseColor = 'g';
+BVecLabel = sprintf("\nB Plane Target from truth data: \n\tBdotR = %.4e km,\n\tBdotT = %.4e km", BdotR_truth, BdotT_truth);
+plotBPlane(BdotR_truth, BdotT_truth, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, false);
 
 

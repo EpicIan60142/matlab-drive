@@ -1,4 +1,4 @@
-function fig = plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, figNum)
+function fig = plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, figNum, newFig)
 % Plots the location of the B vector in the B plane for a problem as well
 % as the true crossing point and 3 sigma uncertainty
 %   Inputs:
@@ -35,7 +35,7 @@ earthY = earthX_s*sin(theta0) + earthY_s*cos(theta0);
 earthZ = pConst.Ri*earthZ_s;
 
     % Convert B vector to ECI coordinates
-BVec = STR2ECI'*[0; BdotT; BdotR];
+BVec = STR2ECI*[0; BdotT; BdotR];
 
     % Define helper variables
 theta = linspace(0, 2*pi, 100);
@@ -75,41 +75,87 @@ ellipse.z = coords(3,:);
 
     % Make Bplane object
 N = 10;
-s = zeros(1,N);
-t = linspace(0,2*BdotT,N);
-r = linspace(0,2*BdotR,N);
+% s = zeros(1,N);
+mag = 1.25*max(BdotT, BdotR);
+t = linspace(0,mag,N);
+r = linspace(0,mag,N);
 
-% points = [s;t;r];
-% points = STR2ECI*points;
-% A = STR2ECI(1,1); B = STR2ECI(2,1); C = STR2ECI(3,1); D = 0;
-% [X_Bplane, Y_Bplane] = meshgrid(points(1,:),points(2,:));
-% Z_Bplane = -1./C*(A*X_Bplane + B*Y_Bplane + D);
+A = 0; B = 0; C = 1; D = 0; % Pull out normal vector
+[T_Bplane, R_Bplane] = meshgrid(t, r);
+S_Bplane = -1./C*(A*T_Bplane + B*R_Bplane + D);
+
+coords = zeros(3,10,10);
+coords(1,:,:) = S_Bplane;
+coords(2,:,:) = T_Bplane;
+coords(3,:,:) = R_Bplane;
+
+coords = tensorprod(STR2ECI',coords,1,1);
 
     % Make labels
-BVecLabel = sprintf("B Plane Target: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR, BdotT);
+% BVecLabel = sprintf("B Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR, BdotT);
 crossingLabel = sprintf("Trajectory propagated to LTOF");
-uncertLabel = sprintf("+/- %.0f\\sigma B plane crossing uncertainty", boundLevel);
+% uncertLabel = sprintf("+/- %.0f\\sigma B plane crossing uncertainty", boundLevel);
 
     % Plot the Bplane!
-fig = figure(figNum);
-hold on; grid on; axis equal
-title(titleText, 'FontSize', 12)
-    % Plot Earth
-earth = surf(earthX, earthY, earthZ, 'FaceAlpha', 0.5);
-set(earth,'FaceColor','texturemap','cdata',I,'edgecolor','none');
-    % Plot B plane target
-Bvec = quiver3(0,0,0,BVec(1),BVec(2),BVec(3),1,'Filled','b-','LineWidth',2);
-    % Plot STR axes
-Svec = quiver3(0,0,0,STR2ECI(1,1),STR2ECI(2,1),STR2ECI(3,1), pConst.Ri, 'filled', 'b--', 'LineWidth', 2);
-Tvec = quiver3(0,0,0,STR2ECI(1,2),STR2ECI(2,2),STR2ECI(3,2), pConst.Ri, 'filled', 'r--', 'LineWidth', 2);
-Rvec = quiver3(0,0,0,STR2ECI(1,3),STR2ECI(2,3),STR2ECI(3,3), pConst.Ri, 'filled', 'k--', 'LineWidth', 2);
-    % Plot B plane crossing and uncertainty
-crossing = plot3(X_crossing(1), X_crossing(2), X_crossing(3),'kx', 'MarkerSize', 10);
-uncert = plot3(ellipse.x, ellipse.y, ellipse.z, 'r-');
-    % Plot B plane
-% Bplane = surf(X_Bplane, Y_Bplane, Z_Bplane, 'EdgeColor', 'k', 'FaceColor', 'g', 'FaceAlpha', 0.4);
-    % Labels and legend
-xlabel(xLabel); ylabel(yLabel); zlabel(zLabel); view([30 35]);
-legend([Bvec, crossing, uncert, Svec, Tvec, Rvec], [BVecLabel, crossingLabel, uncertLabel, "S Vector", "T Vector", "R Vector"], 'location', 'northwest');
+fig = figure(figNum); fig.WindowState = 'maximized';
+if newFig
+    tl = tiledlayout(1,3);
+    title(tl, titleText, 'FontSize', 12)
+    nexttile(1)
+        hold on; grid on; axis equal
+        title("B plane in ECI frame")
+            % Plot Earth
+        earth = surf(earthX, earthY, earthZ, 'FaceAlpha', 0.5);
+        set(earth,'FaceColor','texturemap','cdata',I,'edgecolor','none');
+        
+            % Plot STR axes
+        Svec = quiver3(0,0,0,STR2ECI(1,1),STR2ECI(2,1),STR2ECI(3,1), pConst.Ri, 'filled', 'b--', 'LineWidth', 2);
+        Tvec = quiver3(0,0,0,STR2ECI(1,2),STR2ECI(2,2),STR2ECI(3,2), pConst.Ri, 'filled', 'r--', 'LineWidth', 2);
+        Rvec = quiver3(0,0,0,STR2ECI(1,3),STR2ECI(2,3),STR2ECI(3,3), pConst.Ri, 'filled', 'k--', 'LineWidth', 2);
+            % Plot B plane crossing and uncertainty
+        crossing = plot3(X_crossing(1), X_crossing(2), X_crossing(3),'kx', 'MarkerSize', 10);
+        % plot3(ellipse.x, ellipse.y, ellipse.z, '-', 'Color', ellipseColor, 'DisplayName', ellipseLabel);
+            % Plot B plane target
+        % quiver3(0,0,0,BVec(1),BVec(2),BVec(3),1,'Filled','-','Color', ellipseColor, 'LineWidth',2,'DisplayName',BVecLabel);
+            % Plot B plane
+        % Bplane = surf(X_Bplane, Y_Bplane, Z_Bplane, 'EdgeColor', 'none', 'FaceColor', 'g', 'FaceAlpha', 0.4);
+        Bplane = surf(squeeze(coords(1,:,:)),squeeze(coords(2,:,:)),squeeze(coords(3,:,:)), 'EdgeColor', 'none', 'FaceColor', 'g', 'FaceAlpha', 0.4);
+            % Labels and viewing angle
+        xlabel(xLabel); ylabel(yLabel); zlabel(zLabel); view([-15 25]);
+    nexttile(2)
+        hold on; grid on;
+        title("Bplane in STR frame")
+            % Bplane target
+        plot(BdotT, BdotR, 'x', 'Color', ellipseColor);
+            % Uncertainty
+        plot(ellipseRot.t + BdotT, ellipseRot.r + BdotR, '-', 'Color', ellipseColor);
+        xlabel("T [km]"); ylabel("R [km]");
+    
+    lgnd = legend([crossing, Svec, Tvec, Rvec, Bplane], [crossingLabel, "S Vector", "T Vector", "R Vector", "B Plane"], 'location', 'layout');
+    lgnd.Layout.Tile = 3;
+
+    nexttile(1)
+        hold on;
+            % Plot B plane target in ECI
+        quiver3(0,0,0,BVec(1),BVec(2),BVec(3),1,'Filled','-','Color', ellipseColor, 'LineWidth',2, 'DisplayName', BVecLabel);
+            % Plot uncertainty in ECI
+        plot3(ellipse.x, ellipse.y, ellipse.z, '-', 'Color', ellipseColor, 'DisplayName', ellipseLabel);    
+else
+        % Allow for dynamic B plane target and uncertainty plotting
+    nexttile(1)
+        hold on;
+            % Plot B plane target in ECI
+        quiver3(0,0,0,BVec(1),BVec(2),BVec(3),1,'Filled','-','Color', ellipseColor, 'LineWidth',2, 'DisplayName', BVecLabel);
+            % Plot uncertainty in ECI
+        plot3(ellipse.x, ellipse.y, ellipse.z, '-', 'Color', ellipseColor, 'DisplayName', ellipseLabel);   
+    nexttile(2)
+        hold on;
+            % Plot B plane target in STR
+        plot(BdotT, BdotR, 'x', 'Color', ellipseColor);
+            % Plot uncertainty in STR
+        plot(ellipseRot.t + BdotT, ellipseRot.r + BdotR, '-', 'Color', ellipseColor);
+end
+
+drawnow;
 
 end

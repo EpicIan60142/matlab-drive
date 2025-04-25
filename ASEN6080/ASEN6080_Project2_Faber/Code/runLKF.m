@@ -168,7 +168,14 @@ if plot(4)
 end
         %% Plot covariance ellipsoids
     fig_CovEllipsoids = [];
+
+try
     P_end = PEst_LKF{end};
+catch
+    PEst_LKF
+    pause
+end
+
 if plot(5) 
     elements = 1:3;
     P_pos = P_end(elements, elements); mu = X_LKF(elements,end);
