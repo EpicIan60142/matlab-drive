@@ -40,7 +40,7 @@ BVec = STR2ECI*[0; BdotT; BdotR];
     % Define helper variables
 theta = linspace(0, 2*pi, 100);
 
-    % Find eigenvectors and values of P_BPlane in R and T directions
+    % Find eigenvectors and values of P_BPlane in T and R directions
 [eigVec, Lambda] = eig(P_BPlane(2:3, 2:3));
 
     % Find axis scales
@@ -123,7 +123,7 @@ if newFig
             % Labels and viewing angle
         xlabel(xLabel); ylabel(yLabel); zlabel(zLabel); view([-15 25]);
     nexttile(2)
-        hold on; grid on;
+        hold on; grid on; axis equal
         title("Bplane in STR frame")
             % Bplane target
         plot(BdotT, BdotR, 'x', 'Color', ellipseColor);

@@ -77,7 +77,8 @@ That = cross(Shat, Nhat)/norm(cross(Shat, Nhat)); % In ECI coords!
 Rhat = cross(Shat, That); % In ECI coords!
 
         % B vector
-B = b*cross(Shat, What);
+% B = b*cross(Shat, What);
+B = rVec - dot(rVec, vVec)*vVec;
 
         % DCM from STR to ECI frame
 STR2ECI = [Shat, That, Rhat];

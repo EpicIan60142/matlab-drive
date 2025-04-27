@@ -62,7 +62,7 @@ end
     %% Iterate LKF until residual RMS doesn't change
 RMS_prefit_LKF = 1e99;
 RMS_postfit_LKF = 1e99; % Start RMS with a bogus value
-LKFTolerance = 1e-3; % any ratio less than this is considered converged
+LKFTolerance = 1e-2; % any ratio less than this is considered converged
 maxLKFRuns = numIter; % Cap number of runs
 LKFRuns = 0;
 % fig_LKFPreRes = [];

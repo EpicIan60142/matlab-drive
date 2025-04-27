@@ -54,7 +54,7 @@ XEst = [];
 [t, Y, R, Xs, vis] = processStations(stations);
 
     % Specify number of measurements to process
-if ~exist("numMeas", 'var')
+if isempty(numMeas)
     numMeas = length(Y);
 end
 
@@ -67,7 +67,6 @@ x_im1 = x0;
 P_im1 = P0;
 Phi_full = eye(n);
 for k = kStart+1:kStart+numMeas
-
         % Read next time, measurement, and measurement covariance
     t_i = t(k);
     Y_i = Y{k};
