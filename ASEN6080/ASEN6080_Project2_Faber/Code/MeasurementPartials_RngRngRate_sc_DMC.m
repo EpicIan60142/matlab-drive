@@ -1,4 +1,4 @@
-function Htilde = MeasurementPartials_RngRngRate_sc(X,X_s)
+function Htilde = MeasurementPartials_RngRngRate_sc_DMC(X,X_s)
 % Function that outputs the measurement partials matrix for orbital
 % measurements using range and range rate for spacecraft
 %   Inputs:

@@ -83,13 +83,13 @@ for k = kStart+1:kStart+numMeas
     u = randn(3,1);
     u = chol(Qu)*u; % Scale noise properly
 
-        % Continue to integrate Phi(t0, tf) for iteration purposes
-    Phi_full((n-2):n,(n-2):n) = eye(3); % Reset process noise part
-    XPhi_full = [Xstar_im1; reshape(Phi_full,n^2,1)];
-    [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_MuSunSRP_DMC(t,XPhi,B,u,pConst,scConst), [t_im1 t_i], XPhi_full, opt);
-    Phi_full = reshape(XPhi_full(end,n+1:end), n, n);
-
-    Phi = [Phi; {Phi_full}];
+    %     % Continue to integrate Phi(t0, tf) for iteration purposes
+    % Phi_full((n-2):n,(n-2):n) = eye(3); % Reset process noise part
+    % XPhi_full = [Xstar_im1; reshape(Phi_full,n^2,1)];
+    % [~, XPhi_full] = ode45(@(t,XPhi)STMEOM_MuSunSRP_DMC(t,XPhi,B,u,pConst,scConst), [t_im1 t_i], XPhi_full, opt);
+    % Phi_full = reshape(XPhi_full(end,n+1:end), n, n);
+    % 
+    % Phi = [Phi; {Phi_full}];
 
         % Integrate Xstar and Phi from t_im1 to t_i
     Phi_im1 = eye(n);
@@ -97,6 +97,10 @@ for k = kStart+1:kStart+numMeas
     [~, XPhi_i] = ode45(@(t,XPhi)STMEOM_MuSunSRP_DMC(t,XPhi,B,u,pConst,scConst), [t_im1 t_i], XPhi_im1, opt);
     Xstar_i = XPhi_i(end,1:n)';
     Phi_i = reshape(XPhi_i(end,n+1:end),size(Phi_im1));
+
+    Phi_full((n-2):n,(n-2):n) = eye(3);
+    Phi_full = Phi_full*Phi_i;
+    Phi = [Phi; {Phi_full}];
 
         % Make Q_i
     Q_i = makeQ_DMC(B, Qu, t_i, t_im1);

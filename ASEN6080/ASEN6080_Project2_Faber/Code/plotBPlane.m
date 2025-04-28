@@ -77,8 +77,8 @@ ellipse.z = coords(3,:);
 N = 10;
 % s = zeros(1,N);
 mag = 1.25*max(BdotT, BdotR);
-t = linspace(0,mag,N);
-r = linspace(0,mag,N);
+t = linspace(0,sign(BdotT)*mag,N);
+r = linspace(0,sign(BdotR)*mag,N);
 
 A = 0; B = 0; C = 1; D = 0; % Pull out normal vector
 [T_Bplane, R_Bplane] = meshgrid(t, r);

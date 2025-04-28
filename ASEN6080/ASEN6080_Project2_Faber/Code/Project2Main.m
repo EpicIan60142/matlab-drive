@@ -211,7 +211,7 @@ switch choice
         X0 = [scConst.X0_cart; scConst.C_R];
         % X0 = truthTraj.Xt_50(end,1:7)';
         x0 = zeros(size(X0));
-        
+
             % Set initial covariances
         sigR = 100; % km
         sigV = 0.1; % km/s
@@ -259,9 +259,45 @@ switch choice
         prefits_Combined = [];
         postfits_Combined = [];
         
+        XPhi_0 = [truthTraj.Xt_50(1,1:7)'; reshape(eye(length(X0)),length(X0)^2,1)];
+        [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas, XPhi_0, opt);
+        X_days = XPhi_days(:,1:7);
+        Phi_days = XPhi_days(:,8:end);
+        Phi_ext = {};
+        for k = 1:length(t_days)
+            Phi_ext = [Phi_ext; reshape(Phi_days(k,:), 7, 7)];
+        end
+
         for k = 1:length(days)
             fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - 50, days(k));
         
+                 % Properly initialize filters
+            if k == 1
+                X0_i = X0;
+                x0_i = x0;
+                P0_i = P0;
+            else
+                X0_i = X_days(kEnd_truth + 1, :)';
+                x0_i = x0;
+
+                     % Find STM to propagate X and P between sections
+                        % Filter section
+                Phi_tStartEnd = LKFRuns(end).LKFOut.Phi_full;
+                Phi_tStartEnd = Phi_tStartEnd(1:7,1:7);
+                        % Prefilter section
+                Phi_t0tStart = Phi_ext{kStart};
+                        % Overall time STM from t0 to t
+                Phi_t0t = Phi_ext{kEnd_truth + 1};
+                Phi = (Phi_tStartEnd^-1)*(Phi_t0tStart^-1)*Phi_t0t;
+                    % Propagate P
+                P = PEst_Combined{end};
+                P = P(1:7,1:7);
+                P0_i = 10000*Phi*P*Phi'; % Inflate propagated uncertainty a bit to avoid saturation
+
+                % P0_i = 0.5*P0; % Start new segment with high uncertainty to avoid saturation
+            end
+
+
                 % Create new truth data for the specified number of days
             if k == 1
                 kStart = 1;   
@@ -270,20 +306,11 @@ switch choice
             end
             kEnd_truth = find(tMeas <= days(k)*24*60*60, 1, 'last'); 
         
-            XPhi_0 = [truthTraj.Xt_50(1,1:7)'; reshape(eye(length(X0)),length(X0)^2,1)];
-            [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd_truth), XPhi_0, opt);
-            X_days = XPhi_days(:,1:7);
+            % XPhi_0 = [truthTraj.Xt_50(1,1:7)'; reshape(eye(length(X0)),length(X0)^2,1)];
+            % [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd_truth), XPhi_0, opt);
+            % X_days = XPhi_days(:,1:7);
         
-                % Properly initialize filters
-            if k == 1
-                X0_i = X0;
-                x0_i = x0;
-                P0_i = P0;
-            else
-                X0_i = X_days(kStart, :)';
-                x0_i = x0;
-                P0_i = 0.5*P0; % Start new segment with high uncertainty to avoid saturation
-            end
+           
         
             %     % Determine cutoffs between LKF and EKF, i.e. when a large measurement
             %     % gap happens
@@ -594,7 +621,8 @@ switch choice
         xlim([0 2.5e7]); ylim([0 3e8]);
         
             % Process data
-        days = linspace(25,250,10); %[50; 100; 150; 200; 250];
+        % days = linspace(50,250,5); %[50; 100; 150; 200; 250];
+        days = linspace(50,250,5); 
         dayColors = ['b', 'r', 'c', 'm', 'k'];
         LKFRuns = [];
         EKFRuns = [];
@@ -604,43 +632,72 @@ switch choice
         prefits_Combined = [];
         postfits_Combined = [];
         
-        for k = 1:length(days)
+        XPhi_0 = [X0(1:7); reshape(eye(7),7^2,1)];
+        [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas, XPhi_0, opt);
+        X_days = XPhi_days(:,1:7);
+        Phi_days = XPhi_days(:,8:end);
+        Phi_ext = {};
+        for k = 1:length(t_days)
+            Phi_ext = [Phi_ext; reshape(Phi_days(k,:), 7, 7)];
+        end
+
+        X_comp = X_days';
+
+        for k = 1:0*length(days) + 2
             fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - median(diff(days)), days(k));
         
-                % Create new truth data for the specified number of days
+                % Properly initialize filters for this section
+            if k == 1
+                X0_i = X0;
+                x0_i = x0;
+                P0_i = P0;
+            else
+                % X0_i = [X_days(kEnd_truth + 1, :)'; zeros(3,1)];
+                % x0_i = x0;
+                    % Find STM to propagate X and P between sections
+                        % Filter section
+                Phi_tStartEnd = LKFRuns(end).LKFOut.Phi{end};
+                Phi_tStartEnd = Phi_tStartEnd(1:7,1:7);
+                        % Prefilter section
+                Phi_t0tStart = Phi_ext{kStart};
+                        % Overall time STM from t0 to t
+                Phi_t0t = Phi_ext{kEnd_truth + 1};
+                Phi = (Phi_tStartEnd^-1)*(Phi_t0tStart^-1)*Phi_t0t;
+                    % Propagate P
+                P = PEst_Combined{end};
+                P = P(1:7,1:7);
+                P0_i = 1000*Phi*P*Phi';
+                % P0_i = P0; % Start new segment with high uncertainty to avoid saturation
+
+                    % Propagate x and make X0
+                x_filt = LKFRuns(end).LKFOut.xEst(1:7,end);
+                x_filt = Phi*x_filt;
+                x_error = LKFRuns(end).X_LKF(1:7,end) - X_days(kEnd_truth,:)';
+                x_error = Phi*x_error;
+                X0_i = X_days(kEnd_truth + 1, :)' + x_error;
+                X0_i = [X0_i; zeros(3,1)];
+                
+            end
+            
+                % Update indices for the current section
             if k == 1
                 kStart = 1;   
             else
                 kStart = kEnd_truth + 1;
             end
             kEnd_truth = find(tMeas <= days(k)*24*60*60, 1, 'last'); 
-        
-            XPhi_0 = [X0(1:7); reshape(eye(7),7^2,1)];
-            [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas(1:kEnd_truth), XPhi_0, opt);
-            X_days = XPhi_days(:,1:7);
-        
-                % Properly initialize filters
-            if k == 1
-                X0_i = X0;
-                x0_i = x0;
-                P0_i = P0;
-            else
-                X0_i = [X_days(kStart, :)'; zeros(3,1)];
-                x0_i = x0;
-                P0_i = 0.5*P0; % Start new segment with high uncertainty to avoid saturation
-            end
-            
+
                 % Configure plotting
                     % Only plot residuals and state errors w/ bounds
-            plotBool = [true; true; false; false; false; false; false; true];     
+            plotBool = [false; false; false; false; false; false; false; true];     
             
                 % Run LKF on data
             numMeas = kEnd_truth - kStart;
         
-            tau_x = 1*60*60; tau_y = 1*60*60; tau_z = 1*60*60;
+            tau_x = 0.5*60*60; tau_y = 0.5*60*60; tau_z = 0.5*60*60;
             B = diag([tau_x^-1, tau_y^-1, tau_z^-1]);
         
-            sig_u = 5e-13;
+            sig_u = 7.5e-13;
             Qu = diag([sig_u^2, sig_u^2, sig_u^2]);
 
             P0_i = blkdiag(P0_i, Qu);

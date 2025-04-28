@@ -26,6 +26,13 @@ function fig = plotStateError(t_state, stateError, t_sigma, sigma, boundLevel, t
 
 n = size(stateError,2);
 
+days = [50; 100; 150; 200];
+idx = [];
+for k = 1:length(days)
+    add = find(t_state <= days(k)*24*60*60, 1, 'last');
+    idx = [idx; add];
+end
+
 fig = figure; tl = tiledlayout(3,3); ax = [];
 title(tl, titleText)
 for k = 1:size(stateError,2)
@@ -39,12 +46,17 @@ for k = 1:size(stateError,2)
         end
         xlabel(xLabel); ylabel(yLabel(k))
         % ylim([-4*max(sigma(:,k)) 4*max(sigma(:,k))]);
+        if k == 1
+            markers = xline(t_state(idx), 'k--');
+        else
+            xline(t_state(idx), 'k--')
+        end
 end
 linkaxes(ax, 'x');
 
 if ~isempty(sigma)
     uncertLabel = sprintf("+/- %.0f\\sigma Uncertainty", boundLevel);
-    lgnd = legend([a, b], ["State Error", uncertLabel], 'Location', 'layout');
+    lgnd = legend([a, b, markers(1)], ["State Error", uncertLabel, "50 Day Markers"], 'Location', 'layout');
     lgnd.Layout.Tile = n + 1;
 end
 

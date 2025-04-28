@@ -46,8 +46,8 @@ r_iscHat = rVec_isc/r_isc;
 
     % Define non-trivial partials
 pointMassEarth = (-pConst.mu_Earth/r^3)*(eye(3) - 3*(rHat*rHat'));
-pointMassSun = (pConst.mu_Sun/r_isc^3)*(3*(r_iscHat*r_iscHat'));
-SRP = ((-C_R*d^2*Pphi*scConst.AtoM)/r_isc^3)*(3*(r_iscHat*r_iscHat'));
+pointMassSun = (pConst.mu_Sun/r_isc^3)*(3*(r_iscHat*r_iscHat') - eye(3));
+SRP = ((-C_R*d^2*Pphi*scConst.AtoM)/r_isc^3)*(3*(r_iscHat*r_iscHat') - eye(3));
 
     % Create matrix blocks for convenience
 dynamicsBlock = pointMassEarth + pointMassSun + SRP;
