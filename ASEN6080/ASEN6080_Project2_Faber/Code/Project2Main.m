@@ -623,7 +623,8 @@ switch choice
         
             % Process data
         % days = linspace(50,250,5); %[50; 100; 150; 200; 250];
-        days = linspace(50,250,5); 
+        % days = linspace(100,300,3); 
+        days = 300;
         dayColors = ['b', 'r', 'c', 'm', 'k'];
         LKFRuns = [];
         EKFRuns = [];
@@ -644,9 +645,13 @@ switch choice
 
         X_comp = X_days';
 
-        for k = 1:0*length(days) + 2
-            fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - median(diff(days)), days(k));
-        
+        for k = 1:length(days)
+            if length(days) == 1
+                fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - days(k), days(k));
+            else
+                fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - median(diff(days)), days(k));
+            end
+
                 % Update indices for the current section
             if k == 1
                 kStart = 1;   
@@ -661,7 +666,7 @@ switch choice
                 x0_i = x0;
                 P0_i = P0;
             else
-                X_last = X_Combined(:,end);
+                X_last = X_Combined(1:7,end);
 
                     % Propagate final state estimate forward
                 tspan = tMeas((kStart-1):kEnd_truth);
@@ -716,11 +721,27 @@ switch choice
                 % Run LKF/IEKF on data
             numMeas = kEnd_truth - kStart;
         
+                    % Set up DMC
+                        % LKF
+            tau_x_LKF = 1*60*60; tau_y_LKF = 1*60*60; tau_z_LKF = 1*60*60;
+            B_LKF = diag([tau_x_LKF^-1, tau_y_LKF^-1, tau_z_LKF^-1]);
+            sig_u_LKF = 2.5e-12;
+            Qu_LKF = diag([sig_u_LKF^2, sig_u_LKF^2, sig_u_LKF^2]);
+            P0_i_LKF = blkdiag(P0_i, Qu_LKF);
+            X0_i_LKF = [X0_i; zeros(3,1)];
+            x0_i_LKF = zeros(size(X0_i_LKF));
+                        % EKF
+            tau_x_EKF = 1*60*60; tau_y_EKF = 1*60*60; tau_z_EKF = 1*60*60;
+            B_EKF = diag([tau_x_EKF^-1, tau_y_EKF^-1, tau_z_EKF^-1]);
+            sig_u_EKF = 2.5e-13;
+            Qu_EKF = diag([sig_u_EKF^2, sig_u_EKF^2, sig_u_EKF^2]);
+            P0_i_EKF = blkdiag(P0_i, Qu_EKF);
+
             numLKF = 100;
             LKFiter = 10;
             if numMeas < numLKF
                     % Only run LKF
-                LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numMeas, LKFiter, plotBool_LKF);
+                LKFRun = runLKF_DMC(X0_i_LKF, x0_i_LKF, P0_i_LKF, B_LKF, Qu_LKF, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numMeas, LKFiter, plotBool_LKF);
                 LKFRuns = [LKFRuns; LKFRun];
 
                     % Accumulate data
@@ -731,7 +752,7 @@ switch choice
                 postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
             else
                     % Run LKF for a few measurements
-                LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numLKF, LKFiter, plotBool_LKF);
+                LKFRun = runLKF_DMC(X0_i_LKF, x0_i_LKF, P0_i_LKF, B_LKF, Qu_LKF, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numLKF, LKFiter, plotBool_LKF);
                 LKFRuns = [LKFRuns; LKFRun];
 
                     % Accumulate data
@@ -743,7 +764,8 @@ switch choice
 
                     % Run IEKF for the rest
                 X0_EKF = X_Combined(:,end); P0_EKF = PEst_Combined{end}; t_EKF = t_Combined(end);
-                EKFRun = runIEKF(X0_EKF, P0_EKF, pConst, scConst, stations, X_days, t_days, t_EKF, tMeas(kEnd_truth), plotBool_EKF);
+                X0_EKF(8:10) = zeros(3,1); P0_EKF(8:10,8:10) = Qu_EKF;
+                EKFRun = runIEKF_DMC(X0_EKF, P0_EKF, B_EKF, Qu_EKF, pConst, scConst, stations, X_days, t_days, t_EKF, tMeas(kEnd_truth), plotBool_EKF);
                 EKFRuns = [EKFRuns; EKFRun];
 
                     % Accumulate data
@@ -753,6 +775,44 @@ switch choice
                 prefits_Combined = [prefits_Combined, EKFRun.EKFOut.prefit_res];
                 postfits_Combined = [postfits_Combined, EKFRun.EKFOut.postfit_res];
             end
+
+            % numLKF = 100;
+            % LKFiter = 10;
+            % if numMeas < numLKF
+            %         % Only run LKF
+            %     LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numMeas, LKFiter, plotBool_LKF);
+            %     LKFRuns = [LKFRuns; LKFRun];
+            % 
+            %         % Accumulate data
+            %     t_Combined = [t_Combined; LKFRun.t_LKF];
+            %     X_Combined = [X_Combined, LKFRun.X_LKF];
+            %     PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
+            %     prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
+            %     postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+            % else
+            %         % Run LKF for a few measurements
+            %     LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numLKF, LKFiter, plotBool_LKF);
+            %     LKFRuns = [LKFRuns; LKFRun];
+            % 
+            %         % Accumulate data
+            %     t_Combined = [t_Combined; LKFRun.t_LKF];
+            %     X_Combined = [X_Combined, LKFRun.X_LKF];
+            %     PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
+            %     prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
+            %     postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+            % 
+            %         % Run IEKF for the rest
+            %     X0_EKF = X_Combined(:,end); P0_EKF = PEst_Combined{end}; t_EKF = t_Combined(end);
+            %     EKFRun = runIEKF(X0_EKF, P0_EKF, pConst, scConst, stations, X_days, t_days, t_EKF, tMeas(kEnd_truth), plotBool_EKF);
+            %     EKFRuns = [EKFRuns; EKFRun];
+            % 
+            %         % Accumulate data
+            %     t_Combined = [t_Combined; EKFRun.t_EKF];
+            %     X_Combined = [X_Combined, EKFRun.X_EKF];
+            %     PEst_Combined = [PEst_Combined, EKFRun.EKFOut.PEst];
+            %     prefits_Combined = [prefits_Combined, EKFRun.EKFOut.prefit_res];
+            %     postfits_Combined = [postfits_Combined, EKFRun.EKFOut.postfit_res];
+            % end
 
             % tau_x = 0.5*60*60; tau_y = 0.5*60*60; tau_z = 0.5*60*60;
             % B = diag([tau_x^-1, tau_y^-1, tau_z^-1]);
@@ -798,11 +858,11 @@ switch choice
             colors = ['b', 'r'];
             plotResiduals(t_Combined/(24*60*60), postfits_Combined, titleText, xLabel, yLabel, colors);
         
-            % titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
-            % xLabel = "Time [sec]";
-            % yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
-            % colors = ['b', 'b', 'b'];
-            % plotW(t_Combined, X_Combined, titleText, xLabel, yLabel, colors);
+            titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
+            xLabel = "Time [days]";
+            yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
+            colors = ['b', 'b', 'b'];
+            plotW(t_Combined/(24*60*60), X_Combined, titleText, xLabel, yLabel, colors);
             
             %% Part 3: Bplane Implementation
             fprintf("\n---- Calculating B Plane ----\n")

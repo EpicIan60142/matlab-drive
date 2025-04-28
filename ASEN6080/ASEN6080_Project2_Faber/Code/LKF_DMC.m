@@ -117,6 +117,10 @@ for k = kStart+1:kStart+numMeas
             Q_iW_2, zeros(3,1), Q_iW_3
           ];
 
+    if t_i - t_im1 > 60
+        Q_i = 1*Q_i;
+    end
+
         % Time update
     x_i = Phi_i*x_im1;
     P_i = Phi_i*P_im1*Phi_i' + Q_i;

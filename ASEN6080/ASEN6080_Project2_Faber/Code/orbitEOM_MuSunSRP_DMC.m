@@ -1,4 +1,4 @@
-function dX = orbitEOM_MuSunSRP_DMC(t,X,B,pConst,scConst)
+function dX = orbitEOM_MuSunSRP_DMC(t,X,B,u,pConst,scConst)
 % Function for the equations of motion for a body in orbit around a central
 % body including earth and sun point masses and SRP (cannonball model)
 %   Inputs:
@@ -46,7 +46,7 @@ a_pointMassEarth = -(pConst.mu_Earth/(r^3))*rVec;
 a_pointMassSun = pConst.mu_Sun*((rVec_isc/(r_isc^3)) - (RVec_ic/(R_ic^3)));
 a_SRP = -C_R*(Pphi/(rSRP^2))*scConst.AtoM*(rVec_isc/r_isc);
 
-rDD = a_pointMassEarth + a_pointMassSun + a_SRP;
+rDD = a_pointMassEarth + a_pointMassSun + a_SRP + [wX; wY; wZ];
 
 C_Rdot = 0; % C_R is constant
 

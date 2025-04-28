@@ -43,10 +43,10 @@ dPhi_mat = A*Phi;
 dPhi = reshape(dPhi_mat,n^2,1); % Need to convert back to a column vector...
 
 X0 = [x;y;z;xDot;yDot;zDot;C_R;wX;wY;wZ];
-dX = orbitEOM_MuSunSRP_DMC(t,X0,B,pConst,scConst);
+dX = orbitEOM_MuSunSRP_DMC(t,X0,B,u,pConst,scConst);
 
-C = [zeros(6,3); eye(3); zeros(1,3)];
-dX = dX + 0*C*u;
+% C = [zeros(6,3); eye(3); zeros(1,3)];
+% dX = dX + 1*C*u;
 
 dXPhi = [dX; dPhi];
 
