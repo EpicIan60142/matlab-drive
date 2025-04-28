@@ -101,25 +101,32 @@ for k = 2:kEnd
     K_i = P_i*Htilde_i'*(Htilde_i*P_i*Htilde_i' + R_i)^-1;
     
         % Measurement and reference orbit update
+    x_im = zeros(size(Xstar_i));
     x_i = K_i*y_i;
     Xstar_i = Xstar_i + x_i;
 
     mat = K_i*Htilde_i; % Intermediate matrix for sizing
     P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
 
-    % P_pre = P_i;
-
         % Repeat measurement update up to 5 times
-    for iter = 1:5
+    % for iter = 1:10
+    iter = 0;
+    boundLevel = 5;
+    while ((abs(y_i(1)) > boundLevel*sqrt(R_i(1,1))) || (abs(y_i(2)) > boundLevel*sqrt(R_i(2,2))))
+        if iter >= 999
+            % fprintf("\n\t\tIEKF iterated %.0f times..., y_i = [%.3f, %.3f]", iter, y_i)
+            % fprintf("\nBreaking out")
+            break;
+        end
             % Build y_i
         yExp = [];
         for kk = 1:meas
             genMeas = generateRngRngRate(Xstar_i, Xstat(:,meas), stations(statVis(kk)).elMask, true); % Ignore elevation mask
             yExp = [yExp; genMeas(1:2)];
         end
-    
+
         y_i = Y_i - yExp;
-    
+
             % Build Htilde_i
         Htilde_i = [];
         for kk = 1:meas
@@ -128,14 +135,19 @@ for k = 2:kEnd
 
             % Build K_i
         K_i = P_i*Htilde_i'*(Htilde_i*P_i*Htilde_i' + R_i)^-1;
-        
+
             % Measurement and reference orbit update
-        x_i = K_i*(y_i - Htilde_i*(zeros(size(x_i))-x_i));
+        x_i = x_im + K_i*(y_i - Htilde_i*(x_im-x_i));
         Xstar_i = Xstar_i + x_i;
-    
+
         mat = K_i*Htilde_i; % Intermediate matrix for sizing
         P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
 
+        iter = iter + 1;
+    end
+
+    if iter > 0
+        fprintf("\n\t\tt = %.0f: IEKF iterated %.0f times! y_i = [%.3e, %.3e]", t_i, iter, abs(y_i))
     end
 
         % Accumulate data to save

@@ -68,8 +68,8 @@ X_EKF = EKFOut.XEst;
 RMS_prefit_EKF = calcResidualRMS(prefit_res_EKF, stations, statVis_EKF, true(1,2));
 RMS_postfit_EKF = calcResidualRMS(postfit_res_EKF, stations, statVis_EKF, true(1,2));
 
-fprintf("Prefit RMS: %.4f\n", RMS_postfit_EKF);
-fprintf("Postfit RMS: %.4f\n", RMS_postfit_EKF);
+fprintf("\nPrefit RMS: %.4f", RMS_postfit_EKF);
+fprintf("\nPostfit RMS: %.4f", RMS_postfit_EKF);
 
     %% Plot residuals and Covariance Trace
 if plot(1)

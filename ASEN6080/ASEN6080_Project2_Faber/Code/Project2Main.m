@@ -543,7 +543,8 @@ switch choice
         scConst = getSCConst(3);
         
             % Set initial state estimate and deviation
-        X0 = [scConst.X0_cart; scConst.C_R; zeros(3,1)];
+        % X0 = [scConst.X0_cart; scConst.C_R; zeros(3,1)];
+        X0 = [scConst.X0_cart; scConst.C_R];
         x0 = zeros(size(X0));
         
             % Set initial covariances
@@ -646,39 +647,6 @@ switch choice
         for k = 1:0*length(days) + 2
             fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - median(diff(days)), days(k));
         
-                % Properly initialize filters for this section
-            if k == 1
-                X0_i = X0;
-                x0_i = x0;
-                P0_i = P0;
-            else
-                % X0_i = [X_days(kEnd_truth + 1, :)'; zeros(3,1)];
-                % x0_i = x0;
-                    % Find STM to propagate X and P between sections
-                        % Filter section
-                Phi_tStartEnd = LKFRuns(end).LKFOut.Phi{end};
-                Phi_tStartEnd = Phi_tStartEnd(1:7,1:7);
-                        % Prefilter section
-                Phi_t0tStart = Phi_ext{kStart};
-                        % Overall time STM from t0 to t
-                Phi_t0t = Phi_ext{kEnd_truth + 1};
-                Phi = (Phi_tStartEnd^-1)*(Phi_t0tStart^-1)*Phi_t0t;
-                    % Propagate P
-                P = PEst_Combined{end};
-                P = P(1:7,1:7);
-                P0_i = 1000*Phi*P*Phi';
-                % P0_i = P0; % Start new segment with high uncertainty to avoid saturation
-
-                    % Propagate x and make X0
-                x_filt = LKFRuns(end).LKFOut.xEst(1:7,end);
-                x_filt = Phi*x_filt;
-                x_error = LKFRuns(end).X_LKF(1:7,end) - X_days(kEnd_truth,:)';
-                x_error = Phi*x_error;
-                X0_i = X_days(kEnd_truth + 1, :)' + x_error;
-                X0_i = [X0_i; zeros(3,1)];
-                
-            end
-            
                 % Update indices for the current section
             if k == 1
                 kStart = 1;   
@@ -687,31 +655,125 @@ switch choice
             end
             kEnd_truth = find(tMeas <= days(k)*24*60*60, 1, 'last'); 
 
+                % Properly initialize filters for this section
+            if k == 1
+                X0_i = X0;
+                x0_i = x0;
+                P0_i = P0;
+            else
+                X_last = X_Combined(:,end);
+
+                    % Propagate final state estimate forward
+                tspan = tMeas((kStart-1):kEnd_truth);
+                [t_days, X_days] = ode45(@(t,X)orbitEOM_MuSunSRP(t,X,pConst,scConst), tspan, X_last, opt);
+
+                % X0_i = X_days(kStart, :)';
+                X0_i = X_days(2,:)';
+                x0_i = zeros(size(X0_i));
+                P0_i = 0.5*P0;
+
+                %     % Find STM to propagate X and P between sections
+                %         % Filter section
+                % Phi_tStartEnd = LKFRuns(end).LKFOut.Phi{end};
+                % Phi_tStartEnd = Phi_tStartEnd(1:7,1:7);
+                %         % Prefilter section
+                % Phi_t0tStart = Phi_ext{kStart};
+                %         % Overall time STM from t0 to t
+                % Phi_t0t = Phi_ext{kEnd_truth + 1};
+                % Phi = (Phi_tStartEnd^-1)*(Phi_t0tStart^-1)*Phi_t0t;
+                %     % Propagate P
+                % P = PEst_Combined{end};
+                % P = P(1:7,1:7);
+                % P0_i = 1000*Phi*P*Phi';
+                % % P0_i = P0; % Start new segment with high uncertainty to avoid saturation
+                % 
+                %     % Propagate x and make X0
+                % x_filt = LKFRuns(end).LKFOut.xEst(1:7,end);
+                % x_filt = Phi*x_filt;
+                % x_error = LKFRuns(end).X_LKF(1:7,end) - X_days(kEnd_truth,:)';
+                % x_error = Phi*x_error;
+                % X0_i = X_days(kEnd_truth + 1, :)' + x_error;
+                % X0_i = [X0_i; zeros(3,1)];
+                
+            end
+            
+            %     % Update indices for the current section
+            % if k == 1
+            %     kStart = 1;   
+            % else
+            %     kStart = kEnd_truth + 1;
+            % end
+            % kEnd_truth = find(tMeas <= days(k)*24*60*60, 1, 'last'); 
+
                 % Configure plotting
                     % Only plot residuals and state errors w/ bounds
-            plotBool = [false; false; false; false; false; false; false; true];     
+                    % Order: [prefits; postfits; R trace; V trace; R
+                    %         Ellipsoid; V Ellipsoid; State Error, no
+                    %         bounds; State Error, 3 sigma bounds]
+            plotBool_LKF = [false; false; false; false; false; false; false; true];     
+            plotBool_EKF = [false; false; false; false; false; false; false; true]; 
             
-                % Run LKF on data
+                % Run LKF/IEKF on data
             numMeas = kEnd_truth - kStart;
         
-            tau_x = 0.5*60*60; tau_y = 0.5*60*60; tau_z = 0.5*60*60;
-            B = diag([tau_x^-1, tau_y^-1, tau_z^-1]);
-        
-            sig_u = 7.5e-13;
-            Qu = diag([sig_u^2, sig_u^2, sig_u^2]);
+            numLKF = 100;
+            LKFiter = 10;
+            if numMeas < numLKF
+                    % Only run LKF
+                LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numMeas, LKFiter, plotBool_LKF);
+                LKFRuns = [LKFRuns; LKFRun];
 
-            P0_i = blkdiag(P0_i, Qu);
-        
-            LKFRun = runLKF_DMC(X0_i, x0_i, P0_i, B, Qu, pConst, scConst, stations, X_days(kStart:kEnd_truth,:), t_days(kStart:kEnd_truth), tMeas(kStart), numMeas, 10, plotBool);
-            LKFRuns = [LKFRuns; LKFRun];
-        
-                % Accumulate data
-            t_Combined = [t_Combined; LKFRun.t_LKF];
-            X_Combined = [X_Combined, LKFRun.X_LKF];
-            PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
-            prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
-            postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+                    % Accumulate data
+                t_Combined = [t_Combined; LKFRun.t_LKF];
+                X_Combined = [X_Combined, LKFRun.X_LKF];
+                PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
+                prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
+                postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+            else
+                    % Run LKF for a few measurements
+                LKFRun = runLKF(X0_i, x0_i, P0_i, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numLKF, LKFiter, plotBool_LKF);
+                LKFRuns = [LKFRuns; LKFRun];
+
+                    % Accumulate data
+                t_Combined = [t_Combined; LKFRun.t_LKF];
+                X_Combined = [X_Combined, LKFRun.X_LKF];
+                PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
+                prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
+                postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+
+                    % Run IEKF for the rest
+                X0_EKF = X_Combined(:,end); P0_EKF = PEst_Combined{end}; t_EKF = t_Combined(end);
+                EKFRun = runIEKF(X0_EKF, P0_EKF, pConst, scConst, stations, X_days, t_days, t_EKF, tMeas(kEnd_truth), plotBool_EKF);
+                EKFRuns = [EKFRuns; EKFRun];
+
+                    % Accumulate data
+                t_Combined = [t_Combined; EKFRun.t_EKF];
+                X_Combined = [X_Combined, EKFRun.X_EKF];
+                PEst_Combined = [PEst_Combined, EKFRun.EKFOut.PEst];
+                prefits_Combined = [prefits_Combined, EKFRun.EKFOut.prefit_res];
+                postfits_Combined = [postfits_Combined, EKFRun.EKFOut.postfit_res];
+            end
+
+            % tau_x = 0.5*60*60; tau_y = 0.5*60*60; tau_z = 0.5*60*60;
+            % B = diag([tau_x^-1, tau_y^-1, tau_z^-1]);
+            % 
+            % sig_u = 7.5e-13;
+            % Qu = diag([sig_u^2, sig_u^2, sig_u^2]);
+            % 
+            % P0_i = blkdiag(P0_i, Qu);
+            % 
+            % LKFRun = runLKF_DMC(X0_i, x0_i, P0_i, B, Qu, pConst, scConst, stations, X_days(kStart:kEnd_truth,:), t_days(kStart:kEnd_truth), tMeas(kStart), numMeas, 10, plotBool);
+            % LKFRuns = [LKFRuns; LKFRun];
+            % 
+            %     % Accumulate data
+            % t_Combined = [t_Combined; LKFRun.t_LKF];
+            % X_Combined = [X_Combined, LKFRun.X_LKF];
+            % PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
+            % prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
+            % postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
             
+            
+
             sigma_Combined = [];
             for kk = 1:length(PEst_Combined)
                 P = PEst_Combined{kk};
@@ -725,22 +787,22 @@ switch choice
             end
             
             titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
-            xLabel = "Time [sec]"; 
+            xLabel = "Time [days]"; 
             yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
             colors = ['b', 'r'];
-            plotResiduals(t_Combined, prefits_Combined, titleText, xLabel, yLabel, colors);
+            plotResiduals(t_Combined/(24*60*60), prefits_Combined, titleText, xLabel, yLabel, colors);
         
             titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
-            xLabel = "Time [sec]"; 
+            xLabel = "Time [days]"; 
             yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
             colors = ['b', 'r'];
-            plotResiduals(t_Combined, postfits_Combined, titleText, xLabel, yLabel, colors);
+            plotResiduals(t_Combined/(24*60*60), postfits_Combined, titleText, xLabel, yLabel, colors);
         
-            titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
-            xLabel = "Time [sec]";
-            yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
-            colors = ['b', 'b', 'b'];
-            plotW(t_Combined, X_Combined, titleText, xLabel, yLabel, colors);
+            % titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
+            % xLabel = "Time [sec]";
+            % yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
+            % colors = ['b', 'b', 'b'];
+            % plotW(t_Combined, X_Combined, titleText, xLabel, yLabel, colors);
             
             %% Part 3: Bplane Implementation
             fprintf("\n---- Calculating B Plane ----\n")
