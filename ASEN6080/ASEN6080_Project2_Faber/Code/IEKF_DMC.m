@@ -136,7 +136,7 @@ for k = 2:kEnd
     iter = 0;
     boundLevel = 2;
     while ((abs(y_i(1)) > boundLevel*sqrt(R_i(1,1))) || (abs(y_i(2)) > boundLevel*sqrt(R_i(2,2))))
-        if iter >= 999
+        if iter >= 9999
             % fprintf("\n\t\tIEKF iterated %.0f times..., y_i = [%.3f, %.3f]", iter, y_i)
             % fprintf("\nBreaking out")
             break;
@@ -170,7 +170,7 @@ for k = 2:kEnd
     end
 
     if iter > 0
-        fprintf("\n\t\tt = %.0f: IEKF iterated %.0f times! y_i = [%.3e, %.3e]", t_i, iter, y_i)
+        fprintf("\n\t\tt = %.0f sec (%.3f days): IEKF iterated %.0f times! y_i = [%.3e, %.3e]", t_i, t_i/(24*60*60), iter, y_i)
     % else
     %     fprintf("\n\t\tt = %.0f: IEKF didn't iterate, y_i = [%.3e, %.3e]", t_i, iter, y_i)
     end

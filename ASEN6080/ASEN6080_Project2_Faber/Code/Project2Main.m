@@ -22,7 +22,7 @@ stations = makeStations(pConst, 2);
 opt = odeset('RelTol', 1e-13, 'AbsTol', 1e-13);
 
     %% Ask user for input
-menuText = sprintf("\n\t\tWelcome to Ian's ASEN 6080 Project 2 Code!" + ...
+menuText = sprintf("\n\t\tWelcome to Ian Faber's ASEN 6080 Project 2 Code!" + ...
                    "\nChoose an option to do by entering the corresponding number:" + ...
                    "\n\t1. Run Part 1: Dynamics, Measurements, and B Plane Verification" + ...
                    "\n\t2. Run Part 2: Estimating State with Known Target and Models" + ...
@@ -624,7 +624,7 @@ switch choice
             % Process data
         % days = linspace(50,250,5); %[50; 100; 150; 200; 250];
         % days = linspace(100,300,3); 
-        days = 300;
+        days = 250;
         dayColors = ['b', 'r', 'c', 'm', 'k'];
         LKFRuns = [];
         EKFRuns = [];
@@ -731,7 +731,7 @@ switch choice
             X0_i_LKF = [X0_i; zeros(3,1)];
             x0_i_LKF = zeros(size(X0_i_LKF));
                         % EKF
-            tau_x_EKF = 1*60*60; tau_y_EKF = 1*60*60; tau_z_EKF = 1*60*60;
+            tau_x_EKF = 0.8*60*60; tau_y_EKF = 0.8*60*60; tau_z_EKF = 0.8*60*60;
             B_EKF = diag([tau_x_EKF^-1, tau_y_EKF^-1, tau_z_EKF^-1]);
             sig_u_EKF = 2.5e-13;
             Qu_EKF = diag([sig_u_EKF^2, sig_u_EKF^2, sig_u_EKF^2]);
