@@ -122,7 +122,7 @@ for k = 2:kEnd
 
         % Build K_i
     K_i = P_i*Htilde_i'*(Htilde_i*P_i*Htilde_i' + R_i)^-1;
-    
+
         % Measurement and reference orbit update
     x_im = zeros(size(Xstar_i));
     x_i = K_i*y_i;
@@ -170,7 +170,11 @@ for k = 2:kEnd
     end
 
     if iter > 0
-        fprintf("\n\t\tt = %.0f sec (%.3f days): IEKF iterated %.0f times! y_i = [%.3e, %.3e]", t_i, t_i/(24*60*60), iter, y_i)
+        if iter == 1
+            fprintf("\n\t\tt = %.0f sec (%.3f days): IEKF iterated %.0f time! y_i = [%.3e, %.3e]", t_i, t_i/(24*60*60), iter, y_i)
+        else
+            fprintf("\n\t\tt = %.0f sec (%.3f days): IEKF iterated %.0f times! y_i = [%.3e, %.3e]", t_i, t_i/(24*60*60), iter, y_i)
+        end
     end
 
         % Accumulate data to save

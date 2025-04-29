@@ -1,4 +1,4 @@
-function fig = plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, figNum, newFig)
+function fig = plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, figNum, newFig, part)
 % Plots the location of the B vector in the B plane for a problem as well
 % as the true crossing point and 3 sigma uncertainty
 %   Inputs:
@@ -76,9 +76,16 @@ ellipse.z = coords(3,:);
     % Make Bplane object
 N = 10;
 % s = zeros(1,N);
-mag = 1.25*max(BdotT, BdotR);
-t = linspace(0,sign(BdotT)*mag,N);
-r = linspace(0,sign(BdotR)*mag,N);
+
+if part == 1 || part == 2
+    mag = 1.25*max(BdotT, BdotR);
+    t = linspace(0,sign(BdotT)*mag,N);
+    r = linspace(0,sign(BdotR)*mag,N);
+else
+    mag = 2.5*max(BdotT, BdotR);
+    t = linspace(-sign(BdotT)*mag,sign(BdotT)*mag,N);
+    r = linspace(-sign(BdotR)*mag,sign(BdotR)*mag,N);
+end
 
 A = 0; B = 0; C = 1; D = 0; % Pull out normal vector
 [T_Bplane, R_Bplane] = meshgrid(t, r);

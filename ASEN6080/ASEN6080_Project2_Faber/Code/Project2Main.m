@@ -195,7 +195,7 @@ switch choice
         ellipseLabel = sprintf("\\pm %.0f\\sigma B plane target uncertainty, dummy P_0", boundLevel);
         ellipseColor = 'b';
         BVecLabel = sprintf("B Plane Target after propagating truth data: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR_truth, BdotT_truth);
-        plotBPlane(BdotR_truth, BdotT_truth, X_crossing_truth, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 420, true);
+        plotBPlane(BdotR_truth, BdotT_truth, X_crossing_truth, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 420, true, 1);
         
         figure(420)
         nexttile(1)
@@ -491,7 +491,7 @@ switch choice
             % end
             
             %% Part 2: Bplane Implementation
-            fprintf("\n---- Calculating B Plane ----\n")
+            fprintf("\n---- Calculating B Plane for %.0f days ----\n", days(k))
             
                 % Set up ODE events for sphere of influence
             opt.Events = @(t,X)SOICheck(t,X,pConst);
@@ -523,7 +523,7 @@ switch choice
             ellipseLabel = sprintf("%.0f\\sigma B plane target uncertainty, %.3f days of data", boundLevel, t_Combined(end)/(24*60*60));
             ellipseColor = dayColors(k);
             BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", t_Combined(end)/(24*60*60), BdotR, BdotT);
-            plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig);
+            plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig, 2);
         
         end
 
@@ -534,7 +534,7 @@ switch choice
         ellipseLabel = sprintf("Scaled %.0f\\sigma B plane target uncertainty from 200 days of data", boundLevel);
         ellipseColor = 'g';
         BVecLabel = sprintf("\nB Plane Target from truth data: \nBdotR = %.4e km,\nBdotT = %.4e km", BdotR_truth, BdotT_truth);
-        plotBPlane(BdotR_truth, BdotT_truth, X_crossing, 1e-9*P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, false);
+        plotBPlane(BdotR_truth, BdotT_truth, X_crossing, 1e-9*P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, false, 2);
     case 3
         %% Part 3: Fit Data with Unknown Issues and No Truth
         fprintf("\nFitting Data with Unknown Issues and no Truth\n")
@@ -678,7 +678,9 @@ switch choice
                 % X0_i = X_days(kStart, :)';
                 X0_i = X_days(2,:)';
                 x0_i = zeros(size(X0_i));
-                P0_i = 0.5*P0;
+                % P0_i = 0.5*P0;
+                P = PEst_Combined{end};
+                P0_i = 1.5*P(1:7, 1:7);
 
                 %     % Find STM to propagate X and P between sections
                 %         % Filter section
@@ -847,26 +849,103 @@ switch choice
                 sigma_Combined = [sigma_Combined; sigPart];
             end
             
+            % titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
+            % xLabel = "Time [days]"; 
+            % yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+            % colors = ['b', 'r'];
+            % plotResiduals(t_Combined/(24*60*60), prefits_Combined, titleText, xLabel, yLabel, colors);
+            % 
+            % titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
+            % xLabel = "Time [days]"; 
+            % yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+            % colors = ['b', 'r'];
+            % plotResiduals(t_Combined/(24*60*60), postfits_Combined, titleText, xLabel, yLabel, colors);
+            % 
+            % titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
+            % xLabel = "Time [days]";
+            % yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
+            % colors = ['b', 'b', 'b'];
+            % plotW(t_Combined/(24*60*60), X_Combined, titleText, xLabel, yLabel, colors);
+            % 
+            % %% Part 3: Bplane Implementation
+            % fprintf("\n---- Calculating B Plane ----\n")
+            % 
+            %     % Set up ODE events for sphere of influence
+            % opt.Events = @(t,X)SOICheck(t,X,pConst);
+            % 
+            %     % Define function handle for integration
+            % DynFunc = @(t,XPhi)STMEOM_MuSunSRP(t,XPhi,pConst,scConst);
+            % 
+            %     % Integrate to 3 SOI
+            % XPhi_0 = [X_Combined(1:7,end); reshape(eye(7), 49, 1)];
+            % P0_Bplane = PEst_Combined{end};
+            % P0_Bplane = P0_Bplane(1:7,1:7);
+            % tspan_3SOI = (t_Combined(end):1000:300*24*60*60)'; % Add time up to 300 days in sec
+            % [t_3SOI, XPhi_3SOI] = ode45(@(t,XPhi)DynFunc(t,XPhi), tspan_3SOI, XPhi_0, opt);
+            % Phi_3SOI = reshape(XPhi_3SOI(end, 8:end),7,7);
+            % P_3SOI = Phi_3SOI*P0_Bplane*Phi_3SOI';
+            % 
+            %     % Calculate Bplane without SOI checker
+            % [BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+            % 
+            %     % Plot BdotR and BdotT location + uncertainty ellipse
+            % if k == 1
+            %     newFig = true;
+            % else
+            %     newFig = false;
+            % end
+            % 
+            % boundLevel = 3;
+            % titleText = sprintf("Part 3: B Plane Target Estimate from Estimated State");
+            % xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]"; 
+            % ellipseLabel = sprintf("%.0f\\sigma B plane target uncertainty, %.3f days of data", boundLevel, t_Combined(end)/(24*60*60));
+            % ellipseColor = dayColors(k);
+            % BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", t_Combined(end)/(24*60*60), BdotR, BdotT);
+            % plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig);
+            % 
+            % figure;
+            % hold on; grid on; axis equal;
+            % titleText = sprintf("Part 3: 3D Trajectory over %.3f days of data", t_Combined(end)/(24*60*60));
+            % title(titleText);    
+            % plot3(X_ref(:,1), X_ref(:,2), X_ref(:,3), 'k--')
+            % plot3(X_Combined(1,:), X_Combined(2,:), X_Combined(3,:), 'm--')
+            % plot3(0,0,0,'b.','MarkerSize', 50);
+            % xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
+            % view([30 35]);
+            % legend("Reference Trajectory", "Estimated Trajectory", "Earth", 'Location', 'best')
+
+        end
+
+            % Do plotting and Bplane calculation at specified days
+        days = linspace(50,250,5);
+        for k = 1:length(days)
+                % Find proper indices
+            % kStart = find(t_Combined/(24*60*60) >= days(k)-50, 1, 'first');
+            kEnd = find(t_Combined/(24*60*60) <= days(k), 1, 'last');
+
+            idx = 1:kEnd;
+
+                % Plot residuals and W's
             titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
             xLabel = "Time [days]"; 
             yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
             colors = ['b', 'r'];
-            plotResiduals(t_Combined/(24*60*60), prefits_Combined, titleText, xLabel, yLabel, colors);
+            plotResiduals(t_Combined(idx)/(24*60*60), prefits_Combined(:,idx), titleText, xLabel, yLabel, colors);
         
             titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
             xLabel = "Time [days]"; 
             yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
             colors = ['b', 'r'];
-            plotResiduals(t_Combined/(24*60*60), postfits_Combined, titleText, xLabel, yLabel, colors);
+            plotResiduals(t_Combined(idx)/(24*60*60), postfits_Combined(:,idx), titleText, xLabel, yLabel, colors);
         
             titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
             xLabel = "Time [days]";
             yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
             colors = ['b', 'b', 'b'];
-            plotW(t_Combined/(24*60*60), X_Combined, titleText, xLabel, yLabel, colors);
+            plotW(t_Combined(idx)/(24*60*60), X_Combined(:,idx), titleText, xLabel, yLabel, colors);
             
             %% Part 3: Bplane Implementation
-            fprintf("\n---- Calculating B Plane ----\n")
+            fprintf("\n---- Calculating B Plane for t = %.0f days ----\n", days(k))
             
                 % Set up ODE events for sphere of influence
             opt.Events = @(t,X)SOICheck(t,X,pConst);
@@ -875,10 +954,10 @@ switch choice
             DynFunc = @(t,XPhi)STMEOM_MuSunSRP(t,XPhi,pConst,scConst);
             
                 % Integrate to 3 SOI
-            XPhi_0 = [X_Combined(1:7,end); reshape(eye(7), 49, 1)];
-            P0_Bplane = PEst_Combined{end};
+            XPhi_0 = [X_Combined(1:7,kEnd); reshape(eye(7), 49, 1)];
+            P0_Bplane = PEst_Combined{kEnd};
             P0_Bplane = P0_Bplane(1:7,1:7);
-            tspan_3SOI = (t_Combined(end):1000:300*24*60*60)'; % Add time up to 300 days in sec
+            tspan_3SOI = (t_Combined(kEnd):1000:300*24*60*60)'; % Add time up to 300 days in sec
             [t_3SOI, XPhi_3SOI] = ode45(@(t,XPhi)DynFunc(t,XPhi), tspan_3SOI, XPhi_0, opt);
             Phi_3SOI = reshape(XPhi_3SOI(end, 8:end),7,7);
             P_3SOI = Phi_3SOI*P0_Bplane*Phi_3SOI';
@@ -896,23 +975,28 @@ switch choice
             boundLevel = 3;
             titleText = sprintf("Part 3: B Plane Target Estimate from Estimated State");
             xLabel = "X [km]"; yLabel = "Y [km]"; zLabel = "Z [km]"; 
-            ellipseLabel = sprintf("%.0f\\sigma B plane target uncertainty, %.3f days of data", boundLevel, t_Combined(end)/(24*60*60));
+            ellipseLabel = sprintf("%.0f\\sigma B plane target uncertainty, %.3f days of data", boundLevel, t_Combined(kEnd)/(24*60*60));
             ellipseColor = dayColors(k);
-            BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", t_Combined(end)/(24*60*60), BdotR, BdotT);
-            plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig);
+            BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", t_Combined(kEnd)/(24*60*60), BdotR, BdotT);
+            plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig, 3);
         
-            figure;
-            hold on; grid on; axis equal;
-            titleText = sprintf("Part 3: 3D Trajectory over %.3f days of data", t_Combined(end)/(24*60*60));
-            title(titleText);    
-            plot3(X_ref(:,1), X_ref(:,2), X_ref(:,3), 'k--')
-            plot3(X_Combined(1,:), X_Combined(2,:), X_Combined(3,:), 'm--')
-            plot3(0,0,0,'b.','MarkerSize', 50);
-            xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
-            view([30 35]);
-            legend("Reference Trajectory", "Estimated Trajectory", "Earth", 'Location', 'best')
+            % figure;
+            % hold on; grid on; axis equal;
+            % titleText = sprintf("Part 3: 3D Trajectory over %.3f days of data", t_Combined(end)/(24*60*60));
+            % title(titleText);    
+            % plot3(X_ref(idx,1), X_ref(idx,2), X_ref(idx,3), 'k--')
+            % plot3(X_Combined(1,idx), X_Combined(2,idx), X_Combined(3,idx), 'm--')
+            % plot3(0,0,0,'b.','MarkerSize', 50);
+            % xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
+            % view([30 35]);
+            % legend("Reference Trajectory", "Estimated Trajectory", "Earth", 'Location', 'best')
 
         end
+
+            % Report final estimate of BdotR and BdotT to text file
+        result = sprintf("%.3f %.3f", BdotR, BdotT);
+        writematrix(result,"Faber_Ian_bplane.txt")
+
     case 4
         fprintf("\nHave a great day!\n")
     otherwise
