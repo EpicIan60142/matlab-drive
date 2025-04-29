@@ -133,8 +133,6 @@ for k = 2:kEnd
 
         % Repeat measurement update until residuals reach an acceptable
         % multiple of sigma
-    P_pre = P_i;
-    % for iter = 1:10
     iter = 0;
     boundLevel = 2;
     while ((abs(y_i(1)) > boundLevel*sqrt(R_i(1,1))) || (abs(y_i(2)) > boundLevel*sqrt(R_i(2,2))))
@@ -170,44 +168,9 @@ for k = 2:kEnd
 
         iter = iter + 1;
     end
-    
-    %     % Iterate a few more times to get rid of residual spikes at
-    %     % boundLevel*sigma
-    % if ((abs(y_i(1)) >= 0.9*boundLevel*sqrt(R_i(1,1))) || (abs(y_i(2)) == 0.9*boundLevel*sqrt(R_i(2,2)))) && iter < 9999 && iter > 0
-    %     for moreIter = 1:10
-    %             % Build y_i
-    %         yExp = [];
-    %         for kk = 1:meas
-    %             genMeas = generateRngRngRate(Xstar_i, Xstat(:,meas), stations(statVis(kk)).elMask, true); % Ignore elevation mask
-    %             yExp = [yExp; genMeas(1:2)];
-    %         end
-    % 
-    %         y_i = Y_i - yExp;
-    % 
-    %             % Build Htilde_i
-    %         Htilde_i = [];
-    %         for kk = 1:meas
-    %             Htilde_i = [Htilde_i; MeasurementPartials_RngRngRate_sc_DMC(Xstar_i, Xstat(:,meas))];
-    %         end
-    % 
-    %             % Build K_i
-    %         K_i = P_i*Htilde_i'*(Htilde_i*P_i*Htilde_i' + R_i)^-1;
-    % 
-    %             % Measurement and reference orbit update
-    %         x_i = x_im + K_i*(y_i - Htilde_i*(x_im-x_i));
-    %         Xstar_i = Xstar_i + x_i;
-    % 
-    %         mat = K_i*Htilde_i; % Intermediate matrix for sizing
-    %         P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
-    % 
-    %         iter = iter + 1;
-    %     end
-    % end
 
     if iter > 0
         fprintf("\n\t\tt = %.0f sec (%.3f days): IEKF iterated %.0f times! y_i = [%.3e, %.3e]", t_i, t_i/(24*60*60), iter, y_i)
-    % else
-    %     fprintf("\n\t\tt = %.0f: IEKF didn't iterate, y_i = [%.3e, %.3e]", t_i, iter, y_i)
     end
 
         % Accumulate data to save

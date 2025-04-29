@@ -621,6 +621,21 @@ switch choice
         fExp; nexttile(1); hold on;
         xlim([0 2.5e7]); ylim([0 3e8]);
         
+            % Propagate reference orbit
+        XPhi_0 = [X0(1:7); reshape(eye(7),7^2,1)];
+        [t_ref, XPhi_ref] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas, XPhi_0, opt);
+        X_ref = XPhi_ref(:,1:7);
+        Phi_ref = XPhi_ref(:,8:end);
+        Phi_ext = {};
+        for k = 1:length(t_ref)
+            Phi_ext = [Phi_ext; reshape(Phi_ref(k,:), 7, 7)];
+        end
+
+            % Initialize reference variables
+        X_days = X_ref;
+        t_days = t_ref;
+        % X_comp = X_days';
+
             % Process data
         % days = linspace(50,250,5); %[50; 100; 150; 200; 250];
         % days = linspace(100,300,3); 
@@ -633,18 +648,6 @@ switch choice
         PEst_Combined = {};
         prefits_Combined = [];
         postfits_Combined = [];
-        
-        XPhi_0 = [X0(1:7); reshape(eye(7),7^2,1)];
-        [t_days, XPhi_days] = ode45(@(t,X)STMEOM_MuSunSRP(t,X,pConst,scConst), tMeas, XPhi_0, opt);
-        X_days = XPhi_days(:,1:7);
-        Phi_days = XPhi_days(:,8:end);
-        Phi_ext = {};
-        for k = 1:length(t_days)
-            Phi_ext = [Phi_ext; reshape(Phi_days(k,:), 7, 7)];
-        end
-
-        X_comp = X_days';
-
         for k = 1:length(days)
             if length(days) == 1
                 fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - days(k), days(k));
@@ -831,8 +834,6 @@ switch choice
             % PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
             % prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
             % postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
-            
-            
 
             sigma_Combined = [];
             for kk = 1:length(PEst_Combined)
@@ -900,6 +901,17 @@ switch choice
             BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", t_Combined(end)/(24*60*60), BdotR, BdotT);
             plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig);
         
+            figure;
+            hold on; grid on; axis equal;
+            titleText = sprintf("Part 3: 3D Trajectory over %.3f days of data", t_Combined(end)/(24*60*60));
+            title(titleText);    
+            plot3(X_ref(:,1), X_ref(:,2), X_ref(:,3), 'k--')
+            plot3(X_Combined(1,:), X_Combined(2,:), X_Combined(3,:), 'm--')
+            plot3(0,0,0,'b.','MarkerSize', 50);
+            xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
+            view([30 35]);
+            legend("Reference Trajectory", "Estimated Trajectory", "Earth", 'Location', 'best')
+
         end
     case 4
         fprintf("\nHave a great day!\n")
