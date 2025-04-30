@@ -90,7 +90,7 @@ switch choice
         end
         
         figure;
-        title("Part 1: Truth orbit comparison until 200 days - Sun origin frame")
+        title("Part 1: Truth orbit comparison until 200 days - Sun origin frame (EME2000)")
         hold on; grid on; axis equal;
         plot3(0,0,0,'y.','MarkerSize', 50);
         plot3(X_test(1,1)+R_Earth(1), X_test(1,2)+R_Earth(2), X_test(1,3)+R_Earth(3),'m.','MarkerSize',30);
@@ -104,7 +104,7 @@ switch choice
         view([30 35])
         
         figure;
-        title("Part 1: Truth orbit comparison until 200 days - Earth origin frame")
+        title("Part 1: Truth orbit comparison until 200 days - Earth origin frame (ECI)")
         hold on; grid on; axis equal;
         plot3(0,0,0,'b.','MarkerSize', 50);
         plot3(X_test(1,1), X_test(1,2), X_test(1,3),'m.','MarkerSize',30);
@@ -927,13 +927,13 @@ switch choice
 
             if k == length(days)
                     % Plot residuals and W's
-                titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
+                titleText = sprintf("Pre-Fit Residuals (Before Iteration) over %.0f days", days(k)); 
                 xLabel = "Time [days]"; 
                 yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
                 colors = ['b', 'r'];
                 plotResiduals(t_Combined(idx)/(24*60*60), prefits_Combined(:,idx), titleText, xLabel, yLabel, colors);
             
-                titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
+                titleText = sprintf("Post-Fit Residuals (After Iteration) over %.0f days", days(k)); 
                 xLabel = "Time [days]"; 
                 yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
                 colors = ['b', 'r'];

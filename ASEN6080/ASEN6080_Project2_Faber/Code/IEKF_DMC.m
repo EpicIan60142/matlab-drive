@@ -131,6 +131,8 @@ for k = 2:kEnd
     mat = K_i*Htilde_i; % Intermediate matrix for sizing
     P_i = (eye(size(mat)) - mat)*P_i*(eye(size(mat)) - mat)' + K_i*R_i*K_i';
 
+    y_i_preIter = y_i;
+
         % Repeat measurement update until residuals reach an acceptable
         % multiple of sigma
     iter = 0;
@@ -183,7 +185,7 @@ for k = 2:kEnd
         % Accumulate data to save
     xEst = [xEst, x_i];
     PEst = [PEst, {P_i}];
-    prefit_res = [prefit_res, y_i];
+    prefit_res = [prefit_res, y_i_preIter];
     postfit_res = [postfit_res, y_i - Htilde_i*x_i];
     XEst = [XEst, Xstar_i];
 
