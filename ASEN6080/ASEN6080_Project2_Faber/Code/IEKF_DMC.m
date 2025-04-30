@@ -135,6 +135,9 @@ for k = 2:kEnd
         % multiple of sigma
     iter = 0;
     boundLevel = 2;
+    % rng(69);
+    % boundLevel = 1.5 + (3.5-1.5)*rand(1);
+    % boundLevel = randi([2 3], 1);
     while ((abs(y_i(1)) > boundLevel*sqrt(R_i(1,1))) || (abs(y_i(2)) > boundLevel*sqrt(R_i(2,2))))
         if iter >= 9999
             % fprintf("\n\t\tIEKF iterated %.0f times..., y_i = [%.3f, %.3f]", iter, y_i)

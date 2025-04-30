@@ -721,7 +721,7 @@ switch choice
                     %         Ellipsoid; V Ellipsoid; State Error, no
                     %         bounds; State Error, 3 sigma bounds]
             plotBool_LKF = [false; false; false; false; false; false; false; true];     
-            plotBool_EKF = [false; false; false; false; false; false; false; true]; 
+            plotBool_EKF = [false; false; false; false; false; false; true; false]; 
             
                 % Run LKF/IEKF on data
             numMeas = kEnd_truth - kStart;
@@ -925,25 +925,27 @@ switch choice
 
             idx = 1:kEnd;
 
-                % Plot residuals and W's
-            titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
-            xLabel = "Time [days]"; 
-            yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
-            colors = ['b', 'r'];
-            plotResiduals(t_Combined(idx)/(24*60*60), prefits_Combined(:,idx), titleText, xLabel, yLabel, colors);
-        
-            titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
-            xLabel = "Time [days]"; 
-            yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
-            colors = ['b', 'r'];
-            plotResiduals(t_Combined(idx)/(24*60*60), postfits_Combined(:,idx), titleText, xLabel, yLabel, colors);
-        
-            titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
-            xLabel = "Time [days]";
-            yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
-            colors = ['b', 'b', 'b'];
-            plotW(t_Combined(idx)/(24*60*60), X_Combined(:,idx), titleText, xLabel, yLabel, colors);
+            if k == length(days)
+                    % Plot residuals and W's
+                titleText = sprintf("Pre-Fit Residuals over %.0f days", days(k)); 
+                xLabel = "Time [days]"; 
+                yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+                colors = ['b', 'r'];
+                plotResiduals(t_Combined(idx)/(24*60*60), prefits_Combined(:,idx), titleText, xLabel, yLabel, colors);
             
+                titleText = sprintf("Post-Fit Residuals over %.0f days", days(k)); 
+                xLabel = "Time [days]"; 
+                yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+                colors = ['b', 'r'];
+                plotResiduals(t_Combined(idx)/(24*60*60), postfits_Combined(:,idx), titleText, xLabel, yLabel, colors);
+            
+                titleText = sprintf("Estimated DMC Accelerations over %.0f days", days(k));
+                xLabel = "Time [days]";
+                yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
+                colors = ['b', 'b', 'b'];
+                plotW(t_Combined(idx)/(24*60*60), X_Combined(:,idx), titleText, xLabel, yLabel, colors);
+            end
+
             %% Part 3: Bplane Implementation
             fprintf("\n---- Calculating B Plane for t = %.0f days ----\n", days(k))
             
