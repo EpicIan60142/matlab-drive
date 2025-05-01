@@ -1,4 +1,4 @@
-function stations = readObsData(stations,data)
+function [tMeas, stations] = readObsData(stations,data)
 % Parses provided data from a text file into a valid stations struct format
 % for Project 2
 %   - Inputs: 

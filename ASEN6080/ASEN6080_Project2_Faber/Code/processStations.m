@@ -48,7 +48,7 @@ for k = 1:length(stations)
         idx = [idx, find(stations(k).Xs(:,end) == stations(k).tMeas(kk))];
     end
     Xss = [Xss; stations(k).Xs(idx,:)];
-    viss = [viss; [stations(k).id*ones(size(stations(k).tMeas)), stations(k).tMeas]];
+    viss = [viss; [stations(k).idx*ones(size(stations(k).tMeas)), stations(k).tMeas]];
 end
 
     % Append time to R matrix tracker

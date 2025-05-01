@@ -21,7 +21,11 @@ function rms = calcResidualRMS(residuals, stations, vis, measInclude)
 
 rms_part = [];
 for kk = 1:size(residuals,2)
-    stat = vis{kk}; % Find which station was visible and made the measurement
+    try
+        stat = vis{kk}; % Find which station was visible and made the measurement
+    catch
+        stat = vis(kk);
+    end
     R = [];
     measCov = stations(stat(1)).R{stat(1)};
     if measInclude(1)

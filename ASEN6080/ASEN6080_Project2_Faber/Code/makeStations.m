@@ -40,13 +40,16 @@ stations = struct('X0', [], 'elMask', [], 'Xs', [], 'rho', [], 'rhoDot', [], ...
 
     % Set individual station parameters
 elMask = deg2rad([10; 10; 10]);
-sigRho = [5e-3; 5e-3; 5e-3]; % 5 m uncertainty in range, km
-sigRhoDot = [0.5e-6; 0.5e-6; 0.5e-6]; % 0.5 mm/s uncertainty in range rate, km/s
+
 latitudes = deg2rad([-35.398333; 40.427222; 35.247164]); % phi
 if part == 2
     longitudes = deg2rad([148.981944; -355.749444; 243.205]); % lambda
+    sigRho = [5e-3; 5e-3; 5e-3]; % 5 m uncertainty in range, km
+    sigRhoDot = [0.5e-6; 0.5e-6; 0.5e-6]; % 0.5 mm/s uncertainty in range rate, km/s
 else
     longitudes = deg2rad([148.981944; 355.749444; 243.205]); % lambda
+    sigRho = [5e-3; 5e-3; 5e-3]; % 5 m uncertainty in range, km
+    sigRhoDot = [0.5e-6; 0.5e-6; 0.5e-6]; % 0.5 mm/s uncertainty in range rate, km/s
 end
 altitudes = [0.691750; 0.834539; 1.07114904]; % km
 ids = ["DSS 34", "DSS 65", "DSS 13"];

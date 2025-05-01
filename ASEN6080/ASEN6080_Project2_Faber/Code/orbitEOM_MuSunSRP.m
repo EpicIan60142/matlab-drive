@@ -26,7 +26,7 @@ C_R = X(7);
 
     % Make vectors
 rVec = [x; y; z]; % Position vector from Earth to sc
-[RVec_ic, ~, ~, ~] = Ephem(pConst.initEpoch + (t/(24*60*60)), 3, 'EME2000');
+[RVec_ic, ~, ~, ~] = Ephem(pConst.initEpoch + (t/(24*60*60)), 3, 'EME2000'); % Convert seconds to JD - 1 JD = 24*60*60 sec
 RVec_ic = -RVec_ic; % Ephem gives vector from sun to Earth, but want Earth to sun
 rVec_isc = RVec_ic - rVec; % Vector from sc to Sun
 

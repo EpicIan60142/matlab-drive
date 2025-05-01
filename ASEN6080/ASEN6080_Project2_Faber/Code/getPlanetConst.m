@@ -28,6 +28,7 @@ constants.mu_Sun = mu_Sun;
 
     % Planetary parameters
 constants.Ri = 6378.1363; % Earth, km
+constants.RSOI = 925000; % Earth, km
 constants.wEarth = 7.29211585275553e-5; % Earth, rad/s
 
     % Other parameters
