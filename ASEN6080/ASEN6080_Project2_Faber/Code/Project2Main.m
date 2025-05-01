@@ -1019,7 +1019,17 @@ switch choice
 
         end
 
-            % Report final estimate of BdotR and BdotT to text file
+        %% Part 3: Initial epoch state estimate
+        plotBool_Batch = [true; true; false; false; false; false; false; true];
+        kEnd = 230;
+
+        BatchRun = runBatch(X0, x0, P0, pConst, scConst, stations, X_ref, tMeas, 60, opt, 10, true(1,2), plotBool_Batch, kEnd);
+
+        X0_batch = BatchRun.X_batchFilt(1,:)'
+
+
+
+        %% Part 3: Report final estimate of BdotR and BdotT to text file
         result = sprintf("%.3f %.3f", BdotR, BdotT);
         writematrix(result,"Faber_Ian_bplane_overwrite.txt")
 
