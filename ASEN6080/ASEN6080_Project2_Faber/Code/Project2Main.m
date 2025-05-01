@@ -186,7 +186,7 @@ switch choice
         P_3SOI = Phi_3SOI*P0*Phi_3SOI';
         
             % Calculate Bplane without SOI checker
-        [BdotR_truth, BdotT_truth, X_crossing_truth, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+        [BdotR_truth, BdotT_truth, ~, ~, ~, X_crossing_truth, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
         
             % Plot BdotR and BdotT location + uncertainty ellipse
         boundLevel = 3;
@@ -508,7 +508,7 @@ switch choice
             P_3SOI = Phi_3SOI*P0_Bplane*Phi_3SOI';
             
                 % Calculate Bplane without SOI checker
-            [BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+            [BdotR, BdotT, ~, ~, ~, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
             
                 % Plot BdotR and BdotT location + uncertainty ellipse
             if k == 1
@@ -557,8 +557,9 @@ switch choice
         opt = odeset('RelTol', 1e-13, 'AbsTol', 1e-13);
         
             % Remake and populate stations structure
+        part = 3;
                 % Make structure
-        stations = makeStations(pConst, 3);
+        stations = makeStations(pConst, part);
                 % Read and populate observations
         data2a = readmatrix('..\Data\Project2b_Obs.txt');
         [tMeas, stations] = readObsData(stations, data2a);
@@ -648,6 +649,7 @@ switch choice
         PEst_Combined = {};
         prefits_Combined = [];
         postfits_Combined = [];
+        iterations_Combined = [];
         for k = 1:length(days)
             if length(days) == 1
                 fprintf("\n--- Filtering from %.0f to %.0f days of data ---\n", days(k) - days(k), days(k));
@@ -755,6 +757,7 @@ switch choice
                 PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
                 prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
                 postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+                iterations_Combined = [iterations_Combined, zeros(1,length(LKFRun.t_LKF))];
             else
                     % Run LKF for a few measurements
                 LKFRun = runLKF_DMC(X0_i_LKF, x0_i_LKF, P0_i_LKF, B_LKF, Qu_LKF, pConst, scConst, stations, X_days, t_days, tMeas(kStart), numLKF, LKFiter, plotBool_LKF);
@@ -766,6 +769,7 @@ switch choice
                 PEst_Combined = [PEst_Combined, LKFRun.LKFOut.PEst];
                 prefits_Combined = [prefits_Combined, LKFRun.LKFOut.prefit_res];
                 postfits_Combined = [postfits_Combined, LKFRun.LKFOut.postfit_res];
+                iterations_Combined = [iterations_Combined, zeros(1,length(LKFRun.t_LKF))];
 
                     % Run IEKF for the rest
                 X0_EKF = X_Combined(:,end); P0_EKF = PEst_Combined{end}; t_EKF = t_Combined(end);
@@ -779,6 +783,7 @@ switch choice
                 PEst_Combined = [PEst_Combined, EKFRun.EKFOut.PEst];
                 prefits_Combined = [prefits_Combined, EKFRun.EKFOut.prefit_res];
                 postfits_Combined = [postfits_Combined, EKFRun.EKFOut.postfit_res];
+                iterations_Combined = [iterations_Combined, EKFRun.EKFOut.iterations];
             end
 
             % numLKF = 100;
@@ -916,6 +921,9 @@ switch choice
 
         end
 
+            % Ensure 0 iterations show up on plot
+        iterations_Combined = iterations_Combined + 0.1;
+
             % Do plotting and Bplane calculation at specified days
         days = linspace(50,250,5);
         for k = 1:length(days)
@@ -926,7 +934,7 @@ switch choice
             idx = 1:kEnd;
 
             if k == length(days)
-                    % Plot residuals and W's
+                    % Plot residuals, W's, and iterations
                 titleText = sprintf("Pre-Fit Residuals (Before Iteration) over %.0f days", days(k)); 
                 xLabel = "Time [days]"; 
                 yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
@@ -944,6 +952,20 @@ switch choice
                 yLabel = ["w_X [km/s^2]", "w_Y [km/s^2]", "w_Z [km/s^2]"];
                 colors = ['b', 'b', 'b'];
                 plotW(t_Combined(idx)/(24*60*60), X_Combined(:,idx), titleText, xLabel, yLabel, colors);
+
+                titleText = sprintf("IEKF Iterations over %.0f days", days(k));
+                xLabel = "Time [days]";
+                yLabel = "Measurement Update Iterations";
+                colors = 'b';
+                figure; 
+                sgtitle(titleText)
+                subplot(1,2,1)
+                    semilogy(t_Combined(idx)/(24*60*60), iterations_Combined, '.', 'Color', colors)
+                    hold on; grid on;
+                    xlabel(xLabel); ylabel(yLabel);
+                subplot(1,2,2)
+                    hold on; grid on;
+                    histogram(iterations_Combined, 'FaceColor',colors,'Orientation','horizontal')
             end
 
             %% Part 3: Bplane Implementation
@@ -965,8 +987,10 @@ switch choice
             P_3SOI = Phi_3SOI*P0_Bplane*Phi_3SOI';
             
                 % Calculate Bplane without SOI checker
-            [BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
+            [BdotR, BdotT, sig_R, sig_T, sig_RT, X_crossing, P_BPlane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI(end,:)', t_3SOI(end), P_3SOI, pConst, DynFunc, odeset('RelTol',1e-13,'AbsTol',1e-13));
             
+            fprintf("\n\tSigma_R: %.3f, Sigma_T: %.3f, Sigma_RT: %.3e\n", sig_R, sig_T, sig_RT);
+
                 % Plot BdotR and BdotT location + uncertainty ellipse
             if k == 1
                 newFig = true;
@@ -980,7 +1004,7 @@ switch choice
             ellipseLabel = sprintf("%.0f\\sigma B plane target uncertainty, %.3f days of data", boundLevel, t_Combined(kEnd)/(24*60*60));
             ellipseColor = dayColors(k);
             BVecLabel = sprintf("\nB Plane Target after %.3f days of data: \nBdotR = %.4e km,\nBdotT = %.4e km", t_Combined(kEnd)/(24*60*60), BdotR, BdotT);
-            plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig, 3);
+            plotBPlane(BdotR, BdotT, X_crossing, P_BPlane, STR2ECI, pConst, boundLevel, titleText, xLabel, yLabel, zLabel, ellipseLabel, ellipseColor, BVecLabel, 69, newFig, part);
         
             % figure;
             % hold on; grid on; axis equal;
@@ -997,7 +1021,7 @@ switch choice
 
             % Report final estimate of BdotR and BdotT to text file
         result = sprintf("%.3f %.3f", BdotR, BdotT);
-        writematrix(result,"Faber_Ian_bplane.txt")
+        writematrix(result,"Faber_Ian_bplane_overwrite.txt")
 
     case 4
         fprintf("\nHave a great day!\n")

@@ -1,4 +1,4 @@
-function [BdotR, BdotT, X_crossing, P_Bplane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI, t_3SOI, P_3SOI, pConst, DynFunc, opt)
+function [BdotR, BdotT, sig_R, sig_T, sig_RT, X_crossing, P_Bplane, STR2ECI, XPhi_BPlane, t_BPlane] = calcBPlane(XPhi_3SOI, t_3SOI, P_3SOI, pConst, DynFunc, opt)
 % Function that calculates the expected Bplane crossing based on when a S/C
 % passes the 3 SOI mark of a given planet.
 %   Inputs:
@@ -111,5 +111,9 @@ P_Bplane = blkRot*P_Bplane*blkRot';
     % Assign outputs
 BdotR = dot(B,Rhat);
 BdotT = dot(B,That);
+
+sig_R = sqrt(P_Bplane(3,3));
+sig_T = sqrt(P_Bplane(2,2));
+sig_RT = P_Bplane(2,3);
 
 end

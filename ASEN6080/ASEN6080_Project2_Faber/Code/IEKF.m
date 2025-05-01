@@ -46,6 +46,7 @@ PEst = [];
 prefit_res = [];
 postfit_res = [];
 XEst = [];
+iterations = [];
 
     %% Process station data into a usable form
 [t, Y, R, Xs, vis] = processStations(stations, t_start);
@@ -156,6 +157,7 @@ for k = 2:kEnd
     prefit_res = [prefit_res, y_i];
     postfit_res = [postfit_res, y_i - Htilde_i*x_i];
     XEst = [XEst, Xstar_i];
+    iterations = [iterations, iter];
 
         % Update for next run
     t_im1 = t_i;
@@ -172,5 +174,6 @@ filterOut.postfit_res = postfit_res;
 filterOut.t = t(2:kEnd); % t_0 not included in estimate
 filterOut.statVis = vis;
 filterOut.XEst = XEst;
+filterOut.iterations = iterations;
 
 end
