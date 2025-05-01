@@ -42,4 +42,17 @@ Htilde = [
             delRhoDotDelXs, delRhoDotDelYs, delRhoDotDelZs
          ];
 
+% R = X(1:3);
+% Rs = X_s(1:3);
+% V = X(4:6);
+% 
+% wTilde = tilde([0;0;7.2921158553e-5]);
+% rhoVec = R - Rs;
+% rho = norm(rhoVec);
+% 
+% stationPosPart = -rhoVec'/rho;
+% stationVelPart = ((rho^2)*(wTilde*R - V) + rhoVec'*(V - wTilde*Rs)*rhoVec)/rho^3;
+% 
+% Htilde = [stationPosPart;stationVelPart'];
+
 end

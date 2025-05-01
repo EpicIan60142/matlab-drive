@@ -30,8 +30,10 @@ function LKFRun = runLKF(X0, x0, P0, pConst, stations, X_ref, t_ref)
 %                                 component
 %           - RMS_state_full_LKF: Full state RMS error after the filter
 %                                 has converged
-%           - fig_LKFRes: Array of LKF residual plot figure handles, one 
-%                         per filter iteration
+%           - fig_LKFPreRes: Array of LKF prefit residual plot figure 
+%                            handles, one per filter iteration
+%           - fig_LKFPostRes: Array of LKF postfit residual plot figure 
+%                             handles, one per filter iteration
 %           - fig_LKFError: LKF state error plot figure handle
 %
 %   By: Ian Faber, 02/03/2025
@@ -48,7 +50,8 @@ RMS_postfit_LKF = 1e99; % Start RMS with a bogus value
 LKFTolerance = 1e-6; % any ratio less than this is considered converged
 maxLKFRuns = 5; % Cap number of runs
 LKFRuns = 0;
-fig_LKFRes = [];
+fig_LKFPreRes = [];
+fig_LKFPostRes = [];
 k = 2; % Start counter with bogus value
 while true
         % Run LKF
@@ -57,22 +60,28 @@ while true
         % Extract LKF data
     xEst_LKF = LKFOut.xEst;
     PEst_LKF = LKFOut.PEst;
+    prefit_res_LKF = LKFOut.prefit_res;
     postfit_res_LKF = LKFOut.postfit_res;
-    epsilon_LKF = LKFOut.epsilon;
     t_LKF = LKFOut.t;
     statVis_LKF = LKFOut.statVis;
     X_LKF = LKFOut.XEst;
     Phi_full_LKF = LKFOut.Phi_full;
     
         % Calculate residual RMS errors
-    RMS_postfit_LKF = [RMS_postfit_LKF; calcPostFitRMS(epsilon_LKF(), stations, statVis_LKF)];
+    RMS_postfit_LKF = [RMS_postfit_LKF; calcResidualRMS(postfit_res_LKF, stations, statVis_LKF)];
 
         % Plot residuals
+    titleText = sprintf("LKF Pre-Fit Residuals - Run %.0f", k-1); 
+    xLabel = "Time [sec]"; 
+    yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
+    colors = ['b', 'r'];
+    fig_LKFPreRes = [fig_LKFPreRes; plotResiduals(t_LKF, prefit_res_LKF, titleText, xLabel, yLabel, colors)];
+
     titleText = sprintf("LKF Post-Fit Residuals - Run %.0f", k-1); 
     xLabel = "Time [sec]"; 
     yLabel = ["Range Residuals [km]", "Range-Rate Residuals [km/s]"];
     colors = ['b', 'r'];
-    fig_LKFRes = [fig_LKFRes; plotPostFitRes(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors)];
+    fig_LKFPostRes = [fig_LKFPostRes; plotResiduals(t_LKF, postfit_res_LKF, titleText, xLabel, yLabel, colors)];
 
         % Determine if another run is needed via percent change
     if (abs((RMS_postfit_LKF(k) - RMS_postfit_LKF(k-1))/RMS_postfit_LKF(k-1)) > LKFTolerance) && (LKFRuns < maxLKFRuns)
@@ -129,11 +138,12 @@ xLabel = "Time [sec]";
 yLabel = ["X error [km]", "Y error [km]", "Z error [km]", ...
           "Xdot error [km/s]", "Ydot error [km/s]", "Zdot error [km/s]"];
 
-fig_LKFError = plotStateError(t_LKF, stateError_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
+fig_LKFError = plotStateError(t_LKF, stateError_LKF, t_LKF, sigma_LKF, boundLevel, titleText, xLabel, yLabel);
 
     %% Assign output
 LKFRun = struct("LKFOut", LKFOut, "t_LKF", t_LKF, "X_LKF", X_LKF, ...
                 "RMS_postfit_LKF", RMS_postfit_LKF, "RMS_state_comp_LKF", RMS_state_comp_LKF, ...
-                "RMS_state_full_LKF", RMS_state_full_LKF, "fig_LKFRes", fig_LKFRes, "fig_LKFError", fig_LKFError);
+                "RMS_state_full_LKF", RMS_state_full_LKF, "fig_LKFPreRes", fig_LKFPreRes, ...
+                "fig_LKFPostRes", fig_LKFPostRes, "fig_LKFError", fig_LKFError);
 
 end

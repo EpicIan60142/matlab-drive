@@ -23,11 +23,11 @@ function filterOut = LKF(Xstar0, stations, pConst, P0, x0, numMeas)
 %           - PEst: Estimated state covariance at each time in t, organized 
 %                   as follows:
 %                   [{P_1}, {P_2}, ..., {P_t}]
-%           - postfit_res: Post-fit residuals (y_i) at each time in t:
-%                          [y_1, y_2, ..., y_t]
-%           - epsilon: Observation errors (y_i - Htilde_i*x_i) at each time
-%                      in t:
-%                      [epsilon_1, epsilon_2, ..., epsilon_t]
+%           - prefit_res: Pre-fit residuals (y_i) at each time in t:
+%                         [y_1, y_2, ..., y_t]
+%           - postfit_res: Postfit residuals (epsilon = y_i - Htilde_i*x_i)
+%                          at each time in t:
+%                          [epsilon_1, epsilon_2, ..., epsilon_t]
 %           - t: Measurement time vector for the LKF filter
 %           - statVis: Station visibility vector
 %           - XEst: Estimated full state at each time in t:
@@ -46,8 +46,8 @@ opt = odeset('RelTol',1e-12,'AbsTol',1e-12);
 n = length(Xstar0);
 xEst = [];
 PEst = [];
+prefit_res = [];
 postfit_res = [];
-epsilon = [];
 XEst = [];
 
     %% Process station data into a usable form
@@ -120,8 +120,8 @@ for k = 2:numMeas
         % Accumulate data to save
     xEst = [xEst, x_i];
     PEst = [PEst, {P_i}];
-    postfit_res = [postfit_res, y_i];
-    epsilon = [epsilon, y_i - Htilde_i*x_i];
+    prefit_res = [prefit_res, y_i];
+    postfit_res = [postfit_res, y_i - Htilde_i*x_i];
     XEst = [XEst, Xstar_i + x_i];
 
         % Update for next run
@@ -135,8 +135,8 @@ end
     %% Assign outputs
 filterOut.xEst = xEst;
 filterOut.PEst = PEst;
+filterOut.prefit_res = prefit_res;
 filterOut.postfit_res = postfit_res;
-filterOut.epsilon = epsilon;
 filterOut.t = t(2:end); % t_0 not included in estimate
 filterOut.statVis = vis;
 filterOut.XEst = XEst;
