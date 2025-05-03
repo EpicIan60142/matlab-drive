@@ -48,7 +48,7 @@ switch choice
                               "n", n);
         
             % ODE45 options
-        opt = odeset('AbsTol', 1e-13, 'RelTol', 1e-13);
+        opt = odeset('AbsTol', 1e-12, 'RelTol', 1e-12);
         
         %% Generate race course
             % Set rng seed for testing
@@ -111,7 +111,7 @@ switch choice
         names = ["Eeny", "Meeny", "Miny", "Mo"]; % Names :P Mo has attitude control system problems, and can only use x-y-z thrusters!
         markers = ["o", "^", "square", "diamond"]; % Markers for plotting
         colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E"]; % Colors for plotting
-        thrusts = [500, 250, 500, 500]*(10^-3); % Maximum thrust values
+        thrusts = [100, 250, 500, 500]*(10^-3); % Maximum thrust values
         thrustConfigs = [false, false, false, true]; % Whether thrust is split amongst x-y-z thrusters or a general direction
         
             % Make CubeSats
@@ -148,15 +148,16 @@ switch choice
         % return;
         
         %% Run the race course!
-        debug = [true; false; true]; % iteration plotting+display; trajectory plotting; disable progress sequence
+        debug = [false; false; false]; % iteration plotting+display; trajectory plotting; disable progress sequence
         for k = 1:length(cubesats)
             fprintf("\nCubesat %s is starting the race course!\n", cubesats(k).name)
             for kk = 1:length(rings)-1 % Intermediate ring problem
                     % Solve trajectory
-                [t,X,optParams,cost] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt, debug);
+                [t,X,optParams,initGuess,cost] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt, debug);
                 cubesats(k).X = [cubesats(k).X; X];
                 cubesats(k).t = [cubesats(k).t; t];
                 cubesats(k).optParams = [cubesats(k).optParams, optParams]; % Parameters solved by fmincon
+                cubesats(k).initGuess = [cubesats(k).initGuess, initGuess]; % Initial guess for parameters
                 cubesats(k).ringSeg = [cubesats(k).ringSeg, [kk-1; kk]]; % Ring segment of this trajectory (from kk-1 to kk)
                 cubesats(k).tSeg = [cubesats(k).tSeg, [t(1); t(end)]]; % Time this ring segment started and ended
                 cubesats(k).cost = [cubesats(k).cost, cost]; % Cost for this ring segment

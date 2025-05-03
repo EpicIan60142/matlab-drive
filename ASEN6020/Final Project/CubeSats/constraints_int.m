@@ -24,11 +24,11 @@ function [c, ceq] = constraints_int(x, ring, cubesat, courseParams, opt)
 
     % Pull out parameters
 p0 = x(1:6);
-lambda_t = x(7);
-lambda_v = x(8:10);
-lambda_n = x(11);
-lambda_rf = x(12);
-tf = x(13);
+% lambda_t = x(7);
+% lambda_v = x(8:10);
+% lambda_n = x(11);
+% lambda_rf = x(12);
+tf = x(7);
 
     % Pull out ring parameters
 n = ring.normal;
@@ -110,7 +110,7 @@ g_f = [2*courseParams.n*vf(2) + 3*courseParams.n^2*rf(1); -2*courseParams.n*vf(1
 
     % H_0 transversality
 H0 = p0(1:3)'*v0 + p0(4:6)'*g_0 - norm(p0(4:6))*norm(uMax0);
-ceq_H0 = H0 - lambda_t; % H_0 - lambda_t = 0
+% ceq_H0 = H0 - lambda_t; % H_0 - lambda_t = 0
 
     % H_f transversality
 % ceq_Hf = (1/norm(vf))*(2*(rf - ring.center)'*M*nHat + lambda_v'*(eye(3) - nHat*nHat')*g_f ...
@@ -135,6 +135,7 @@ Hf = pf(1:3)'*vf + pf(4:6)'*g_f - norm(pf(4:6))*norm(uMaxf);
 % ceq_Hf = Hf + 1; % H_f + 1 = 0
 % if cubesat.t0 == 0
 ceq_Hf = Hf - (-1); % H_f = -1
+ceq_H = Hf - H0; % H_f = H_0
 % else
 %     ceq_Hf = Hf - (-1/cubesat.t0); % H_f = -1/t0
 % end
@@ -148,12 +149,12 @@ ceq_Hf = Hf - (-1); % H_f = -1
 %                (1 + lambda_rf)*(distVec/norm(distVec)) + lambda_n*nHat; 
 %                (1/norm(vf))*(eye(3) - vfHat*vfHat')*lambda_v
 %            ];
-pf_check = [
-               (1 + lambda_rf)*(distVec/norm(distVec)) + lambda_n*nHat; 
-               (1/norm(vf))*(eye(3) - nHat*nHat')*lambda_v
-           ];
-
-ceq_pf = pf - pf_check; % p_f = condition
+% pf_check = [
+%                (1 + lambda_rf)*(distVec/norm(distVec)) + lambda_n*nHat; 
+%                (1/norm(vf))*(eye(3) - nHat*nHat')*lambda_v
+%            ];
+% 
+% ceq_pf = pf - pf_check; % p_f = condition
 
     % g constraints
 ceq_X0 = [r0; v0] - cubesat.X0;
@@ -166,7 +167,7 @@ ceq_vHatf = vfHat - nHat;
 % c_rf = norm(rf - ring.center) - max(ring.S, [], 'all'); % Want final intersection to be close to the ring, i.e. |r_f - r_r,i| <= largest size of S
 
     % Assign outputs
-ceq = [ceq_H0; ceq_Hf; ceq_X0; ceq_t0; ceq_pf; ceq_vHatf];%; ceq_rf];
+ceq = [ceq_H; ceq_Hf; ceq_X0; ceq_t0; ceq_vHatf];%; ceq_rf];
 c = [c_rf_dist; c_rf_plane];
 
 end

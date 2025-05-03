@@ -1,4 +1,4 @@
-function [tOpt, XOpt, xSolved, cost] = solveTrajectory_int(cubesat, ring, courseParams, opt, debug)
+function [tOpt, XOpt, xSolved, x0, cost] = solveTrajectory_int(cubesat, ring, courseParams, opt, debug)
 % Function that applies the optimal control law to navigate from one ring
 % of the race course to another for the intermediate ring problem
 %   Inputs:
@@ -17,18 +17,18 @@ function [tOpt, XOpt, xSolved, cost] = solveTrajectory_int(cubesat, ring, course
     % Set up problem: Trying to solve for p0, lambda_t, and lambda_v such that K is minimized.
         % Set initial guesses
             % Lambdas
-if cubesat.t0 == 0
-    lambda_t = -1;
-    lambda_v = 1*1e-6*ones(3,1);
-    lambda_n = 0*1e-3;
-    lambda_rf = 0*1e-3;
-else
-    % lambda_t = cubesat.optParams(7,end);
-    lambda_t = -1;
-    lambda_v = cubesat.optParams(8:10,end);
-    lambda_n = cubesat.optParams(11,end);
-    lambda_rf = cubesat.optParams(12,end);
-end
+% if cubesat.t0 == 0
+%     lambda_t = -1;
+%     lambda_v = 1*1e-6*ones(3,1);
+%     lambda_n = 0*1e-3;
+%     lambda_rf = 0*1e-3;
+% else
+%     % lambda_t = cubesat.optParams(7,end);
+%     lambda_t = -1;
+%     lambda_v = cubesat.optParams(8:10,end);
+%     lambda_n = cubesat.optParams(11,end);
+%     lambda_rf = cubesat.optParams(12,end);
+% end
 
             % p0
 r0 = cubesat.X0(1:3);
@@ -45,8 +45,9 @@ if norm(v0) == 0 % Initial ring - cubesat at rest
     %       (eye(3) - ring.params.lastRing.normal*ring.params.lastRing.normal')*lambda_v];
     % p0 = [(1+lambda_rf)*(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_n*ring.params.lastRing.normal; 
     %       -ring.params.lastRing.normal];
-    p0 = [(1+lambda_rf)*(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_n*ring.params.lastRing.normal; 
+    p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center); 
           -dVec/norm(dVec)];
+    % p0 = ones(6,1);
 else
     % p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_rf*ring.params.lastRing.normal; 
     %       (eye(3) - vHat0*vHat0')*lambda_v];
@@ -56,10 +57,11 @@ else
     %       (1/norm(v0))*(eye(3) - vHat0*vHat0')*lambda_v];
     % p0 = [(1+lambda_rf)*(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_n*ring.params.lastRing.normal; 
     %       -(1/norm(v0))*ring.params.lastRing.normal];
-    p0 = [(1+lambda_rf)*(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center) + lambda_n*ring.params.lastRing.normal; 
+    p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center); 
           -(1/norm(v0))*dVec];
-    % p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center); 
-    %       -dVec/norm(dVec)];
+    % p0 = ones(6,1);
+    % % p0 = [(r0 - ring.params.lastRing.center)/norm(r0 - ring.params.lastRing.center); 
+    % %       -dVec/norm(dVec)];
 end
 
             % tf
@@ -74,10 +76,10 @@ end
 d = 0 - norm(dVec); % d = d0 - df, where d0 = 0
 tMin = max((1/norm(uMax))*[-norm(v0) + sqrt(norm(v0)^2 - 2*norm(uMax)*d); -norm(v0) - sqrt(norm(v0)^2 - 2*norm(uMax)*d)]);
 
-tf = cubesat.t0 + tMin;
+tf = cubesat.t0 + 10*tMin;
 
             % Combine initial guesses
-x0 = [p0; lambda_t; lambda_v; lambda_n; lambda_rf; tf];
+x0 = [p0; tf];
 
 %         % Set lower bound on tf to force it to be positive and physically
 %         % possible given the maximum possible acceleration for this
@@ -91,8 +93,8 @@ x0 = [p0; lambda_t; lambda_v; lambda_n; lambda_rf; tf];
 % tMin = max((1/norm(uMax))*[-norm(v0) + sqrt(norm(v0)^2 - 2*norm(uMax)*d); -norm(v0) - sqrt(norm(v0)^2 - 2*norm(uMax)*d)]);
 
         % Set bounds
-lb = [-1e3*ones(6,1); -1.01; -1e3*ones(3,1); -10; -10; cubesat.t0 + tMin];
-ub = [1e3*ones(6,1); -0.99; 1e3*ones(3,1); 10; 10; Inf];
+lb = [-1e3*ones(6,1); cubesat.t0 + tMin];
+ub = [1e3*ones(6,1); Inf];
 
 %         % Define linear equalities
 % sz = length(x0);
@@ -130,7 +132,7 @@ fprintf("\b")
     % Report constraints
 [ineq, eq] = constraints_int(xSolved, ring, cubesat, courseParams, opt);
 
-eqLabels = ["H_0 constraint", "H_f constraint", "X_0 constraint", "t_0 constraint", "p_f constraint", "vHat_f constraint", "r_f constraint"];
+eqLabels = ["H_0 constraint", "H_f constraint", "X_0 constraint", "t_0 constraint", "vHat_f constraint", "vHat_f constraint", "r_f constraint"];
 ineqLabels = ["r_f distance constraint", "r_f plane constraint", "vHat_f constraint"];
 
 [~, maxIneqIdx] = max(abs(ineq));
@@ -167,7 +169,7 @@ fprintf("\t\tMax equality constraint magnitude: %.3e at position %.0f, %s\n", eq
 
     % Propagate optimal trajectory
 p0 = xSolved(1:6);
-tf = xSolved(13);
+tf = xSolved(7);
 
 X0 = [cubesat.X0; p0];
 

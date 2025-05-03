@@ -31,7 +31,7 @@ end
 
     % Pull out p0 and tf
 p0 = x(1:6);
-tf = x(13);
+tf = x(7);
 
     % Propagate [X0; p0] through CHW equations
 X0 = [cubesat.X0; p0];
@@ -49,7 +49,8 @@ rf = X(end,1:3)';
 % K_int = df'*ring.S*df + tf - cubesat.t0;
 
     % Assign cost
-K_int = 10*norm(rf - ring.center) + (tf - cubesat.t0);
+dVec = rf - ring.center;
+K_int = norm(dVec) + (tf - cubesat.t0);
 
     % Plot iteration
 if debug(2)
