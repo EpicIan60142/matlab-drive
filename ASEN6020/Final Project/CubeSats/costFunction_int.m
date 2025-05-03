@@ -1,4 +1,4 @@
-function K_int = costFunction_int(x, ring, cubesat, courseParams, opt)
+function K_int = costFunction_int(x, ring, cubesat, courseParams, opt, debug)
 % Implements the cost function for the CubeSat racing intermediate ring
 % problem
 %   Inputs:
@@ -14,10 +14,24 @@ function K_int = costFunction_int(x, ring, cubesat, courseParams, opt)
 %   Outputs:
 %       - K_int: Cost function value for the intermediate ring problem
 
+    % Status indicator
+persistent idx;
+if isempty(idx)
+    idx = 1;
+end
+sequence = ['/','/','-','-','\','\','|','|'];
+if all(~debug)
+    fprintf("\b%s",sequence(idx));
+end
+idx = idx + 1;
+if idx > length(sequence)
+    idx = 1;
+end
+
 
     % Pull out p0 and tf
 p0 = x(1:6);
-tf = x(12);
+tf = x(13);
 
     % Propagate [X0; p0] through CHW equations
 X0 = [cubesat.X0; p0];
@@ -35,6 +49,18 @@ rf = X(end,1:3)';
 % K_int = df'*ring.S*df + tf - cubesat.t0;
 
     % Assign cost
-K_int = norm(rf - ring.center) + (tf - cubesat.t0);
+K_int = 10*norm(rf - ring.center) + (tf - cubesat.t0);
+
+    % Plot iteration
+if debug(2)
+    figure(69420); clf;
+        hold on; grid on; axis equal
+        title("Iterated Trajectory");
+        plotRing(ring.params.lastRing, 'g-');
+        plot3(X(:,1), X(:,2), X(:,3), 'k-');
+        plotRing(ring, 'r-');
+        xlabel("Radial [km]"); ylabel("Along Track [km]"); zlabel("Cross Track [km]");
+        view([30 35]); drawnow;
+end
 
 end

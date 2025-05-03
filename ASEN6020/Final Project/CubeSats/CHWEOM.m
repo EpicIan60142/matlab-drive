@@ -29,6 +29,7 @@ pvz = X(12);
 
 %% Get constants
 n = courseParams.n;
+
 uMax = 0;
 if length(cubeSatParams.uMax) > 1 % Axial thrusting is at play!
     u = cubeSatParams.uMax;

@@ -70,6 +70,8 @@ X0_vel = zeros(3,1);
 X0 = [X0_pos; X0_vel];
 
     % Assign outputs
-cubesat = struct("uMax", uMax, "X0", X0, "t0", 0, "X", [], "t", [], "optParams", [], "ringSeg", [], "tSeg", [], "name", name, "marker", marker, "color", color);
+cubesat = struct("uMax", uMax, "X0", X0, "t0", 0, "X", [], "t", [], ...
+                 "optParams", [], "ringSeg", [], "tSeg", [], "cost", [], ...
+                 "name", name, "marker", marker, "color", color);
 
 end

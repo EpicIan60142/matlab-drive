@@ -26,8 +26,9 @@ function [c, ceq] = constraints_int(x, ring, cubesat, courseParams, opt)
 p0 = x(1:6);
 lambda_t = x(7);
 lambda_v = x(8:10);
-lambda_rf = x(11);
-tf = x(12);
+lambda_n = x(11);
+lambda_rf = x(12);
+tf = x(13);
 
     % Pull out ring parameters
 n = ring.normal;
@@ -49,7 +50,9 @@ v0 = X(1,4:6)';
 
 rf = X(end,1:3)';
 vf = X(end,4:6)';
+
 vfHat = vf/norm(vf);
+
 pf = X(end,7:end)';
 
     % Pull out cubesat max acceleration at t0 and tf
@@ -82,42 +85,83 @@ else
     uMaxf = uMax;
 end
 
+    % Determine if we need lambda_rf
+        % ring inequality constraints
+c_rf_dist = norm(rf - ring.center) - min(ring.S, [], 'all'); % Want in-plane component of final intersection to be close to the ring center, i.e. |r_f - r_r,i| <= smallest size of S
+c_rf_plane = dot((rf - ring.center),nHat) - min(ring.S, [], 'all'); % Want normal component of final intersection to be close to the plane of the ring, i.e. dot((r_f = r_r,i), nHat) <= smallest size of S
+
+    % Deactivate inequality multiplier(s) if inequality is met
+if c_rf_dist < 0
+    lambda_rf = 0;
+end
+
+if c_rf_plane < 0
+    lambda_n = 0;
+end
+
     % Calculate initial and final gravity accelerations
 g_0 = [2*courseParams.n*v0(2) + 3*courseParams.n^2*r0(1); -2*courseParams.n*v0(1); -courseParams.n^2*r0(3)];
 g_f = [2*courseParams.n*vf(2) + 3*courseParams.n^2*rf(1); -2*courseParams.n*vf(1); -courseParams.n^2*rf(3)];
 
     % H_0 transversality
-ceq_H0 = p0(1:3)'*v0 + p0(4:6)'*g_0 - norm(p0(4:6))*norm(uMax0) - lambda_t; % H_0 - lambda_t = 0
+H0 = p0(1:3)'*v0 + p0(4:6)'*g_0 - norm(p0(4:6))*norm(uMax0);
+ceq_H0 = H0 - lambda_t; % H_0 - lambda_t = 0
 
     % H_f transversality
 % ceq_Hf = (1/norm(vf))*(2*(rf - ring.center)'*M*nHat + lambda_v'*(eye(3) - nHat*nHat')*g_f ...
 %                         - sqrt(lambda_v'*(eye(3) - nHat*nHat')^2*lambda_v)*norm(uMaxf)) + 1; % H_f + 1 = 0
 % ceq_Hf = (1/norm(vf))*(((rf - ring.center)'/norm(rf - ring.center))*vf*norm(vf) + lambda_v'*(eye(3) - nHat*nHat')*g_f ...
 %                         - sqrt(lambda_v'*(eye(3) - nHat*nHat')^2*lambda_v)*norm(uMaxf)) + 1; % H_f + 1 = 0
-ceq_Hf = (((rf-ring.center)/norm(rf-ring.center)) + lambda_rf*nHat)'*vf + ...
-         ((eye(3)-vfHat*vfHat')*lambda_v/norm(vf))'*g_f - ...
-         (1/norm(vf))*sqrt(lambda_v'*(eye(3)-vfHat*vfHat')^2*lambda_v) + 1; % H_f + 1 = 0
+% ceq_Hf = (((rf-ring.center)/norm(rf-ring.center)) + lambda_rf*nHat)'*vf + ...
+%          ((eye(3)-vfHat*vfHat')*lambda_v/norm(vf))'*g_f - ...
+%          (1/norm(vf))*sqrt(lambda_v'*(eye(3)-vfHat*vfHat')^2*lambda_v) + 1; % H_f + 1 = 0
 % ceq_Hf = ((1+lambda_rf)*((rf-ring.center)/norm(rf-ring.center)))'*vf + ...
 %          ((eye(3)-vfHat*vfHat')*lambda_v/norm(vf))'*g_f - ...
 %          (1/norm(vf))*sqrt(lambda_v'*(eye(3)-vfHat*vfHat')^2*lambda_v) + 1; % H_f + 1 = 0
+distVec = rf - ring.center;
+Hf = pf(1:3)'*vf + pf(4:6)'*g_f - norm(pf(4:6))*norm(uMaxf);
+
+% Hf_check =  ((1 + lambda_rf)*(distVec/norm(distVec)) + lambda_n*nHat)'*vf + ...
+%             ((eye(3)-vfHat*vfHat')*lambda_v/norm(vf))'*g_f + ...
+%             (1/norm(vf))*sqrt(lambda_v'*(eye(3) - vfHat*vfHat')'*(eye(3) - vfHat*vfHat')*lambda_v)*norm(uMaxf);
+
+% fprintf("\n\tHf: %.6f, Hf_check: %.6f\n\tH0: %.6f, lambda_t = %.6f\n", Hf, Hf_check, H0, lambda_t)
+
+% ceq_Hf = Hf + 1; % H_f + 1 = 0
+% if cubesat.t0 == 0
+ceq_Hf = Hf - (-1); % H_f = -1
+% else
+%     ceq_Hf = Hf - (-1/cubesat.t0); % H_f = -1/t0
+% end
+
 
     % P_f transversality
 % ceq_pf = X(end,7:end)' - [2*M*(rf - ring.center); (1/norm(vf))*(eye(3)-nHat*nHat')*lambda_v]; % p_f = condition
-ceq_pf = pf - [(rf - ring.center)/norm(rf - ring.center) + lambda_rf*nHat; (1/norm(vf))*(eye(3)-vfHat*vfHat')*lambda_v]; % p_f = condition
+% ceq_pf = pf - [(rf - ring.center)/norm(rf - ring.center) + lambda_rf*nHat; (1/norm(vf))*(eye(3)-vfHat*vfHat')*lambda_v]; % p_f = condition
 % ceq_pf = pf - [(1+lambda_rf)*((rf - ring.center)/norm(rf - ring.center)); (1/norm(vf))*(eye(3)-vfHat*vfHat')*lambda_v]; % p_f = condition
+% pf_check = [
+%                (1 + lambda_rf)*(distVec/norm(distVec)) + lambda_n*nHat; 
+%                (1/norm(vf))*(eye(3) - vfHat*vfHat')*lambda_v
+%            ];
+pf_check = [
+               (1 + lambda_rf)*(distVec/norm(distVec)) + lambda_n*nHat; 
+               (1/norm(vf))*(eye(3) - nHat*nHat')*lambda_v
+           ];
+
+ceq_pf = pf - pf_check; % p_f = condition
 
     % g constraints
 ceq_X0 = [r0; v0] - cubesat.X0;
 ceq_t0 = t(1) - cubesat.t0;
 ceq_vHatf = vfHat - nHat;
-ceq_rf = dot((rf - ring.center),nHat);
+% ceq_rf = dot((rf - ring.center),nHat);
 % ceq_rf = norm(rf - ring.center) - max(ring.S, [], 'all');
 
-    % ring constraints
-c_rf = norm(rf - ring.center) - max(ring.S, [], 'all'); % Want final intersection to be close to the ring, i.e. |r_f - r_r,i| <= largest size of S
+%     % ring constraints
+% c_rf = norm(rf - ring.center) - max(ring.S, [], 'all'); % Want final intersection to be close to the ring, i.e. |r_f - r_r,i| <= largest size of S
 
     % Assign outputs
-ceq = [ceq_H0; ceq_Hf; ceq_X0; ceq_t0; ceq_pf; ceq_vHatf; ceq_rf]
-c = c_rf;
+ceq = [ceq_H0; ceq_Hf; ceq_X0; ceq_t0; ceq_pf; ceq_vHatf];%; ceq_rf];
+c = [c_rf_dist; c_rf_plane];
 
 end
