@@ -89,15 +89,20 @@ end
         % ring inequality constraints
 c_rf_dist = norm(rf - ring.center) - min(ring.S, [], 'all'); % Want in-plane component of final intersection to be close to the ring center, i.e. |r_f - r_r,i| <= smallest size of S
 c_rf_plane = dot((rf - ring.center),nHat) - min(ring.S, [], 'all'); % Want normal component of final intersection to be close to the plane of the ring, i.e. dot((r_f = r_r,i), nHat) <= smallest size of S
+% c_vfHat = acosd(dot(vfHat, nHat)) - 15; % vfHat should be within 5 degrees of nHat
 
     % Deactivate inequality multiplier(s) if inequality is met
-if c_rf_dist < 0
-    lambda_rf = 0;
-end
+% if c_rf_dist < 0
+%     lambda_rf = 0;
+% end
+% 
+% if c_rf_plane < 0
+%     lambda_n = 0;
+% end
 
-if c_rf_plane < 0
-    lambda_n = 0;
-end
+% if c_vfHat < 0
+%     lambda_v = zeros(3,1);
+% end
 
     % Calculate initial and final gravity accelerations
 g_0 = [2*courseParams.n*v0(2) + 3*courseParams.n^2*r0(1); -2*courseParams.n*v0(1); -courseParams.n^2*r0(3)];
@@ -165,3 +170,6 @@ ceq = [ceq_H0; ceq_Hf; ceq_X0; ceq_t0; ceq_pf; ceq_vHatf];%; ceq_rf];
 c = [c_rf_dist; c_rf_plane];
 
 end
+
+
+

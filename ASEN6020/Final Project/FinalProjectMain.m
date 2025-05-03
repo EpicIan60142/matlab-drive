@@ -148,7 +148,7 @@ switch choice
         % return;
         
         %% Run the race course!
-        debug = [false; false; true]; % point plotting; trajectory plotting; disable sequence
+        debug = [true; false; true]; % iteration plotting+display; trajectory plotting; disable progress sequence
         for k = 1:length(cubesats)
             fprintf("\nCubesat %s is starting the race course!\n", cubesats(k).name)
             for kk = 1:length(rings)-1 % Intermediate ring problem

@@ -91,16 +91,23 @@ x0 = [p0; lambda_t; lambda_v; lambda_n; lambda_rf; tf];
 % tMin = max((1/norm(uMax))*[-norm(v0) + sqrt(norm(v0)^2 - 2*norm(uMax)*d); -norm(v0) - sqrt(norm(v0)^2 - 2*norm(uMax)*d)]);
 
         % Set bounds
-lb = [-1e3*ones(12,1); cubesat.t0 + tMin];
-ub = [1e3*ones(12,1); Inf];
+lb = [-1e3*ones(6,1); -1.01; -1e3*ones(3,1); -10; -10; cubesat.t0 + tMin];
+ub = [1e3*ones(6,1); -0.99; 1e3*ones(3,1); 10; 10; Inf];
+
+%         % Define linear equalities
+% sz = length(x0);
+% Aeq = [
+%         zeros(1,6), 1, zeros(1,sz-7)
+%       ];
+% beq = -1;
 
     % Define parameter scales
 D = diag([1e-3, 1e-3, 1e-3, 1, 1, 1e-2, 1, 1, 1, 1, 1, 1, 1e-3]);
 
     % % Check feasibility
-% optCheck = optimoptions("fmincon","Algorithm", "interior-point", "EnableFeasibilityMode", true,...
-                        % "SubproblemAlgorithm", "cg",'Display','iter-detailed','PlotFcn','optimplotx');
-% xCheck = fmincon(@(x)0,x0,[],[],[],[],lb,[],@(x)constraints_int(x,ring,cubesat,courseParams,opt),optCheck);
+% optCheck = optimoptions("fmincon","Algorithm", "sqp", "EnableFeasibilityMode", true,...
+%                         "SubproblemAlgorithm", "cg",'Display','iter-detailed','PlotFcn','optimplotx');
+% xCheck = fmincon(@(x)0,x0,[],[],[],[],lb,ub,@(x)constraints_int(x,ring,cubesat,courseParams,opt),optCheck);
 
     % Solve problem
 if debug(1)
@@ -124,12 +131,12 @@ fprintf("\b")
 [ineq, eq] = constraints_int(xSolved, ring, cubesat, courseParams, opt);
 
 eqLabels = ["H_0 constraint", "H_f constraint", "X_0 constraint", "t_0 constraint", "p_f constraint", "vHat_f constraint", "r_f constraint"];
-ineqLabels = ["r_f distance constraint", "r_f plane constraint"];
+ineqLabels = ["r_f distance constraint", "r_f plane constraint", "vHat_f constraint"];
 
 [~, maxIneqIdx] = max(abs(ineq));
 [~, maxEqIdx] = max(abs(eq));
 
-fprintf("\t\tMax inequality constraint magnitude: %.3f, %s\n", ineq(maxIneqIdx), ineqLabels(maxIneqIdx));
+fprintf("\t\tMax inequality constraint magnitude: %.3e, %s\n", ineq(maxIneqIdx), ineqLabels(maxIneqIdx));
 
 if maxEqIdx == 1
     const = eqLabels(1);
@@ -156,7 +163,7 @@ else
     const = "Unknown constraint";
     offset = maxEqIdx;
 end
-fprintf("\t\tMax equality constraint magnitude: %.3f at position %.0f, %s\n", eq(maxEqIdx), maxEqIdx-offset, const);
+fprintf("\t\tMax equality constraint magnitude: %.3e at position %.0f, %s\n", eq(maxEqIdx), maxEqIdx-offset, const);
 
     % Propagate optimal trajectory
 p0 = xSolved(1:6);

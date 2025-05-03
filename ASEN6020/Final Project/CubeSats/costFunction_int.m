@@ -19,7 +19,7 @@ persistent idx;
 if isempty(idx)
     idx = 1;
 end
-sequence = ['/','/','-','-','\','\','|','|'];
+sequence = ['/','/','/','-','-','-','\','\','\','|','|','|'];
 if all(~debug)
     fprintf("\b%s",sequence(idx));
 end
