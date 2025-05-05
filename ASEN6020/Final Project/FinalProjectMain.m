@@ -120,7 +120,10 @@ switch choice
         cBar.Label.String = "Ring Number"; colormap("cool");
         
         %% Generate CubeSats
-            % Max thrust based on https://www.cubesatshop.com/product/cluster-ifm-nano-thruster-smallsats/ - 10-500 uN
+            % Max thrust based on
+            % https://www.cubesatshop.com/product/cluster-ifm-nano-thruster-smallsats/
+            % - 10-500 uN. Boosted by 1e3 for this problem to make things
+            % more interesting!
         numSats = 4;
         names = ["Eeny", "Meeny", "Miny", "Mo"]; % Names :P Mo has attitude control system problems, and can only use x-y-z thrusters!
         markers = ["o", "^", "square", "diamond"]; % Markers for plotting
@@ -154,17 +157,6 @@ switch choice
             drawnow
         end
         
-        % Test dynamics
-        % X0 = [cubesats(1).X0; 1e-3*ones(6,1)];
-        % [t,XTest] = ode45(@(t,X)CHWEOM(t,X,cubesats(1),courseParams), [0 T], X0, opt);
-        
-        % figure
-        % hold on; grid on;
-        % plot3(XTest(:,1), XTest(:,2), XTest(:,3));
-        % view([30 35])
-        
-        % return;
-        
         %% Run the race course!
         debug = [false; false; false]; % iteration plotting+display; trajectory plotting; disable progress sequence
         for k = 1:length(cubesats)
@@ -179,7 +171,7 @@ switch choice
                 end
 
                     % Solve trajectory according to problem
-                [t,X,u,optParams,initGuess,cost] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt, isFinal, debug);
+                [t,X,u,optParams,initGuess,cost] = solveTrajectory(cubesats(k), rings(kk), courseParams, opt, isFinal, debug);
                 cubesats(k).X = [cubesats(k).X; X];
                 cubesats(k).t = [cubesats(k).t; t];
                 cubesats(k).u = [cubesats(k).u; u];
