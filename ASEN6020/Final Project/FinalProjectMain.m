@@ -169,9 +169,17 @@ switch choice
         debug = [false; false; false]; % iteration plotting+display; trajectory plotting; disable progress sequence
         for k = 1:length(cubesats)
             fprintf("\nCubesat %s is starting the race course!\n", cubesats(k).name)
-            for kk = 1:length(rings)-1 % Intermediate ring problem
-                    % Solve trajectory
-                [t,X,u,optParams,initGuess,cost] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt, debug);
+            for kk = 1:length(rings) % Loop through each course segment
+                    % Determine which cost function and constraints to
+                    % apply
+                if kk == length(rings) % Final problem, come to a stop in minimum time
+                    isFinal = true;
+                else % Initial/intermediate problem, aim for rings
+                    isFinal = false;
+                end
+
+                    % Solve trajectory according to problem
+                [t,X,u,optParams,initGuess,cost] = solveTrajectory_int(cubesats(k), rings(kk), courseParams, opt, isFinal, debug);
                 cubesats(k).X = [cubesats(k).X; X];
                 cubesats(k).t = [cubesats(k).t; t];
                 cubesats(k).u = [cubesats(k).u; u];
@@ -186,16 +194,15 @@ switch choice
                 cubesats(k).t0 = t(end);
         
                     % Plot segment
-                titleText = sprintf("Cubesat trajectory segment: Ring %.0f to %.0f", kk-1, kk);
+                titleText = sprintf("Cubesat %s trajectory segment: Ring %.0f to %.0f", cubesats(k).name, kk-1, kk);
                 xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
                 if ~debug(1)
-                    figNum = kk;
+                    figNum = kk + (k-1)*length(rings);
                 else
-                    figNum = kk + 1;
+                    figNum = kk + (k-1)*length(rings) + 1;
                 end
                 plotSegment(cubesats(k), rings(kk), t, X, u, figNum, titleText, xLabel, yLabel, zLabel);
                 
-
                     % Report progress
                 fprintf("\tCubesat %s passed through ring %.0f in %.3f sec!\n", cubesats(k).name, kk, t(end) - t(1));
             end
@@ -277,8 +284,10 @@ switch choice
                 X = cubesats(k).X(kStart:kEnd, :);
                 u = cubesats(k).u(kStart:kEnd, :);
 
+                figNum = kk + (k-1)*length(rings);
+
                     % Plot segment
-                titleText = sprintf("Cubesat trajectory segment: Ring %.0f to %.0f", kk-1, kk);
+                titleText = sprintf("Cubesat %s trajectory segment: Ring %.0f to %.0f", cubesats(k).name, kk-1, kk);
                 xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
                 figNum = kk;
                 plotSegment(cubesats(k), rings(kk), t, X, figNum, titleText, xLabel, yLabel, zLabel);

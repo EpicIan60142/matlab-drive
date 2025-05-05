@@ -1,4 +1,4 @@
-function [tOpt, XOpt, uOpt, xSolved, x0, cost] = solveTrajectory_int(cubesat, ring, courseParams, opt, debug)
+function [tOpt, XOpt, uOpt, xSolved, x0, cost] = solveTrajectory_int(cubesat, ring, courseParams, opt, isFinal, debug)
 % Function that applies the optimal control law to navigate from one ring
 % of the race course to another for the intermediate ring problem
 %   Inputs:
@@ -125,7 +125,7 @@ end
 % options = optimoptions("fmincon", 'Display', 'iter-detailed', 'PlotFcn', 'optimplotx');
 fprintf("\n")
 
-[xSolved, cost] = fmincon(@(x)costFunction_int(x,ring,cubesat,courseParams,opt,debug),x0,[],[],[],[],lb,ub,@(x)constraints_int(x,ring,cubesat,courseParams,opt), options);
+[xSolved, cost] = fmincon(@(x)costFunction_int(x,ring,cubesat,courseParams,opt,isFinal,debug),x0,[],[],[],[],lb,ub,@(x)constraints_int(x,ring,cubesat,courseParams,opt,isFinal), options);
 
 fprintf("\b")
 

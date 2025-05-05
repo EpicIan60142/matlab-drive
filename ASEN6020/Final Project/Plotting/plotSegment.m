@@ -13,7 +13,7 @@ function fig = plotSegment(cubesat, ring, t, X, u, figNum, titleText, xLabel, yL
     %% Create figure
 % if newFigure
 fig = figure(figNum); 
-fig.WindowState = "maximized";
+% fig.WindowState = "maximized";
 tl = tiledlayout(5, 7);
 title(tl, titleText);
 % else

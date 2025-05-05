@@ -1,4 +1,4 @@
-function [c, ceq] = constraints_int(x, ring, cubesat, courseParams, opt)
+function [c, ceq] = constraints_int(x, ring, cubesat, courseParams, opt, isFinal)
 % Nonlinear constraint function that is passed into fmincon, places
 % constraints on p0, lambda_t, and lambda_v for the intermediate ring
 % problem
@@ -84,6 +84,7 @@ else
     uMax0 = uMax;
     uMaxf = uMax;
 end
+
 
     % Determine if we need lambda_rf
         % ring inequality constraints
