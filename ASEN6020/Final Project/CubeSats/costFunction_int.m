@@ -37,16 +37,8 @@ tf = x(7);
 X0 = [cubesat.X0; p0];
 [~, X] = ode45(@(t,X)CHWEOM(t,X,cubesat,courseParams), [cubesat.t0, tf], X0, opt);
 
-%     % Project final position onto ring
-% T = ring.NR';
-% T = T(1:2,:);
-% 
+    % Pull out final position
 rf = X(end,1:3)';
-% 
-% df = T*(rf - ring.center);
-% 
-%     % Assign cost
-% K_int = df'*ring.S*df + tf - cubesat.t0;
 
     % Assign cost
 dVec = rf - ring.center;

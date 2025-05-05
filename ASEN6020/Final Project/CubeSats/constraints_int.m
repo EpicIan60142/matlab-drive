@@ -88,7 +88,7 @@ end
     % Determine if we need lambda_rf
         % ring inequality constraints
 c_rf_dist = norm(rf - ring.center) - min(ring.S, [], 'all'); % Want in-plane component of final intersection to be close to the ring center, i.e. |r_f - r_r,i| <= smallest size of S
-c_rf_plane = dot((rf - ring.center),nHat) - min(ring.S, [], 'all'); % Want normal component of final intersection to be close to the plane of the ring, i.e. dot((r_f = r_r,i), nHat) <= smallest size of S
+c_rf_plane = abs(dot((rf - ring.center),nHat)) - 0.1; %min(ring.S, [], 'all'); % Want normal component of final intersection to be close to the plane of the ring, i.e. dot((r_f = r_r,i), nHat) <= smallest size of S
 % c_vfHat = acosd(dot(vfHat, nHat)) - 15; % vfHat should be within 5 degrees of nHat
 
     % Deactivate inequality multiplier(s) if inequality is met

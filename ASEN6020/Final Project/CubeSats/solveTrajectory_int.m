@@ -1,4 +1,4 @@
-function [tOpt, XOpt, xSolved, x0, cost] = solveTrajectory_int(cubesat, ring, courseParams, opt, debug)
+function [tOpt, XOpt, uOpt, xSolved, x0, cost] = solveTrajectory_int(cubesat, ring, courseParams, opt, debug)
 % Function that applies the optimal control law to navigate from one ring
 % of the race course to another for the intermediate ring problem
 %   Inputs:
@@ -173,7 +173,7 @@ tf = xSolved(7);
 
 X0 = [cubesat.X0; p0];
 
-dt = 1;
+dt = 0.1;
 % tspan = [cubesat.t0, cubesat.t0+dt:dt:tf, tf];
 tspan = cubesat.t0:dt:tf;
 if tspan(end) ~= tf
@@ -183,5 +183,33 @@ end
 [tOpt, XOpt] = ode45(@(t,X)CHWEOM(t,X,cubesat,courseParams), tspan, X0, opt);
 
 cost = [cost; tMin];
+
+    % Back out optimal control
+uOpt = [];
+for k = 1:length(tOpt)
+    pvx = XOpt(k,10);
+    pvy = XOpt(k,11);
+    pvz = XOpt(k,12);
+
+    uMax = 0;
+    if length(cubesat.uMax) > 1 % Axial thrusting is at play!
+        uComp = cubesat.uMax;
+        if abs(pvx) > 1 % Cubesat has max x acceleration at time t
+            uMax = uMax + [uComp(1); 0; 0];
+        end
+        if abs(pvy) > 1 % Cubesat has max y acceleration at time t
+            uMax = uMax + [0; uComp(2); 0];
+        end
+        if abs(pvz) > 1 % Cubesat has max z acceleration at time t
+            uMax = uMax + [0; 0; uComp(3)];
+        end
+    else
+        uMax = cubesat.uMax;
+    end
+
+    pvHat = [pvx; pvy; pvz]/norm([pvx; pvy; pvz]);
+    u = -norm(uMax)*pvHat';
+    uOpt = [uOpt; u];
+end
 
 end
