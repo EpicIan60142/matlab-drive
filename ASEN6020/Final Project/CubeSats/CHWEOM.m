@@ -33,13 +33,13 @@ n = courseParams.n;
 uMax = 0;
 if length(cubeSatParams.uMax) > 1 % Axial thrusting is at play!
     u = cubeSatParams.uMax;
-    if abs(pvx) > 1 % Cubesat has max x acceleration at time t
+    if abs(pvx) > 0 % Cubesat has max x acceleration at time t
         uMax = uMax + [u(1); 0; 0];
     end
-    if abs(pvy) > 1 % Cubesat has max y acceleration at time t
+    if abs(pvy) > 0 % Cubesat has max y acceleration at time t
         uMax = uMax + [0; u(2); 0];
     end
-    if abs(pvz) > 1 % Cubesat has max z acceleration at time t
+    if abs(pvz) > 0 % Cubesat has max z acceleration at time t
         uMax = uMax + [0; 0; u(3)];
     end
 else

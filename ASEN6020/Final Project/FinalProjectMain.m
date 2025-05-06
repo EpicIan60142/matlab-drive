@@ -224,6 +224,18 @@ switch choice
         fileParts = split(file, "_");
         scenario = extractBefore(fileParts{end}, ".mat");
 
+        menuMsg = sprintf("\n\tWould you like to save new figures?\n" + ...
+                          "\t1. Yes\n" + ...
+                          "\t2. No\n" + ...
+                          "\tChoice (enter number of option to do): ");
+        choice = input(menuMsg);
+
+        if choice == 1
+            makeFigures = true;
+        else
+            makeFigures = false;
+        end
+
         %% Plot race course and example ring
             % Race course
         courseNum = 420;
@@ -231,11 +243,13 @@ switch choice
         xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
         courseFig = plotCourse(startRing, rings, endRing, cubesats, courseNum, titleText, xLabel, yLabel, zLabel);
 
-        angles = [0, 90, 180, 270];
-        for k = angles
-            view([-30 + k, 35]);
-            fileName = sprintf(".\\Figures\\%s\\Course\\InitCourse_%.0fdegRot.png", scenario, k);
-            saveas(courseFig, fileName);
+        if makeFigures
+            angles = [0, 90, 180, 270];
+            for k = angles
+                view([-30 + k, 35]);
+                fileName = sprintf(".\\Figures\\%s\\Course\\InitCourse_%.0fdegRot.png", scenario, k);
+                saveas(courseFig, fileName);
+            end
         end
         courseFig.WindowState = "minimized";
 
@@ -245,10 +259,12 @@ switch choice
         xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
         ringFig = plotExampleRing(rings, ringNum, titleText, xLabel, yLabel, zLabel);
 
-        for k = angles
-            view([30 + k, 35]);
-            fileName = sprintf(".\\Figures\\%s\\Ring\\ExampleRing_%.0fdegRot.png", scenario, k);
-            saveas(courseFig, fileName);
+        if makeFigures
+            for k = angles
+                view([30 + k, 35]);
+                fileName = sprintf(".\\Figures\\%s\\Ring\\ExampleRing_%.0fdegRot.png", scenario, k);
+                saveas(courseFig, fileName);
+            end
         end
         ringFig.WindowState = "minimized";
 
@@ -282,11 +298,13 @@ switch choice
                     xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
                     figDetailed = plotSegment(cubesats(k), rings(kk), t, X, u, figNum, titleText, xLabel, yLabel, zLabel);
                         
-                    for idx = angles
-                        nexttile(1);
-                        view([-30 + idx, 35]);
-                        fileName = sprintf(".\\Figures\\%s\\SegmentsDetailed\\DetailedSegment_%s_Ring%.0fTo%.0f_%.0fdegRot.png", scenario, cubesats(k).name, kk-1, kk, idx);
-                        saveas(figDetailed, fileName);
+                    if makeFigures
+                        for idx = angles
+                            nexttile(1);
+                            view([-30 + idx, 35]);
+                            fileName = sprintf(".\\Figures\\%s\\SegmentsDetailed\\DetailedSegment_%s_Ring%.0fTo%.0f_%.0fdegRot.png", scenario, cubesats(k).name, kk-1, kk, idx);
+                            saveas(figDetailed, fileName);
+                        end
                     end
                     figDetailed.WindowState = "minimized";
 
@@ -309,11 +327,13 @@ switch choice
                 xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
                 figOverview = plotSegment_all(cubesats, rings(k), k, figNum, titleText, xLabel, yLabel, zLabel);
 
-                for idx = angles
-                    nexttile(1);
-                    view([-30 + idx, 35]);
-                    fileName = sprintf(".\\Figures\\%s\\SegmentsOverview\\OverviewSegment_Ring%.0fTo%.0f_%.0fdegRot.png", scenario, k-1, k, idx);
-                    saveas(figOverview, fileName);
+                if makeFigures
+                    for idx = angles
+                        nexttile(1);
+                        view([-30 + idx, 35]);
+                        fileName = sprintf(".\\Figures\\%s\\SegmentsOverview\\OverviewSegment_Ring%.0fTo%.0f_%.0fdegRot.png", scenario, k-1, k, idx);
+                        saveas(figOverview, fileName);
+                    end
                 end
                 figOverview.WindowState = "minimized";
             end
@@ -327,22 +347,27 @@ switch choice
             plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), '-', 'Color', cubesats(k).color, 'DisplayName', sprintf("Cubesat %s trajectory", cubesats(k).name));
         end
 
-        for idx = angles
-            view([-30 + idx, 35]);
-            fileName = sprintf(".\\Figures\\%s\\Course\\FinishedCourse_%.0fdegRot.png", scenario, idx);
-            saveas(courseFig, fileName);
+        if makeFigures
+            for idx = angles
+                view([-30 + idx, 35]);
+                fileName = sprintf(".\\Figures\\%s\\Course\\FinishedCourse_%.0fdegRot.png", scenario, idx);
+                saveas(courseFig, fileName);
+            end
         end
         courseFig.WindowState = "minimized";
-
-            %% Plot full trajectory
+        
+        %% Plot full trajectory
         for k = 1:length(cubesats)
             trajNum = 421 + k;
             titleText = sprintf("Full Trajectory of Cubesat %s", cubesats(k).name);
             trajFig = plotFullTrajectory(cubesats(k), rings, trajNum, titleText);
-            fileName = sprintf(".\\Figures\\%s\\Trajectories\\Trajectory_%s.png", scenario, cubesats(k).name);
-            saveas(trajFig, fileName);
+            if makeFigures
+                fileName = sprintf(".\\Figures\\%s\\Trajectories\\Trajectory_%s.png", scenario, cubesats(k).name);
+                saveas(trajFig, fileName);
+            end
             trajFig.WindowState = "minimized";
         end
+       
 
         %% Analyze race course results
         fprintf("\n\t---Analyzing Race Outcome---\n")
