@@ -14,7 +14,7 @@ addpath(genpath(".\Plotting"));
 
 %% Ask user for input
 menuMsg = sprintf("\n\t\tWelcome to the CubeSat racer! What would you like to do?\n\n" + ...
-                  "\t1. Generate and run a new race course (time intensive!)\n" + ...
+                  "\t1. Generate and run a new race course (time intensive, ~30 min!)\n" + ...
                   "\t2. Analyze an old run\n" + ...
                   "\t3. Exit\n\n" + ...
                   "\tChoice (enter number of option to do): ");
@@ -37,8 +37,6 @@ switch choice
             randomCourse = true;
             fprintf("Generating and solving new race course, this will take some time!\n")
         end
-
-        
 
             % Define ring semi-major and minor axis ranges
         semiMaj = [1, 5]; % m
@@ -65,10 +63,12 @@ switch choice
         opt = odeset('AbsTol', 1e-12, 'RelTol', 1e-12);
         
         %% Generate race course
-            % Set rng seed for testing
+            % Set rng seed for race course generation
         if ~randomCourse
             seed = 2*69420; % cool options: 0, 2, 3, 4
             rng(seed);
+        else
+            rng("shuffle");
         end
         
             % Make course
@@ -102,22 +102,10 @@ switch choice
         endRing.params.lastRing.center = endRing.params.lastRing.center - newOrigin;
         
             % Plot race course
-        figure(420)
-        hold on; grid on; axis equal
-        title("Generated Race Course")
-        for k = 1:length(rings)-1
-            scatter3(rings(k).center(1), rings(k).center(2), rings(k).center(3), 10, k, 'filled')
-            quiver3(rings(k).center(1), rings(k).center(2), rings(k).center(3), rings(k).normal(1), rings(k).normal(2), rings(k).normal(3), 10, 'filled', 'k-')
-            plotRing(rings(k), 'k-');
-        end
-        cubeStart = plotRing(startRing, 'g-');
-        quiver3(startRing.center(1), startRing.center(2), startRing.center(3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 10, 'filled', 'k-')
-        plotRing(endRing, 'r-');
-        
-        courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
-        
-        xlabel("X [m]"); ylabel("Y [m]"); zlabel("Z [m]"); cBar = colorbar;
-        cBar.Label.String = "Ring Number"; colormap("cool");
+        % figNum = 420;
+        % titleText = sprintf("Generated Race Course");
+        % xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
+        % [courseFig, cubeStart, courseCenter] = plotCourse(startRing, rings, endRing, figNum, titleText, xLabel, yLabel, zLabel);
         
         %% Generate CubeSats
             % Max thrust based on
@@ -132,8 +120,8 @@ switch choice
             thrusts = [100, 250, 500, 500]*(10^-3); % Maximum thrust values
             thrustConfigs = [false, false, false, true]; % Whether thrust is split amongst x-y-z thrusters or a general direction
         else
-            thrusts = 500*10^-3*ones(1,4);
-            thrustConfigs = false(1,4);
+            thrusts = 500*10^-3*ones(1,4); % Make cubesats with max thrust
+            thrustConfigs = false(1,4); % No thrust configuration shenanigans
         end
 
             % Make CubeSats
@@ -142,16 +130,12 @@ switch choice
             cubesats = [cubesats; generateCubesat(thrusts(k), thrustConfigs(k), startRing, names(k), markers(k), colors(k))];
         end
         
-            % Plot starting positions
-        cubeAx = []; cubeLabels = [];
-        for k = 1:length(cubesats)
-            cubeAx = [cubeAx, plot3(cubesats(k).X0(1), cubesats(k).X0(2), cubesats(k).X0(3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k')];
-            cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
-        end
-        
-        legend([cubeStart, courseCenter, cubeAx], ["CubeSat 3\sigma Starting Sample Space", "Race Course Origin", cubeLabels], 'location', 'best');
-        
-            % Show off course
+        %% Show off course and cubesat starting positions
+        figNum = 420;
+        titleText = sprintf("Generated Race Course");
+        xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
+        courseFig = plotCourse(startRing, rings, endRing, cubesats, figNum, titleText, xLabel, yLabel, zLabel);
+
         for k = 0:180
             view(-30 + 2*k, 35);
             drawnow
@@ -236,76 +220,121 @@ switch choice
 
         load([path,file])
 
-            % Plot race course
-        figure(420)
-        hold on; grid on; axis equal
-        title("Generated Race Course")
-        for k = 1:length(rings)-1
-            scatter3(rings(k).center(1), rings(k).center(2), rings(k).center(3), 10, k, 'filled')
-            quiver3(rings(k).center(1), rings(k).center(2), rings(k).center(3), rings(k).normal(1), rings(k).normal(2), rings(k).normal(3), 10, 'filled', 'k-')
-            plotRing(rings(k), 'k-');
+        fileParts = split(file, "_");
+        scenario = extractBefore(fileParts{end}, ".mat");
+
+        %% Plot race course and example ring
+            % Race course
+        courseNum = 420;
+        titleText = sprintf("Generated Race Course");
+        xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
+        courseFig = plotCourse(startRing, rings, endRing, cubesats, courseNum, titleText, xLabel, yLabel, zLabel);
+
+        angles = [0, 90, 180, 270];
+        for k = angles
+            view([-30 + k, 35]);
+            fileName = sprintf(".\\Figures\\%s\\Course\\InitCourse_%.0fdegRot.png", scenario, k);
+            saveas(courseFig, fileName);
         end
-        cubeStart = plotRing(startRing, 'g-');
-        quiver3(startRing.center(1), startRing.center(2), startRing.center(3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 10, 'filled', 'k-')
-        plotRing(endRing, 'r-');
-        
-        courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
-        
-        xlabel("Radial [m]"); ylabel("Along Track [m]"); zlabel("Cross Track [m]"); cBar = colorbar;
-        cBar.Label.String = "Ring Number"; colormap("cool"); view([30 35]);
+        courseFig.WindowState = "minimized";
 
-            % Plot starting positions
-        cubeAx = []; cubeLabels = [];
-        for k = 1:length(cubesats)
-            cubeAx = [cubeAx, plot3(cubesats(k).X(1,1), cubesats(k).X(1,2), cubesats(k).X(1,3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k')];
-            cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
+            % Example ring
+        ringNum = 421;
+        titleText = sprintf("Example Race Course Ring");
+        xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
+        ringFig = plotExampleRing(rings, ringNum, titleText, xLabel, yLabel, zLabel);
+
+        for k = angles
+            view([30 + k, 35]);
+            fileName = sprintf(".\\Figures\\%s\\Ring\\ExampleRing_%.0fdegRot.png", scenario, k);
+            saveas(courseFig, fileName);
         end
-        
-        legend([cubeStart, courseCenter, cubeAx], ["CubeSat 3\sigma Starting Sample Space", "Race Course Origin", cubeLabels], 'location', 'best');
+        ringFig.WindowState = "minimized";
 
-            % Plot trajectory segments
-        for k = 1:length(cubesats)
-            fprintf("\nPlotting Cubesat %s's Trajectory!\n", cubesats(k).name)
-            for kk = 1:length(rings)-1 % Intermediate ring problem
-                    % Find indices
-                kStart = find(cubesats(k).t == cubesats(k).tSeg(1,kk), 1, 'first');
-                kEnd = find(cubesats(k).t == cubesats(k).tSeg(2,kk), 1, 'last');
+        %% Plot trajectory segments
+        menuMsg = sprintf("\n\tWould you like detailed segment plots or just an overview?\n" + ...
+                          "\t1. Detailed plots (one plot per segment per cubesat, including time history plots. Generates LOTS of figures)\n" + ...
+                          "\t2. Overview (one plot per segment with all cubesat trajectories, no time history plots)\n" + ...
+                          "\tChoice (enter number of option to do): ");
+        choice = input(menuMsg);
 
-                    % Extract proper segment
-                t = cubesats(k).t(kStart:kEnd);
-                X = cubesats(k).X(kStart:kEnd, :);
-                u = cubesats(k).u(kStart:kEnd, :);
+        if choice == 1
+            for k = 1:length(cubesats)
+                fprintf("\nPlotting Cubesat %s's Trajectory!\n", cubesats(k).name)
+                for kk = 1:length(rings)
+                        % Find indices
+                    kStart = find(cubesats(k).t == cubesats(k).tSeg(1,kk), 1, 'last');
+                    kEnd = find(cubesats(k).t == cubesats(k).tSeg(2,kk), 1, 'first');
+    
+                        % Extract proper segment
+                    t = cubesats(k).t(kStart:kEnd);
+                    X = cubesats(k).X(kStart:kEnd, :);
+                    u = cubesats(k).u(kStart:kEnd, :);
+    
+                        % Plot segment
+                    figNum = kk + (k-1)*length(rings);
+                    if kk == length(rings)
+                        titleText = sprintf("Cubesat %s trajectory segment: Ring %.0f to end", cubesats(k).name, kk-1);
+                    else
+                        titleText = sprintf("Cubesat %s trajectory segment: Ring %.0f to %.0f", cubesats(k).name, kk-1, kk);
+                    end
+                    xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
+                    figDetailed = plotSegment(cubesats(k), rings(kk), t, X, u, figNum, titleText, xLabel, yLabel, zLabel);
+                        
+                    for idx = angles
+                        nexttile(1);
+                        view([-30 + idx, 35]);
+                        fileName = sprintf(".\\Figures\\%s\\SegmentsDetailed\\DetailedSegment_%s_Ring%.0fTo%.0f_%.0fdegRot.png", scenario, cubesats(k).name, kk-1, kk, idx);
+                        saveas(figDetailed, fileName);
+                    end
+                    figDetailed.WindowState = "minimized";
 
-                figNum = kk + (k-1)*length(rings);
-
-                    % Plot segment
-                titleText = sprintf("Cubesat %s trajectory segment: Ring %.0f to %.0f", cubesats(k).name, kk-1, kk);
-                xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
-                figNum = kk;
-                plotSegment(cubesats(k), rings(kk), t, X, figNum, titleText, xLabel, yLabel, zLabel);
+                        % Report progress
+                    fprintf("\tCubesat %s passed through ring %.0f in %.3f sec!\n", cubesats(k).name, kk, cubesats(k).t(kEnd) - cubesats(k).t(kStart));
+                end
+                fprintf("\n\tCubesat %s finished the course in %.3f sec!\n", cubesats(k).name, cubesats(k).t(end)-cubesats(k).t(1));
+    
                 
-                    % Report progress
-                fprintf("\tCubesat %s passed through ring %.0f in %.3f sec!\n", cubesats(k).name, kk, cubesats(k).t(kEnd) - cubesats(k).t(kStart));
             end
-            fprintf("\n\tCubesat %s finished the course in %.3f sec!\n", cubesats(k).name, cubesats(k).t(end)-cubesats(k).t(1));
+        else
+            for k = 1:length(rings)
+                figNum = k;
+                if k == length(rings)
+                    titleText = sprintf("Cubesat trajectory segment: Ring %.0f to end", k-1);
+                else
+                    titleText = sprintf("Cubesat trajectory segment: Ring %.0f to %.0f", k-1, k);
+                end
+                xLabel = "Radial [m]"; yLabel = "Along Track [m]"; zLabel = "Cross Track [m]";
+                figOverview = plotSegment_all(cubesats, rings(k), k, figNum, titleText, xLabel, yLabel, zLabel);
 
-                % Add trajectory to race course plot
-            figure(420)
-            plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), '-', 'Color', cubesats(k).color, 'DisplayName', sprintf("Cubesat %s trajectory", cubesats(k).name));
-        
-            figure; tl = tiledlayout(1,2);
-            title(tl, sprintf("Cubesat %s Adjoints", cubesats(k).name))
-            nexttile
-                title(sprintf("Cubesat %s Position Adjoints", cubesats(k).name))
-                hold on; grid on; axis equal;
-                plot3(cubesats(k).X(:,7), cubesats(k).X(:,8), cubesats(k).X(:,9), 'k.');
-                view([30 35])
-            nexttile
-                title(sprintf("Cubesat %s Velocity Adjoints", cubesats(k).name))
-                hold on; grid on; axis equal;
-                plot3(cubesats(k).X(:,10), cubesats(k).X(:,11), cubesats(k).X(:,12), 'k.');
-                view([30 35])
+                for idx = angles
+                    nexttile(1);
+                    view([-30 + idx, 35]);
+                    fileName = sprintf(".\\Figures\\%s\\SegmentsOverview\\OverviewSegment_Ring%.0fTo%.0f_%.0fdegRot.png", scenario, k-1, k, idx);
+                    saveas(figOverview, fileName);
+                end
+                figOverview.WindowState = "minimized";
+            end
         end
+
+        courseFig = figure(courseNum);
+        courseFig.WindowState = "maximized";
+        view(-30, 35)
+        for k = 1:length(cubesats)
+                % Add trajectory to race course plot
+            plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), '-', 'Color', cubesats(k).color, 'DisplayName', sprintf("Cubesat %s trajectory", cubesats(k).name));
+        end
+
+        for idx = angles
+            view([-30 + idx, 35]);
+            fileName = sprintf(".\\Figures\\%s\\Course\\FinishedCourse_%.0fdegRot.png", scenario, idx);
+            saveas(courseFig, fileName);
+        end
+        courseFig.WindowState = "minimized";
+
+        %% Analyze race course results
+        fprintf("\n\t---Analyzing Race Outcome---\n")
+
 
     case 3
         %% Say goodbye

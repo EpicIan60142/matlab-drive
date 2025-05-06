@@ -24,15 +24,21 @@ function cubesat = generateCubesat(uMax, axialThrust, startRing, name, marker, c
 %                 t0 = 0
 %           - X: Trajectory of this Cubesat for the race course, organized
 %                as follows:
-%                X = [X; Y; Z; Xdot; Ydot; Zdot; px; py; pz; pxDot; pyDot;
+%                X = [X, Y, Z, Xdot, Ydot, Zdot, px, py, pz, pxDot, pyDot,
 %                     pzDot]
 %           - t: Time at each point of this Cubesat's trajectory for the 
 %                race course
+%           - u: Control vector at each point of this Cubesat's trajectory
+%                for the race course, organized as follows:
+%                u = [u_x, u_y, u_z]
+%           - initGuess: Initial guess for the parameters of this cube sat
+%                        during each course segment, organized as follows:
+%                        x0 = [p0; t_f]
 %           - optParams: Parameters solved for this Cubesat during each
 %                        course segment, organized as follows:
 %                        optParams = [x_01, x_12, ..., x_lm1l], 
 %                        where l is the number of rings in the course and 
-%                        x = [p0; lambda_t; lambda_v; lambda_rf; tf]
+%                        x = [p0; t_f]
 %           - ringSeg: Stores what segment each set of parameters
 %                      corresponds to, organized as follows:
 %                      ringSeg = [ringSeg_1, ringSeg_2, ..., ringSeg_l], 
@@ -42,6 +48,9 @@ function cubesat = generateCubesat(uMax, axialThrust, startRing, name, marker, c
 %                   each ring segment, organized as follows:
 %                   tSeg = [tSeg_1, tSeg_2, ..., tSeg_l], where
 %                   tSeg_i = [startRingSegTime; endRingSegTime]
+%           - cost: Actual and minimum cost for the Cubesat to traverse
+%                   each course segment, organized as follows:
+%                   cost = [actualCost; minCost] 
 %           - name: Specified cubesat name
 %           - marker: Specified cubesat marker
 %           - color: Specified cubesat color

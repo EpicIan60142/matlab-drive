@@ -25,6 +25,9 @@ function K = costFunction(x, ring, cubesat, courseParams, opt, isFinal, debug)
 %                            true: Disable print sequence
 %   Outputs:
 %       - K: Cost function value for the current ring problem
+%
+%   By: Ian Faber, 04/19/2025
+%
 
     % Command window print sequence
 persistent idx;
