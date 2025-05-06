@@ -111,26 +111,26 @@ nt = nexttile; ax = [ax; nt];
     xlabel("Time [sec]"); ylabel("p_{vz} [m/s]");
 
     %% Control
-uLim = vecnorm(u,2);
+uLim = vecnorm(u,2,2);
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(t, u(:,1), 'Color', color);
-    yline(uLim, 'k--');
-    yline(-uLim, 'k--');
+    plot(t, uLim, 'k--');
+    plot(t, -uLim, 'k--');
     xlabel("Time [sec]");
     ylabel("u_x [m/s^2]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(t, u(:,2), 'Color', color);
-    yline(uLim, 'k--');
-    yline(-uLim, 'k--');
+    plot(t, uLim, 'k--');
+    plot(t, -uLim, 'k--');
     xlabel("Time [sec]");
     ylabel("u_y [m/s^2]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(t, u(:,3), 'Color', color);
-    yline(uLim, 'k--');
-    yline(-uLim, 'k--');
+    plot(t, uLim, 'k--');
+    plot(t, -uLim, 'k--');
     xlabel("Time [sec]");
     ylabel("u_z [m/s^2]");
 

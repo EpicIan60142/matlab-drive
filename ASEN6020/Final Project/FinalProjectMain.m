@@ -298,6 +298,7 @@ switch choice
             end
         else
             for k = 1:length(rings)
+                    % Plot segment
                 figNum = k;
                 if k == length(rings)
                     titleText = sprintf("Cubesat trajectory segment: Ring %.0f to end", k-1);
@@ -317,11 +318,11 @@ switch choice
             end
         end
 
+            % Plot completed course
         courseFig = figure(courseNum);
         courseFig.WindowState = "maximized";
         view(-30, 35)
         for k = 1:length(cubesats)
-                % Add trajectory to race course plot
             plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), '-', 'Color', cubesats(k).color, 'DisplayName', sprintf("Cubesat %s trajectory", cubesats(k).name));
         end
 
@@ -332,9 +333,39 @@ switch choice
         end
         courseFig.WindowState = "minimized";
 
+            %% Plot full trajectory
+        for k = 1:length(cubesats)
+            trajNum = 421 + k;
+            titleText = sprintf("Full Trajectory of Cubesat %s", cubesats(k).name);
+            trajFig = plotFullTrajectory(cubesats(k), rings, trajNum, titleText);
+            fileName = sprintf(".\\Figures\\%s\\Trajectories\\Trajectory_%s.png", scenario, cubesats(k).name);
+            saveas(trajFig, fileName);
+            trajFig.WindowState = "minimized";
+        end
+
         %% Analyze race course results
         fprintf("\n\t---Analyzing Race Outcome---\n")
 
+            % Compile costs and course times
+        costs = [];
+        times = [];
+        for k = 1:length(cubesats)
+            cost = sum(cubesats(k).cost(1,:));
+            time = cubesats(k).t(end) - cubesats(k).t(1);
+            costs = [costs; cost];
+            times = [times; time];
+        end
+        accuracy = costs - times;
+
+            % Find winner (smallest cost)
+        [minCost, winner] = min(costs);
+
+            % Report results
+        for k = 1:length(cubesats)
+            fprintf("\nCubesat %s results: overall cost = %.3f, time = %.3f, accuracy = %.3f", cubesats(k).name, costs(k), times(k), accuracy(k));
+        end
+
+        fprintf("\nCubesat %s won the race!\n\n", cubesats(winner).name);
 
     case 3
         %% Say goodbye
