@@ -89,8 +89,8 @@ fprintf("\b") % Delete newline or last character of print sequence
     % Report constraints
 [ineq, eq] = constraints(xSolved, ring, cubesat, courseParams, opt, isFinal);
 
-if isFinal
-    eqLabels = ["v_f constraint", "H equivalence constraint", "H_f constraint", "X_0 constraint", "t_0 constraint"];
+if isFinal % Final problem constraints
+    eqLabels = ["v_f at rest constraint", "H equivalence constraint", "H_f constraint", "X_0 constraint", "t_0 constraint"];
 
     [~, maxEqIdx] = max(abs(eq));
 
@@ -116,8 +116,8 @@ if isFinal
         offset = maxEqIdx;
     end
     fprintf("\t\tMax equality constraint magnitude: %.3e at position %.0f, %s\n", eq(maxEqIdx), maxEqIdx-offset, const);
-else
-    eqLabels = ["H equivalence constraint", "H_f constraint", "X_0 constraint", "t_0 constraint", "vHat_f constraint"];
+else % Initial/intermediate problem constraints
+    eqLabels = ["H equivalence constraint", "H_f constraint", "X_0 constraint", "t_0 constraint", "vHat_f pointing constraint"];
     ineqLabels = ["r_f ring distance constraint", "r_f ring plane constraint"];
 
     [~, maxIneqIdx] = max(abs(ineq));

@@ -112,7 +112,7 @@ switch choice
         end
         cubeStart = plotRing(startRing, 'g-');
         quiver3(startRing.center(1), startRing.center(2), startRing.center(3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 10, 'filled', 'k-')
-        cubeEnd = plotRing(endRing, 'r-');
+        plotRing(endRing, 'r-');
         
         courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
         
@@ -149,7 +149,7 @@ switch choice
             cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
         end
         
-        legend([cubeStart, cubeEnd, courseCenter, cubeAx], ["CubeSat 3\sigma Starting Sample Space", "CubeSat End Target Space", "Race Course Origin", cubeLabels], 'location', 'best');
+        legend([cubeStart, courseCenter, cubeAx], ["CubeSat 3\sigma Starting Sample Space", "Race Course Origin", cubeLabels], 'location', 'best');
         
             % Show off course
         for k = 0:180
@@ -247,7 +247,7 @@ switch choice
         end
         cubeStart = plotRing(startRing, 'g-');
         quiver3(startRing.center(1), startRing.center(2), startRing.center(3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 10, 'filled', 'k-')
-        cubeEnd = plotRing(endRing, 'r-');
+        plotRing(endRing, 'r-');
         
         courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
         
@@ -261,7 +261,7 @@ switch choice
             cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
         end
         
-        legend([cubeStart, cubeEnd, courseCenter, cubeAx], ["CubeSat 3\sigma Starting Sample Space", "CubeSat End Target Space", "Race Course Origin", cubeLabels], 'location', 'best');
+        legend([cubeStart, courseCenter, cubeAx], ["CubeSat 3\sigma Starting Sample Space", "Race Course Origin", cubeLabels], 'location', 'best');
 
             % Plot trajectory segments
         for k = 1:length(cubesats)
