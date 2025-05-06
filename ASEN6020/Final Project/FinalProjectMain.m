@@ -14,9 +14,10 @@ addpath(genpath(".\Plotting"));
 
 %% Ask user for input
 menuMsg = sprintf("\n\t\tWelcome to the CubeSat racer! What would you like to do?\n\n" + ...
-                  "\t1. Generate and run a new race course (time intensive, ~30 min!)\n" + ...
+                  "\t1. Generate and run a new race course (time intensive, ~30 min to 1 hour!)\n" + ...
                   "\t2. Analyze an old run\n" + ...
-                  "\t3. Exit\n\n" + ...
+                  "\t3. Animate an old run\n" + ...
+                  "\t4. Exit\n\n" + ...
                   "\tChoice (enter number of option to do): ");
 choice = input(menuMsg);
 
@@ -348,26 +349,46 @@ switch choice
 
             % Compile costs and course times
         costs = [];
+        minCosts = [];
         times = [];
         for k = 1:length(cubesats)
             cost = sum(cubesats(k).cost(1,:));
+            minCost = sum(cubesats(k).cost(2,:));
             time = cubesats(k).t(end) - cubesats(k).t(1);
             costs = [costs; cost];
+            minCosts = [minCosts; minCost];
             times = [times; time];
         end
-        accuracy = costs - times;
+        accuracies = costs - times; % cost = time cost + accuracy cost
 
             % Find winner (smallest cost)
         [minCost, winner] = min(costs);
 
             % Report results
         for k = 1:length(cubesats)
-            fprintf("\nCubesat %s results: overall cost = %.3f, time = %.3f, accuracy = %.3f", cubesats(k).name, costs(k), times(k), accuracy(k));
+            fprintf("\nCubesat %s results: overall cost = %.3f, time = %.3f, accuracy = %.3f. \n\tMinimum possible cost: %.3f\n", cubesats(k).name, costs(k), times(k), accuracies(k), minCosts(k));
         end
 
-        fprintf("\nCubesat %s won the race!\n\n", cubesats(winner).name);
-
+        fprintf("\n\n\t~~~Cubesat %s won the race!~~~\n\n", cubesats(winner).name);
+    
     case 3
+        %% Choose run to animate
+        fprintf("\n\tChoose a run to animate!\n");
+        cd .\Runs\
+        [file, path, ~] = uigetfile('.mat', "Pick a MAT file to analyze");
+        cd ..\
+
+        load([path,file])
+
+        fileParts = split(file, "_");
+        scenario = extractBefore(fileParts{end}, ".mat");
+
+        %% Animate!
+        saveMovie = true;
+        movieTitle = sprintf(".\\Videos\\ASEN6020_%s_animated", scenario);
+        figAnim = animateRun(cubesats, rings, saveMovie, movieTitle);
+
+    case 4
         %% Say goodbye
         fprintf("\n\tHave a great day!\n")
         return;

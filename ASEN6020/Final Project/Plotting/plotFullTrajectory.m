@@ -124,7 +124,7 @@ nt = nexttile; ax = [ax; nt];
     ylabel("u_z [m/s^2]");
 
     %% Make legend to mark rings
-lgnd = legend(posPlot, "Ring Position or Normal Vector", 'location', 'layout');
+lgnd = legend(posPlot, "Ring Position/Normal Vector", 'location', 'layout');
 lgnd.Layout.Tile = 'east';
 
     %% Link axes and update figure
