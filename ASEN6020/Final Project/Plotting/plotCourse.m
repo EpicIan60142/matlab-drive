@@ -1,4 +1,4 @@
-function fig = plotCourse(startRing, rings, endRing, cubesats, figNum, titleText, xLabel, yLabel, zLabel)
+function fig = plotCourse(startRing, rings, endRing, cubesats, figNum, titleText, xLabel, yLabel, zLabel, atEnd)
 % Function that plots a generated cubesat race course
 %   Inputs:
 %       - startRing: Ring structure for the cubesat starting position ring
@@ -12,11 +12,17 @@ function fig = plotCourse(startRing, rings, endRing, cubesats, figNum, titleText
 %       - xLabel: String specifying the x axis for the 3D plot
 %       - yLabel: String specifying the y axis for the 3D plot
 %       - zLabel: String specifying the z axis for the 3D plot
+%       - atEnd: Boolean indicating whether to plot Cubesats at the start
+%                or end of the course
 %   Outputs:
 %       - fig: Course figure handle
 %
 %   By: Ian Faber, 05/05/2025
 %
+
+if ~exist("atEnd", 'var')
+    atEnd = false;
+end
 
     %% Make figure
 fig = figure(figNum);
@@ -44,13 +50,21 @@ fig.WindowState = "maximized";
         % Plot course origin
     courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
     
-        % Plot cubesat starting positions
-    cubeAx = []; cubeLabels = [];
-    for k = 1:length(cubesats)
-        cubeAx = [cubeAx, plot3(cubesats(k).X(1,1), cubesats(k).X(1,2), cubesats(k).X(1,3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k', 'MarkerSize', 5)];
-        cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
+    if atEnd
+            % Plot cubesat ending positions
+        cubeAx = []; cubeLabels = [];
+        for k = 1:length(cubesats)
+            cubeAx = [cubeAx, plot3(cubesats(k).X(end,1), cubesats(k).X(end,2), cubesats(k).X(end,3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k', 'MarkerSize', 5)];
+            cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
+        end
+    else
+            % Plot cubesat starting positions
+        cubeAx = []; cubeLabels = [];
+        for k = 1:length(cubesats)
+            cubeAx = [cubeAx, plot3(cubesats(k).X(1,1), cubesats(k).X(1,2), cubesats(k).X(1,3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k', 'MarkerSize', 5)];
+            cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
+        end
     end
-    
         % Labels, colorbar, and view angle
     xlabel(xLabel); ylabel(yLabel); zlabel(zLabel); cBar = colorbar;
     cBar.Label.String = "Ring Number"; cBar.Location = "west";

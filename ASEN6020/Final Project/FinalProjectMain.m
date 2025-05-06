@@ -239,9 +239,9 @@ switch choice
         %% Plot race course and example ring
             % Race course
         courseNum = 420;
-        titleText = sprintf("Generated Race Course");
+        titleText = sprintf("Generated Race Course"); atEnd = false;
         xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
-        courseFig = plotCourse(startRing, rings, endRing, cubesats, courseNum, titleText, xLabel, yLabel, zLabel);
+        courseFig = plotCourse(startRing, rings, endRing, cubesats, courseNum, titleText, xLabel, yLabel, zLabel, atEnd);
 
         if makeFigures
             angles = [0, 90, 180, 270];
