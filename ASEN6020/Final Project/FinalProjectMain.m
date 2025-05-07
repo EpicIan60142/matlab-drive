@@ -102,12 +102,6 @@ switch choice
         endRing.center = endRing.center - newOrigin;
         endRing.params.lastRing.center = endRing.params.lastRing.center - newOrigin;
         
-            % Plot race course
-        % figNum = 420;
-        % titleText = sprintf("Generated Race Course");
-        % xLabel = sprintf("Radial [m]"); yLabel = sprintf("Along Track [m]"); zLabel = sprintf("Cross Track [m]");
-        % [courseFig, cubeStart, courseCenter] = plotCourse(startRing, rings, endRing, figNum, titleText, xLabel, yLabel, zLabel);
-        
         %% Generate CubeSats
             % Max thrust based on
             % https://www.cubesatshop.com/product/cluster-ifm-nano-thruster-smallsats/
@@ -187,7 +181,6 @@ switch choice
 
                 % Add trajectory to race plot
             figure(420)
-            % title(sprintf("Cubesat %s Race Course Trajectory", cubesats(k).name));
             plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), '-', 'Color', cubesats(k).color, 'DisplayName', sprintf("Cubesat %s trajectory", cubesats(k).name));
         
             figure; tl = tiledlayout(1,2);
