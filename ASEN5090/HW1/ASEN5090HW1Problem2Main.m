@@ -89,12 +89,13 @@ for k = idx
     levels = linspace(mindR, maxdR, numLevels);
     nt = nexttile; ax(end+1) = nt;
         hold on; grid on;
-        title(sprintf("Range Sensitivity vs. aircraft position at x_T = %.3f m", x_test(k)))
+        title(sprintf("Range Sensitivity vs. aircraft position at x_T = %.3f m", x_test(k)), 'FontSize', 9)
         contourf(dX, dY, dR(:,:,k), levels)
         c = colorbar; c.Label.String = "\deltaR [m]"; c.Location = "southoutside";
         xlabel("\deltax [m]"); ylabel("\deltay [m]")
 end
-linkaxes(ax, 'x', 'y')
+linkaxes(ax, 'x', 'y');
+fig.Position = [10 10 1200 1000];
 
 % Plot Range Rate results
 fig = figure; tl = tiledlayout('flow'); ax = [];
@@ -104,12 +105,13 @@ for k = idx
     levels = linspace(mindRDot, maxdRDot, numLevels);
     nt = nexttile; ax(end+1) = nt;
         hold on; grid on;
-        title(sprintf("Range Rate Sensitivity vs. aircraft position at x_T = %.3f m", x_test(k)))
+        title(sprintf("Range Rate Sensitivity vs. aircraft position at x_T = %.3f m", x_test(k)), 'FontSize', 8.5)
         contourf(dX, dY, dRDot(:,:,k), levels)
         c = colorbar; c.Label.Interpreter = 'latex'; c.Label.String = "$\delta \dot{R}$ [m/s]";  c.Location = "southoutside";
         xlabel("\deltax [m]"); ylabel("\deltay [m]")
 end
-linkaxes(ax, 'x', 'y')
+linkaxes(ax, 'x', 'y');
+fig.Position = [10 10 1200 1000];
 
 % Plot Zenith Angle results
 fig = figure; tl = tiledlayout('flow'); ax = [];
@@ -119,12 +121,13 @@ for k = idx
     levels = linspace(mindZenith, maxdZenith, numLevels);
     nt = nexttile; ax(end+1) = nt;
         hold on; grid on;
-        title(sprintf("Zenith Angle Sensitivity vs. aircraft position at x_T = %.3f m", x_test(k)))
+        title(sprintf("Zenith Angle Sensitivity vs. aircraft position at x_T = %.3f m", x_test(k)), 'FontSize', 8.5)
         contourf(dX, dY, rad2deg(dZenith(:,:,k)), rad2deg(levels))
         c = colorbar; c.Label.String = "\delta\xi [deg]"; c.Location = "southoutside";
         xlabel("\deltax [m]"); ylabel("\deltay [m]")
 end
-linkaxes(ax, 'x', 'y')
+linkaxes(ax, 'x', 'y');
+fig.Position = [10 10 1200 1000];
 
 figure; plots = []; labels = [];
 hold on; grid on;
