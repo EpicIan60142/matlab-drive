@@ -6,6 +6,7 @@ clc; clear; close all;
 
 addpath("HW2_Code\")
 addpath("HW2_DATA\")
+addpath("..\utilities\")
 
 %% Setup
 sp3Data = read_sp3("IGS0OPSFIN_20252230000_01D_15M_ORB.SP3");
