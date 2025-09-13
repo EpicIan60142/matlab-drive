@@ -149,14 +149,18 @@ yy = (90-el).*cos(az*pi/180);
 xx = (90-el).*sin(az*pi/180);
 
 % plot data on top of grid
-q = plot(xx,yy,'.k','MarkerSize',4);
+q = scatter(xx,yy,20,svs,'filled');%,'.k','MarkerSize',4);
+colormap(gca,'cool')
+c = colorbar; c.Label.String = "PRN";
 
+%{
 % Place satellite PRN numbers with satellite position 
 for i = 1:length(svs)
     if(svs(i)~=0)
         text(xx(i)+3,yy(i),int2str(svs(i)));
     end
 end
+%}
 
 if nargout > 0
 	eval(['hpol = gca;']);

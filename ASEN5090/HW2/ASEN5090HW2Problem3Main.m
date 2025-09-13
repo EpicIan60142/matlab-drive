@@ -39,7 +39,7 @@ satECEF = sp3Data(idxSats, 4:6)';
     % Call az-el-range function
 [satAz, satEl, satRange] = compute_azelrange(NIST_ECEF, satECEF);
 
-    % Pull out satellite measurements
+    % Pull out satellite measurements into individual PRN vectors
 satMeasurements.Az = [];
 satMeasurements.El = [];
 satMeasurements.Range = [];
