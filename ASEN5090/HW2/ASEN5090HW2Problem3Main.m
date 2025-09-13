@@ -1,4 +1,4 @@
-%% ASEN 5090 HW 2 Problem 3 Main
+%% ASEN 5090 HW 2 Problem 3 Main Script
 % By: Ian Faber
 
 %% Housekeeping
