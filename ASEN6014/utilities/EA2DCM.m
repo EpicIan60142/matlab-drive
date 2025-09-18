@@ -17,7 +17,7 @@ function mat = EA2DCM(angles, type)
 %             (3) axis, then a (34) degree rotation about the (2) axis, 
 %             then an (86) degree rotation about the (1) axis
 %
-%   Author: Ian Faber
+%   Author: Ian Faber, 04/15/2024
 
 M1 = @(theta) [
                 1,          0,          0;

@@ -44,7 +44,11 @@ eVec = cross(vVec, hVec)/mu - rVec/r;
 oe.e = norm(eVec);
 
 % Calculate perifocal frame unit vectors and construct PN
-i_e = eVec/oe.e;
+if oe.e == 0
+    i_e = [1; 0; 0];
+else
+    i_e = eVec/oe.e;
+end
 i_h = hVec/h;
 i_p = cross(i_h, i_e);
 
