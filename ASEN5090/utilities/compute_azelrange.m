@@ -30,9 +30,11 @@ for k = 1:size(satECEF, 2)
     satECEF_k = satECEF(:,k);
     satENU = C_ECEF2ENU*satECEF_k;
 
-    AZ = [AZ, atan2(satENU(1), satENU(2))];
-    EL = [EL, asin(satENU(3)/norm(satENU))];
-    RANGE = [RANGE, norm(satENU - userENU)];
+    LOS = satENU - userENU;
+
+    AZ = [AZ, atan2(LOS(1), LOS(2))];
+    EL = [EL, asin(LOS(3)/norm(LOS))];
+    RANGE = [RANGE, norm(LOS)];
 
 end
 

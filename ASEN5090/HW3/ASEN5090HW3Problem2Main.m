@@ -83,7 +83,7 @@ nt = nexttile; ax = [ax; nt];
 linkaxes(ax, 'x');
 
 %% Part c. Plot the clock bias based on the a0 and a1 parameters vs. time
-
+    % Plot
 figure;
 hold on; grid on;
 title(sprintf("Satellite clock bias vs. time for PRN %.0f", PRN))
@@ -91,15 +91,16 @@ plot(TOW, clkCorr)
 xlabel("TOW [hr]"); ylabel("Clock bias [m]")
 
 %% Part d. Calculate and plot relativistic correction vs. time
-
+    % Calculate time correction
 t_r = 2*dot(ephPos, ephVel, 2)/c^2;
+
+    % Convert to distance correction
 dx_r = c*t_r;
 
+    % Plot
 figure;
 hold on; grid on;
 title(sprintf("Relativistic correction vs. time for PRN %.0f", PRN))
 plot(TOW, dx_r, 'b');
 xlabel("TOW [hr]"); ylabel("\Deltax_r [m]")
-
-
 

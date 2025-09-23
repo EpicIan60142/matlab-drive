@@ -34,7 +34,7 @@ idxSats = logical(idxSats);
 
 t_Meas = unique(sp3Data(idxSats, 2));
 t_Meas = (t_Meas - t_Meas(1))/3600;
-satECEF = sp3Data(idxSats, 4:6)';
+satECEF = sp3Data(idxSats, 4:6)'*1000;
 
     % Call az-el-range function
 [satAz, satEl, satRange] = compute_azelrange(NIST_ECEF, satECEF);

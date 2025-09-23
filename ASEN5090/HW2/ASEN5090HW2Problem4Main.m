@@ -18,7 +18,7 @@ EQUA_LLA = [0, NIST_LLA(2), 0];
 EQUA_ECEF = lla2ecef(EQUA_LLA);
 
 sp3Data = read_sp3("IGS0OPSFIN_20252230000_01D_15M_ORB.SP3");
-satECEF = sp3Data(:,4:6)';
+satECEF = sp3Data(:,4:6)'*1000;
 PRNs = sp3Data(:,3);
 
 userPositions = [NIST_ECEF; Smead_ECEF; EQUA_ECEF]';
