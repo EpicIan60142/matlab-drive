@@ -128,7 +128,7 @@ title(tl, sprintf("Difference of Computed and Expected range for PRN %.0f", PRN)
 nexttile([1 2]);
     hold on; grid on;
     title("Computed Range - Expected Range")
-    plot(satRange - expRange, 'b.');
+    plot(t, satRange - expRange, 'b.');
     xlabel("Time"); ylabel("\Delta\rho [m]")
 nexttile;
     hold on;

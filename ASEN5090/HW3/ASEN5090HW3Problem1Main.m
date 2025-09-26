@@ -34,7 +34,7 @@ figure;
 hold on; grid on;
 title(sprintf("S1C SNR vs. time for PRN %.0f", PRN));
 plot(GPSData.Time, GPSData.S1C, 'b.');
-xlabel("Time"); ylabel("S1C SNR [dB]");
+xlabel("Time"); ylabel("S1C SNR [dB-Hz]");
 
 %% Part d. Choose another pseudorange or carrier phase measurement and plot against time
     % GPS wavelength and speed of light
