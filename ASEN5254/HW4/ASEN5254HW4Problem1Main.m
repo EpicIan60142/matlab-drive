@@ -7,20 +7,34 @@ clc; clear; close all;
 %% Setup
 theta = linspace(0, pi/4, 12);
 
-obstacleX = [0, 1, 0, 0];
-obstacleY = [0, 2, 2, 0];
+obstacleX = [0, 1, 0];
+obstacleY = [0, 2, 2];
 obstacle = [obstacleX; obstacleY];
 robotX = obstacleX;
 robotY = obstacleY;
-invRobotX = [-1 0 0, -1];
-invRobotY = [-2 -2 0, -2];
+invRobotX = [0, -1 0];
+invRobotY = [0, -2 -2];
 
 %% Make c-space obstacle for every theta
 cSpaceObs = [];
 for k = 1:length(theta)
     invRobot = [cos(theta(k)) -sin(theta(k)); sin(theta(k)) cos(theta(k))]*[invRobotX; invRobotY];
 
-    [invRobotX, invRobotY] = poly2ccw(invRobot(1,:), invRobot(2,:));
+    smallestY = 9e9;
+    smallestYidx = 9e9;
+    for kk = 1:length(invRobotX)
+        if invRobot(2,kk) < smallestY
+            smallestY = invRobot(2,kk);
+            smallestYidx = kk;
+        end
+    end
+
+    test = 1:length(invRobotX);
+    idxNotSmall = test ~= smallestYidx;
+    invRobotX = [invRobot(1,smallestYidx), invRobot(1,idxNotSmall)];
+    invRobotY = [invRobot(2,smallestYidx), invRobot(2,idxNotSmall)];
+
+    [invRobotX, invRobotY] = poly2ccw(invRobotX, invRobotY);
 
     invRobot = [invRobotX; invRobotY];
 
@@ -62,14 +76,11 @@ figure;
 hold on; grid on;
 title("C-space object")
 for k = 1:length(theta)
-    plot3(cSpaceObs{k}(1,:), cSpaceObs{k}(2,:), rad2deg(theta(k))*ones(size(cSpaceObs{k}(1,:))), 'b-')
+    patch(cSpaceObs{k}(1,:), cSpaceObs{k}(2,:), rad2deg(theta(k))*ones(size(cSpaceObs{k}(1,:))), ...
+          rad2deg(theta(k))*ones(size(cSpaceObs{k}(1,:))), 'FaceAlpha', 0.5);
+    c = colorbar; c.Label.String = "\theta [deg]";
+    colormap('cool');
     xlabel("X [m]"); ylabel("Y [m]"); zlabel("\theta [deg]")
 
-    view([30 35])
-
-
-
-
-
-
+    view([-30 25])
 end
