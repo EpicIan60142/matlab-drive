@@ -72,7 +72,7 @@ for k = 1:length(testC1)
                 yCheck = cos(theta1)*(sin(theta2)*(9*cos(theta3) + 8) + 9*cos(theta2)*sin(theta3)) ...
                        + sin(theta1)*(cos(theta2)*(9*cos(theta3) + 8) - 9*sin(theta2)*sin(theta3) + 8);
 
-                epsilon = 1e-10n;
+                epsilon = 1e-10;
                 if (xCheck <= point(1) + epsilon && xCheck >= point(1) - epsilon && yCheck <= point(2) + epsilon && yCheck >= point(2) - epsilon)
                     thetas.theta1 = [thetas.theta1; theta1];
                     thetas.theta2 = [thetas.theta2; theta2];

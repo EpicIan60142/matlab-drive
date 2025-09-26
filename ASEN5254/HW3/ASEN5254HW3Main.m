@@ -5,7 +5,7 @@
 clc; clear; close all;
 
 %% Setup
-testC1 = -1:1e-6:1; % List of cos(theta3) to test
+testC1 = -1:1e-3:1; % List of cos(theta3) to test
 point = [0; 4]; % 
 
 %% Run procedure to solve for thetas and check answer
