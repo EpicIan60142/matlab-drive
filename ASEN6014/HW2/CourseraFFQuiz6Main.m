@@ -78,8 +78,8 @@ tspan = 0:10:2000; % sec
 fprintf("\nDeputy initial relative state: [%.6f, %.6f, %.6f] km, [%.6f, %.6f, %.6f] km/s\n", X_d_H)
 
     % Integrate full nonlinear EOM
-[t_N, X_N] = ode45(@(t,X)multiSatOrbitEOM(t,X,const,false), tspan, X0_N, opt);
-X_rel = convDeputyN2H(X_N(end,1:6)', X_N(end,7:12)', const);
+%[t_N, X_N] = ode45(@(t,X)multiSatOrbitEOM(t,X,const,false), tspan, X0_N, opt);
+%X_rel = convDeputyN2H(X_N(end,1:6)', X_N(end,7:12)', const);
 
 [t_rel, X_rel] = ode45(@(t,X)fullNLGenRelEOM(t,X,const), tspan, X0, opt);
 X_rel = X_rel(end, 7:12)';
