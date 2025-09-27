@@ -27,6 +27,9 @@ zDot = X(6);
 
 r = sqrt(x^2 + y^2 + z^2);
 
+    % THESE SIGNS ARE WRONG! Should be -(Ri/r)^2, not +(Ri/r)^2. Surprised 
+    % that this didn't break more things... 
+    %   - Ian F, 09/27/2025
 xDDot = -(mu*x/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(3/2))));
 yDDot = -(mu*y/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(3/2))));
 zDDot = -(mu*z/(r^3))*(1 + (((Ri/r)^2)*J2*((15/2)*(z/r)^2-(9/2))));
