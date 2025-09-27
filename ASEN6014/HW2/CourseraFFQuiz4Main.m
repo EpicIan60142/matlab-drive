@@ -8,6 +8,8 @@ clc; clear; close all;
     % Earth mu
 const.mu = 398600.4415; % km^3/s^2
 
+sc = zeros(2,1);
+
     % Chief initial state
 r_c_N = [-6685.20926; 601.51244; 3346.06634]; % km
 v_c_N = [-1.74294; -6.70242; -2.27739]; % km/s
@@ -28,7 +30,7 @@ X0_N = [X_c_N; convDeputyH2N(X_c_N, X_d_H, const)];
 fprintf("\nDeputy initial inertial state: [%.6f, %.6f, %.6f] km, [%.6f, %.6f, %.6f] km/s\n", X0_N(7:12))
 
     % Integrate in the inertial frame
-[t_N, X_N] = ode45(@(t,X)multiSatOrbitEOM(t,X,const,false), tspan, X0_N, opt);
+[t_N, X_N] = ode45(@(t,X)multiSatOrbitEOM(t,X,const,sc,false), tspan, X0_N, opt);
 
     % Pull out final deputy states
 fprintf("\nInertial - Deputy final inertial state: [%.6f, %.6f, %.6f] km, [%.6f, %.6f, %.6f] km/s\n", X_N(end, 7:12))

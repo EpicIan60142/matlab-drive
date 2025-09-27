@@ -19,10 +19,12 @@ pConst.mu = 398600.4415; % km^3/s^2
 pConst.Ri = 6378; % km
 pConst.J2 = 1.08264e-3; % n.d.
 
+scConst = 0;
+
 opt = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 
 %% Propagate states
-[t, X] = ode45(@(t,X)orbitEOM(t, X, pConst, J2_enable), tspan, X0, opt);
+[t, X] = ode45(@(t,X)orbitEOM(t, X, pConst, scConst, J2_enable), tspan, X0, opt);
 
 %% Pull out states at the end of propagation
 rf = X(end, 1:3)'

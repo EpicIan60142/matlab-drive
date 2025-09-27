@@ -27,10 +27,12 @@ pConst.mu = 398600.4415; % km^3/s^2
 pConst.Ri = 6378; % km
 pConst.J2 = 1.08263e-3; % n.d.
 
+scConst = zeros(2,1);
+
 opt = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 
 %% Propagate states
-[t, X] = ode45(@(t,X)multiSatOrbitEOM(t, X, pConst, J2_enable), tspan, X0, opt);
+[t, X] = ode45(@(t,X)multiSatOrbitEOM(t, X, pConst, scConst, J2_enable), tspan, X0, opt);
 
 %% Pull out states at the end of propagation
 format long
@@ -52,6 +54,6 @@ figure;
 hold on; grid on; axis equal;
 title("Integrated Spacecraft Motion")
 plot3(X(:,1), X(:,2), X(:,3), 'b-');
-plot3(X(:,7), X(:,8), X(:,9), 'r-');
+plot3(X(:,7), X(:,8), X(:,9), 'r--');
 xlabel("X [km]"); ylabel("Y [km]"); zlabel("Z [km]");
 view([30 35]); legend("Spacecraft 1", "Spacecraft 2")
