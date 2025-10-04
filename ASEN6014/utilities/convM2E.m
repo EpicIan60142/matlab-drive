@@ -1,13 +1,21 @@
-function E = convM2E(M,e)
+function E = convM2E(M,e,verbose)
 % Function that converts Mean Anomaly to Eccentric Anomaly using Newton's
 % Method
 %   Inputs:
 %       - M: Mean Anomaly in radians
+%       - e: Orbit eccentricity
+%       - verbose: Boolean indicating whether to print results or not.
+%                  Defaults to true.
 %   Outputs:
 %       - E: Eccentric Anomaly in radians
 %
 %   By: Ian Faber, 08/27/2025
 %
+
+% Set verbosity
+if ~exist("verbose", "var")
+    verbose = true;
+end
 
 % Define Arbitrarily small number for floating point operations to be 
 % "close enough" to 0
@@ -35,10 +43,12 @@ while iter < maxIter
     end
 end
 
-if iter < maxIter
-    fprintf("\nConverged to E = %.6f rad after %.0f iterations!\n", E, iter)
-else
-    fprintf("\nHit maximum iterations (%.0f) at E = %.6f rad.\n", iter, E)
+if verbose
+    if iter < maxIter
+        fprintf("\nConverged to E = %.6f rad after %.0f iterations!\n", E, iter)
+    else
+        fprintf("\nHit maximum iterations (%.0f) at E = %.6f rad.\n", iter, E)
+    end
 end
 
 end

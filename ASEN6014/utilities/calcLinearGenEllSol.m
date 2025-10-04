@@ -63,21 +63,21 @@ f_v = f_u - (pi/2);
 theta_w = atan2(di,-sin(i)*dRAAN);
 
         % Analytical delta defs
-d_u = sqrt((((e^2)*(dM^2))/(eta^2)) + de^2);
+d_u = sqrt((((e^2)*(dM.^2))/(eta^2)) + de^2);
 d_w = sqrt(di^2 + (sin(i)^2)*(dRAAN^2));
 
         % Chief orbit radius
-r = (a*(1-e^2))/(1+e*cos(f));
+r = (a*(1-e^2))./(1+e*cos(f));
 
     % Calculate nondimensional solution
-u = da/a - (e*de)/(2*(eta^2)) + (d_u/(eta^2))*(cos(f-f_u) + (e/2)*cos(2*f - f_u));
-v = ((1 + (e^2)/2)*(dM/(eta^3)) + dargPeri + cos(i)*dRAAN) - (d_u/(eta^2))*(2*sin(f - f_u) + (e/2)*sin(2*f - f_u));
+u = da/a - (e*de)/(2*(eta^2)) + (d_u/(eta^2)).*(cos(f-f_u) + (e/2)*cos(2*f - f_u));
+v = ((1 + (e^2)/2)*(dM/(eta^3)) + dargPeri + cos(i)*dRAAN) - (d_u/(eta^2)).*(2*sin(f - f_u) + (e/2)*sin(2*f - f_u));
 w = d_w*cos(theta - theta_w);
 
     % Dimensionalize
-x = u*r;
-y = v*r;
-z = w*r;
+x = u.*r;
+y = v.*r;
+z = w.*r;
 
     % Assign outputs
 rho_H = [x; y; z];
