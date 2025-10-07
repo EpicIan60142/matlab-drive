@@ -63,7 +63,7 @@ for k = 1:length(di)
     %% Nuimerically integrate
         % Find orbit period
     T = 2*pi*sqrt((oe_c.a^3)/pConst.mu);
-    tspan = 0:1:T;
+    tspan = 0:1:2*T;
     
         % Collate start states
     cart_c = convClassicOE2Cart(oe_c);
@@ -97,7 +97,7 @@ for k = 1:length(di)
     if k == 1
         %% Plot vs. time
     figure; tl = tiledlayout(3,1); ax = [];
-    title(tl, "Nonlinear Deputy Position vs. Time")
+    title(tl, "Nonlinear Deputy Position vs. Time for 2 Orbit Periods")
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
         title("x vs. time")
@@ -109,10 +109,11 @@ for k = 1:length(di)
         hold on; grid on;
         title("y vs. time")
         plot(t_NL, X_NL(:,8), 'b-');
-        yline(xyBound, 'k--');
-        yline(-xyBound, 'k--');
-        yline(yGoal, 'm--')
+        yline(yGoal+xyBound, 'k--');
+        yline(yGoal-xyBound, 'k--');
+        a = yline(yGoal, 'm--');
         xlabel("Time [sec]"); ylabel("y [km]");
+        legend(a, "Desired Along-Track Offset", 'Location', 'best');
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
         title("z vs. time")
