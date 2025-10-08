@@ -84,8 +84,17 @@ for k = 1:l
 
         NR = [normalPrime, normalDPrime, normal];
 
+            % Ring area for drag calculation
+        A = pi*(a*b - (0.8*a*0.8*b));
+        
+            % Ring mass
+        m = 100; % kg
+        
+            % Ring coefficient of drag
+        Cd = 1.2;
+
             % Create ring
-        init = struct("center", center, "normal", normal, "S", S, "NR", NR); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
+        init = struct("center", center, "normal", normal, "S", S, "NR", NR, "A", A, "m", m, "Cd", Cd, "X", [], "t", []); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
         init.params = struct("a", a, "b", b, "theta", rad2deg(theta), "phi", rad2deg(phi), ...
                              "d", 0, "normalPrime", normalPrime, "normalDPrime", normalDPrime, "lastRing", init);
 

@@ -69,6 +69,19 @@ ring.center = lastRing.center + d*lastRing.normal;
     % DCM from ring frame to inertial frame
 ring.NR = [normalPrime, normalDPrime, ring.normal];
 
+    % Ring area for drag calculation
+ring.A = pi*(a*b - (0.8*a*0.8*b));
+
+    % Ring mass
+ring.m = 100; % kg
+
+    % Ring coefficient of drag
+ring.Cd = 1.2;
+
+    % Trajectory fields
+ring.X = [];
+ring.t = [];
+
 %% Assign params structure
 ring.params = struct("a", a, "b", b, "theta", rad2deg(thetaNew), "phi", rad2deg(phiNew), ...
                      "d", d, "normalPrime", normalPrime, "normalDPrime", normalDPrime, "lastRing", lastRing);

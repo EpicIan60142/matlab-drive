@@ -1,4 +1,4 @@
-function fig = plotCourse(rings, figNum, titleText, xLabel, yLabel, zLabel)
+function fig = plotCourse(rings, figNum, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel)
 % Function that plots a generated cubesat race course
 %   Inputs:
 %       - rings: Vector of ring structures for the intermediate rings of
@@ -42,6 +42,14 @@ fig.WindowState = "maximized";
     quiver3(startRing.center(1), startRing.center(2), startRing.center(3), startRing.normal(1), startRing.normal(2), startRing.normal(3), normalScale, 'filled', 'k-')
     cubeEnd = plotRing(endRing, 'r-');
     
+        % Plot trajectory of each ring if it's populated
+    traj = [];    
+    for k = 1:length(rings)
+        if ~isempty(rings(k).X)
+            traj = plot3(rings(k).X(1,:), rings(k).X(2,:), rings(k).X(3,:), trajStyle);
+        end
+    end
+        
         % Plot course origin
     courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
     
@@ -51,7 +59,7 @@ fig.WindowState = "maximized";
     colormap("cool"); view([30 35])
 
     %% Legend
-lgnd = legend([cubeStart, cubeEnd, courseCenter, ring, normal], ["CubeSat 3\sigma Starting Ring", "Race Course End Ring", "Race Course Origin", "Course Ring", "Ring Normal Vector"], 'location', 'eastoutside');
+lgnd = legend([cubeStart, cubeEnd, courseCenter, ring, normal, traj], ["CubeSat 3\sigma Starting Ring Initial Position", "Race Course End Ring Initial position", "Race Course Origin", "Course Ring Initial Position", "Ring Normal Vector", trajLabel], 'location', 'eastoutside');
 % lgnd.Layout.Tile = 2;
 
 end
