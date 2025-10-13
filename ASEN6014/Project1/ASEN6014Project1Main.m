@@ -47,10 +47,10 @@ oe_c.mu = pConst.mu;
 oe_c.a = (pConst.mu*(T/(2*pi))^2)^(1/3);
 oe_c.a = 8000;
 oe_c.e = 0.18; % Decently eccentric course origin orbit
-oe_c.i = deg2rad(0);
-oe_c.RAAN = deg2rad(0);
-oe_c.argPeri = deg2rad(0);
-oe_c.f = deg2rad(0);
+oe_c.i = deg2rad(45);
+oe_c.RAAN = deg2rad(15);
+oe_c.argPeri = deg2rad(-23);
+oe_c.f = deg2rad(10);
 
     % ode45 settings
 opt = odeset('AbsTol', 1e-12, 'RelTol', 1e-12);
