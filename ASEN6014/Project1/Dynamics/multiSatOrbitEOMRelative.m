@@ -39,7 +39,7 @@ nDeputies = length(X_deputies)/nStates;
 dX = [];
 
 % Calculate chief rate of change and add to overall rate of change vector
-dX_chief = orbitEOMInertial(t, X_chief, pConst, scConst(1), disturb(1));
+dX_chief = orbitEOMInertial(t, X_chief, pConst, scConst(1), disturb(:,1));
 
 dX = [dX; dX_chief];
 
@@ -48,7 +48,6 @@ dX = [dX; dX_chief];
 rVec = X_chief(1:3);
 vVec = X_chief(4:6);
 
-%HN = EA2DCM([oe.RAAN, oe.i, oe.argPeri + oe.f], [3,1,3]);
 i_r = rVec/norm(rVec);
 i_h = (cross(rVec, vVec)/norm(cross(rVec,vVec)));
 i_theta = cross(i_h, i_r);

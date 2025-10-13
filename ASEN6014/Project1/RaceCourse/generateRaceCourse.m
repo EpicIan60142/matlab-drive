@@ -88,7 +88,7 @@ for k = 1:l
         A = pi*(a*b - (0.8*a*0.8*b));
         
             % Ring mass
-        m = 100; % kg
+        m = 10; % kg
         
             % Ring coefficient of drag
         Cd = 1.2;

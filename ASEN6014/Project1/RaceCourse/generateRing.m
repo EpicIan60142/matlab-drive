@@ -73,7 +73,7 @@ ring.NR = [normalPrime, normalDPrime, ring.normal];
 ring.A = pi*(a*b - (0.8*a*0.8*b));
 
     % Ring mass
-ring.m = 100; % kg
+ring.m = 10; % kg
 
     % Ring coefficient of drag
 ring.Cd = 1.2;

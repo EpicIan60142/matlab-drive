@@ -16,7 +16,14 @@ oe_c.i = deg2rad(15);
 oe_c.RAAN = deg2rad(69);
 oe_c.argPeri = deg2rad(42);
 oe_c.f = deg2rad(5);
-    
+
+%         % Logan params
+% oe_c.a = 8000;
+% oe_c.i = deg2rad(5);
+% oe_c.RAAN = deg2rad(0);
+% oe_c.argPeri = deg2rad(0);
+% oe_c.f = deg2rad(0);
+
     % Bounded formation requirements
 zBound = 0.25; % km, max out of plane oscillation
 xyBound = 1; % km, max in plane oscillation

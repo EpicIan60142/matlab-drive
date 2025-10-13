@@ -102,7 +102,7 @@ if J2_enable
                 0                               0                              (15/2)*(rVec_d(3)/r_d)^2-(9/2)
            ];
 
-    a_perturb = a_perturb + ((pConst.Ri/r_d)^2)*pConst.J2*HN*A_J2*(pConst.mu/(r_d^3))*rVec_d;
+    a_perturb = a_perturb + ((pConst.Ri/r_d)^2)*(pConst.mu/(r_d^3))*pConst.J2*HN*A_J2*rVec_d;
 end
 
 if drag_enable
