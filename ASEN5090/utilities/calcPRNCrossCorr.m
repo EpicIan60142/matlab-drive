@@ -13,14 +13,17 @@ function Rn = calcPRNCrossCorr(CA_k, CA_l, nShift)
 %
 
 % Shift CA_l
-CA_l = shiftCA(CA_l, nShift);
+if nShift ~= 0
+    CA_l = shiftCA(CA_l, nShift);
+end
+
 
 % Convert from [0, 1] to [1, -1]
 %CA_k = convPRNZeroOne2PosNeg(CA_k);
 %CA_l = convPRNZeroOne2PosNeg(CA_l);
 
 % Calculate Rn
-Rn = (1/1023)*sum(CA_k.*CA_l);
+Rn = (1/length(CA_l))*sum(CA_k.*CA_l);
 
 
 

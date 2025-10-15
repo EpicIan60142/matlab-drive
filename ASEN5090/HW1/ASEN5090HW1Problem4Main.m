@@ -39,7 +39,7 @@ nDelay = 200;
     % Generate base and delayed PRNs
 CA_cross = generatePRN(G1, G2, PRN_cross, chips);
 CA_cross = convPRNZeroOne2PosNeg(CA_cross);
-CA_crossDelayed = shiftCA(CA_cross, nDelay);
+CA_crossDelayed = shiftCA(CA_cross, 1023-nDelay);
 
     % Calculate cross-correlation
 Rn_cross = zeros(size(nShift));

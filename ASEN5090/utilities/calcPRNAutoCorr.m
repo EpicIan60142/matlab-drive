@@ -12,13 +12,17 @@ function Rn = calcPRNAutoCorr(CA, nShift)
 
 % Shift PRN code
 CA_unshift = CA;
-CA_shift = shiftCA(CA, nShift);
+if nShift ~= 0
+    CA_shift = shiftCA(CA, nShift);
+else
+    CA_shift = CA_unshift;
+end
 
 % Convert from [0, 1] to [1, -1]
 %CA_unshift = convPRNZeroOne2PosNeg(CA_unshift);
 %CA_shift = convPRNZeroOne2PosNeg(CA_shift);
 
 % Calculate Rn
-Rn = (1/1023)*sum(CA_unshift.*CA_shift);
+Rn = (1/length(CA_shift))*sum(CA_unshift.*CA_shift);
 
 end

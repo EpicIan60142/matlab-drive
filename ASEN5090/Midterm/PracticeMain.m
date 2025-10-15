@@ -34,8 +34,26 @@ R_A_ECEF = C_ECEF2ENU'*R_A_ENU
     % Part d
 LOS = R_T_ENU - R_A_ENU
 
-    % Part e
-
-
-
 format default;
+
+%% Problem 3
+    % Setup
+Code_A = [-1, -1, -1, -1, 1, 1, 1, -1, 1, 1, -1, -1, 1, -1, 1];
+
+    % Part b
+Code_B = [-1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, 1, 1, 1];
+
+    % Part c
+nShift = 0:length(Code_A);
+autoCorr = [];
+crossCorr = [];
+for k = nShift
+    autoCorr = [autoCorr; calcPRNAutoCorr(Code_A, k)];
+    crossCorr = [crossCorr; calcPRNCrossCorr(Code_A, Code_B, k)];
+end
+
+figure
+hold on; grid on; grid minor;
+plot(nShift, autoCorr*length(Code_A), 'r-');
+plot(nShift, crossCorr*length(Code_A), 'b-');
+
