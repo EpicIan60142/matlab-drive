@@ -78,7 +78,8 @@ clkCorr_first = [];
 relCorr_first = [];
 for k = 1:length(PRN)
             % Calculate times and convert to Week Number of Time Of Week
-    t = GPSData.Time(PRN(k));
+    PRNIdx = GPSData.SatelliteID == PRN(k);
+    t = GPSData.Time(idxFirstEpoch & PRNIdx);
     gpsEpoch = datetime(1980, 1, 6, 0, 0, 0);
     tDiff = t - gpsEpoch;
     WN = floor(seconds(tDiff)/(7*24*60*60));
@@ -146,7 +147,8 @@ while(norm(dx) >= epsilon)
     relCorr_1 = [];
     for k = 1:length(PRN)
                 % Calculate times and convert to Week Number of Time Of Week
-        t = GPSData.Time(PRN(k));
+        PRNIdx = GPSData.SatelliteID == PRN(k);
+        t = GPSData.Time(idxFirstEpoch & PRNIdx);
         gpsEpoch = datetime(1980, 1, 6, 0, 0, 0);
         tDiff = t - gpsEpoch;
         WN = floor(seconds(tDiff)/(7*24*60*60));
@@ -165,7 +167,7 @@ while(norm(dx) >= epsilon)
         relCorr_1 = [relCorr_1; relCorr];
     end
             % Troposphere
-    tropoCorr_1 = tropomodel(zd, satEl, elevationCutoff);
+    tropoCorr_1 = tropomodel(zd, deg2rad(satEl), elevationCutoff);
 
         % Compute prefit residual
     rho = PIF_first(1:9) + clkCorr_1 + relCorr_1 - tropoCorr_1;
@@ -224,6 +226,7 @@ VDOPs = [];
 nSolSats = [];
 postfits = [];
 postfitTimes = [];
+uncertainties = {};
 
     % Calculate ECEF to ENU DCM
 C_ECEF2ENU = ECEF2ENU(r_NIST_LLA(1), r_NIST_LLA(2));
@@ -245,8 +248,13 @@ for k = 1:length(rinexTimes)
     end
 
         % Start with an initial receiver location and bias guess
-    rHat = r_0_ECEF;
-    bHat = 0;
+    if k == 1
+        rHat = r_0_ECEF;
+        bHat = 0;
+    else
+        rHat = positions(:,end);
+        bHat = clockBiases(end);
+    end
 
         % Loop until correction vector is less than 1 cm
     dx = 9999*ones(4,1);
@@ -265,7 +273,8 @@ for k = 1:length(rinexTimes)
         relCorrFull = [];
         for kk = 1:length(PRN)
                     % Calculate times and convert to Week Number of Time Of Week
-            t = GPSData.Time(PRN(kk));
+            PRNIdx = GPSData.SatelliteID == PRN(kk);
+            t = GPSData.Time(timeIdx & PRNIdx);
             gpsEpoch = datetime(1980, 1, 6, 0, 0, 0);
             tDiff = t - gpsEpoch;
             WN = floor(seconds(tDiff)/(7*24*60*60));
@@ -290,7 +299,7 @@ for k = 1:length(rinexTimes)
 
             % Troposphere
         [~, satEl, ~] = compute_azelrange(rHat, posT);
-        [tropoCorr, idxValid] = tropomodel(zd, satEl, elevationCutoff);
+        [tropoCorr, idxValid] = tropomodel(zd, deg2rad(satEl), elevationCutoff);
 
             % Update vector validity
         PIF_goodEph = PIF_start(~PRNInvalid); % Remove bad ephemeris data
@@ -310,6 +319,11 @@ for k = 1:length(rinexTimes)
         rho = PIF + clkCorr + relCorr - tropoCorr;
         rho_0 = R1 + bHat;
         dRho = rho - rho_0;
+
+        if any(isnan(dRho))
+            breakEarly = true;
+            break;
+        end
 
             % Compute measurement sensitivity matrix
         G = [-(posT'-rHat')./R1, ones(size(posT,2), 1)];
@@ -355,6 +369,9 @@ for k = 1:length(rinexTimes)
     PRN = PRN(idxValid);
     postTime = repmat(rinexTimes(k), length(postfit), 1);
 
+        % Calculate H matrix
+    H = (G'*G)^-1;
+
         % Accumulate data
     times = [times, rinexTimes(k)];
     positions = [positions, rHat];
@@ -365,27 +382,49 @@ for k = 1:length(rinexTimes)
     nSolSats = [nSolSats, nSats];
     postfits = [postfits; [postfit, PRN]];
     postfitTimes = [postfitTimes; postTime];
+    uncertainties = [uncertainties; {H}];
 end
+
+    % Calculate uncertainty, assuming all directions have the same
+    % uncertainty
+sigma = std(postfits(:,1));
+uncertainties = cellfun(@(H)(sigma^2)*H,uncertainties, 'UniformOutput', false);
+
+sigmas = [];
+for k = 1:length(uncertainties)
+    sigmas = [sigmas, [sqrt(uncertainties{k}(1,1)); sqrt(uncertainties{k}(2,2)); sqrt(uncertainties{k}(3,3)); sqrt(uncertainties{k}(4,4));]];
+end
+
+sigLevel = 2;
 
     % Plot position errors and clock bias
 figure; tl = tiledlayout(4,1); ax = [];
 title(tl, "ENU Position Errors and Clock Bias")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(times, positionErrors(1,:), 'b.');
+    plot(times, positionErrors(1,:), 'm.');
+    plot(times, sigLevel*sigmas(1,:), 'k--')
+    plot(times, -sigLevel*sigmas(1,:), 'k--')
     ylabel("\Delta x_E [m]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(times, positionErrors(2,:), 'b.');
+    plot(times, positionErrors(2,:), 'm.');
+    plot(times, sigLevel*sigmas(2,:), 'k--')
+    plot(times, -sigLevel*sigmas(2,:), 'k--')
     ylabel("\Delta x_N [m]");    
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(times, positionErrors(3,:), 'b.');
+    plot(times, positionErrors(3,:), 'm.');
+    plot(times, sigLevel*sigmas(3,:), 'k--')
+    plot(times, -sigLevel*sigmas(3,:), 'k--')
     ylabel("\Delta x_U [m]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(times, clockBiases, 'r.');
-    xlabel("Time [GPS]"); ylabel("Estimated clock Bias [m]");
+    plot(times, mean(clockBiases) + sigLevel*sigmas(4,:), 'k--')
+    plot(times, mean(clockBiases) - sigLevel*sigmas(4,:), 'k--')
+    xlabel("Time [GPS]"); ylabel("Est Clock Bias [m]");
+    legend("Data", "2\sigma bounds", 'location', 'eastoutside')
 linkaxes(ax,'x');
 
     % Plot number of satellites used and HDOP/VDOP
@@ -394,7 +433,7 @@ title(tl, "Number of Satellites Used and HDOP/VDOP")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(times, nSolSats, 'b.');
-    ylabel("Number of Satellites used");
+    ylabel("Number of Satellites");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(times, HDOPs, 'r.');
@@ -405,13 +444,20 @@ nt = nexttile; ax = [ax; nt];
     xlabel("Time [GPS]"); ylabel("VDOP [m]");
 
     % Plot postfit residuals
-figure;
-hold on; grid on;
-title("Postfits by PRN")
-scatter(postfitTimes, postfits(:,1), 5, postfits(:,2), 'filled')
-xlabel("Time [GPS]"); ylabel("Postfit Residual [m]");
-cBar = colorbar; cBar.Label.String = "PRN";
-colormap("cool")
+figure; tl = tiledlayout(1,3); ax = [];
+nt = nexttile([1 2]); ax = [ax; nt];
+    hold on; grid on;
+    title("Postfits by PRN")
+    scatter(postfitTimes, postfits(:,1), 5, postfits(:,2), 'filled')
+    xlabel("Time [GPS]"); ylabel("Postfit Residual [m]");
+    cBar = colorbar; cBar.Label.String = "PRN"; cBar.Location = 'north';
+    colormap("cool")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    title("Postfit Distribution")
+    histogram(postfits(:,1), 'Orientation', 'horizontal', 'FaceColor', 'b')
+    xlabel("Frequency")
+linkaxes(ax, 'y')
 
 
 
