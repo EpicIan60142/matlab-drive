@@ -31,7 +31,7 @@ GPSDataFull = rinexData.GPS;
 rinexTimes = unique(GPSDataFull.Time);
 
     % Read ephemeris data
-ephData = read_clean_GPSbroadcast("brdc2230.25n", true);
+ephDataFull = read_clean_GPSbroadcast("brdc2230.25n", true);
 
     % Declare PRNs of interest
 PRN = [1, 3, 4, 6, 9, 16, 26, 28, 31, 32];
@@ -40,8 +40,8 @@ PRN = [1, 3, 4, 6, 9, 16, 26, 28, 31, 32];
 PRNRnxIdx = logical(sum(GPSDataFull.SatelliteID == PRN, 2));
 GPSData = GPSDataFull(PRNRnxIdx, :);
 
-PRNEphIdx = logical(sum(ephData(:,1) == PRN, 2));
-ephData = ephData(PRNEphIdx, :);
+PRNEphIdx = logical(sum(ephDataFull(:,1) == PRN, 2));
+ephData = ephDataFull(PRNEphIdx, :);
 
 %% Problem 1: Data gathering
     % Part a. Find distance to initial guess
@@ -212,6 +212,7 @@ VDOP = sqrt(H_ENU(3,3))
 %% Problem 3: Least squares point solutions for all epochs
     % Use all PRNs
 GPSData = GPSDataFull;
+ephData = ephDataFull;
 
     % Preallocate storage vectors
 times = [];
@@ -260,8 +261,8 @@ for k = 1:length(rinexTimes)
             % Compute clock corrections
         PRN = GPSData(timeIdx,:).SatelliteID;
         PRNInvalid = false(size(PRN));
-        clkCorr = [];
-        relCorr = [];
+        clkCorrFull = [];
+        relCorrFull = [];
         for kk = 1:length(PRN)
                     % Calculate times and convert to Week Number of Time Of Week
             t = GPSData.Time(PRN(kk));
@@ -279,13 +280,13 @@ for k = 1:length(rinexTimes)
             end
         
                     % Append data to vector
-            clkCorr = [clkCorr; clkCorrPRN];
-            relCorr = [relCorr; relCorrPRN];
+            clkCorrFull = [clkCorrFull; clkCorrPRN];
+            relCorrFull = [relCorrFull; relCorrPRN];
         end
     
             % Update satellite position and expected range validity
-        % R1 = R1(~PRNInvalid);
-        % posT = posT(:,~PRNInvalid);
+        R1 = R1(~PRNInvalid);
+        posT = posT(:,~PRNInvalid);
 
             % Troposphere
         [~, satEl, ~] = compute_azelrange(rHat, posT);
@@ -299,8 +300,8 @@ for k = 1:length(rinexTimes)
             break;
         end
         PIF = PIF_goodEph(idxValid); % Remove low elevations
-        clkCorr = clkCorr(idxValid);
-        relCorr = relCorr(idxValid);
+        clkCorr = clkCorrFull(idxValid);
+        relCorr = relCorrFull(idxValid);
         tropoCorr = tropoCorr(idxValid);
         R1 = R1(idxValid);
         posT = posT(:, idxValid);
@@ -320,6 +321,10 @@ for k = 1:length(rinexTimes)
         rHat = rHat + dx(1:3);
         bHat = bHat + dx(4);
         iter = iter + 1;
+
+        if iter == maxIter
+            fprintf("\nHit max iterations\n")
+        end
     end
 
     if breakEarly

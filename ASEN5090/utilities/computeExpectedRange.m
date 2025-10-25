@@ -51,7 +51,7 @@ for kk = 1:length(PRN)
     try
         [~, ephPos, ~, ~, ~, ~] = eph2pvt2025(ephData, [WN, TOW], PRN(kk));
     catch
-        fprintf("\n\tBad ephemeris data for PRN %.0f! Can't calculate expected range\n", PRN(kk));
+        %fprintf("\n\tBad ephemeris data for PRN %.0f! Can't calculate expected range\n", PRN(kk));
         continue;
     end
 
