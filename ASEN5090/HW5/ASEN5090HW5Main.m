@@ -421,10 +421,10 @@ nt = nexttile; ax = [ax; nt];
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(times, clockBiases, 'r.');
-    plot(times, mean(clockBiases) + sigLevel*sigmas(4,:), 'k--')
+    bounds = plot(times, mean(clockBiases) + sigLevel*sigmas(4,:), 'k--');
     plot(times, mean(clockBiases) - sigLevel*sigmas(4,:), 'k--')
     xlabel("Time [GPS]"); ylabel("Est Clock Bias [m]");
-    legend("Data", "2\sigma bounds", 'location', 'eastoutside')
+    legend(bounds, sprintf("%.0f\\sigma bounds", sigLevel), 'location', 'eastoutside')
 linkaxes(ax,'x');
 
     % Plot number of satellites used and HDOP/VDOP
