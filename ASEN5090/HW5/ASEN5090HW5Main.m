@@ -108,7 +108,7 @@ relCorr_first
         % PRN 32 doesn't have a valid PIF, look at rows 1:9
 rho = PIF_first(1:9) + clkCorr_first + relCorr_first - tropoCorr_first; % Measurement and corrections
 rho_0 = R1_first + 0; % Expected range and bias
-prefit_first = rho - rho_0;
+prefit_first = rho - rho_0
 
     % Part b. Calculate and print the measurement sensitivity matrix
 G = [-(posT'-r_0_ECEF')./R1_first, ones(size(posT,2), 1)]
