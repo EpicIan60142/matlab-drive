@@ -148,9 +148,19 @@ plot_scope_spectrum_analyzer(6, tSample, sig5, tSample(endIdx), [0, 2*fCarrier])
 
 %% Problem 7: Demodulation/Carrier Recovery
     % Part a. Add white noise with standard deviation 1 V to 6a's signal
+noiseStd = 1; % V
+sig6 = sig5 + noiseStd*(2*rand(size(sig5))-1);
 
+    % Part b. Plot signal and spectrum
+endIdx = floor(length(tSample)/1000);
 
+plot_scope_spectrum_analyzer(7, tSample, sig6, tSample(endIdx), [0, 2*fCarrier]);
 
+    % Part c. Multiply noisy signal by perfect replica
+sig7 = sig6.*sig5;
 
+    % Part d. Plot signal and spectrum
+endIdx = floor(length(tSample)/1000);
 
+plot_scope_spectrum_analyzer(71, tSample, sig7, tSample(endIdx), [0, 2*fCarrier]);
 
