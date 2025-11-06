@@ -16,14 +16,14 @@ function x_d_H = convDeputyN2H(x_c_N, x_d_N, const)
 %   By: Ian Faber, 09/14/2025
 %
 
-% Extract orbital elements from chief spacecraft
-cart.rVec = x_c_N(1:3); 
-cart.vVec = x_c_N(4:6);
-cart.mu = const.mu;
-oe = convCart2ClassicOE(cart);
-
-% Create DCM to Hill frame from inertial frame
-HN = EA2DCM([oe.RAAN, oe.i, oe.argPeri + oe.f], [3,1,3]);
+% % Extract orbital elements from chief spacecraft
+% cart.rVec = x_c_N(1:3); 
+% cart.vVec = x_c_N(4:6);
+% cart.mu = const.mu;
+% oe = convCart2ClassicOE(cart);
+% 
+% % Create DCM to Hill frame from inertial frame
+% HN = EA2DCM([oe.RAAN, oe.i, oe.argPeri + oe.f], [3,1,3]);
 
 % Extract position and velocity
 r_c_N = x_c_N(1:3);
@@ -31,6 +31,14 @@ v_c_N = x_c_N(4:6);
 
 r_d_N = x_d_N(1:3);
 v_d_N = x_d_N(4:6);
+
+% Compute Hill Frame
+rHat = r_c_N/norm(r_c_N);
+hHat = cross(r_c_N, v_c_N)/norm(cross(r_c_N, v_c_N));
+thetaHat = cross(hHat, rHat);
+
+NH = [rHat, thetaHat, hHat];
+HN = NH';
 
 % Calculate orbital rate and angular velocity
 fDot = norm(cross(r_c_N, v_c_N))/(norm(r_c_N)^2); % fDot = h/r_c^2

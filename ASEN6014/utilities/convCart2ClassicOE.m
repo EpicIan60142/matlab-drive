@@ -44,23 +44,38 @@ eVec = cross(vVec, hVec)/mu - rVec/r;
 oe.e = norm(eVec);
 
 % Calculate perifocal frame unit vectors and construct PN
-if abs(oe.e) <= 1e-12
-    i_e = [1; 0; 0];
+if abs(oe.e) <= 1e-12 % We have a circular orbit
+    oe.argPeri = 0;
+
+    nVec = cross([0;0;1], hVec);
+    n = norm(hVec);
+
+    if n >= 1e-12 % not an equatorial orbit
+        oe.RAAN = atan2(nVec(2), nVec(1));
+    else
+        oe.RAAN = 0;
+    end
+
+    oe.i = acos(hVec(3)/h);
+
+    oe.f = atan2(rVec(2), rVec(1)); % Becomes true longitude
 else
     i_e = eVec/oe.e;
+
+    i_h = hVec/h;
+    i_p = cross(i_h, i_e);
+    
+    PN = [i_e, i_p, i_h]';
+    
+    % Extract angles from PN
+    oe.RAAN = atan2(PN(3,1),-PN(3,2));
+    oe.i = acos(PN(3,3));
+    oe.argPeri = atan2(PN(1,3), PN(2,3));
+    
+    % Calculate true anomaly
+    i_r = rVec/r;
+    oe.f = atan2(dot(cross(i_e, i_r), i_h), dot(i_e, i_r));
 end
-i_h = hVec/h;
-i_p = cross(i_h, i_e);
 
-PN = [i_e, i_p, i_h]';
-
-% Extract angles from PN
-oe.RAAN = atan2(PN(3,1),-PN(3,2));
-oe.i = acos(PN(3,3));
-oe.argPeri = atan2(PN(1,3), PN(2,3));
-
-% Calculate true anomaly
-i_r = rVec/r;
-oe.f = atan2(dot(cross(i_e, i_r), i_h), dot(i_e, i_r));
 
 end
