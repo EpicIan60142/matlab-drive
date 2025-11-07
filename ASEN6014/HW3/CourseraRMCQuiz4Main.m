@@ -20,16 +20,16 @@ oe_c.argPeri = deg2rad(40); % deg -> rad
 oe_c.f = deg2rad(0); % deg -> rad
 
     % Initial deputy orbit element differences
-doe.e = 10/oe_c.a;
-doe.RAAN = deg2rad(0.01);
+doe.de = 10/oe_c.a;
+doe.dRAAN = deg2rad(0.01);
 
     % Desired radial offset
 offset = 10; % km
 
     % Initial deputy orbit elements
 oe_d = oe_c;
-oe_d.e = oe_c.e + doe.e;
-oe_d.RAAN = oe_c.RAAN + doe.RAAN;
+oe_d.e = oe_c.e + doe.de;
+oe_d.RAAN = oe_c.RAAN + doe.dRAAN;
 
     % Control gains
 kConst.K1 = 2e-5;

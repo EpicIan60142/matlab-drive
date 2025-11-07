@@ -20,15 +20,15 @@ oe_c.argPeri = deg2rad(40); % deg -> rad
 oe_c.f = deg2rad(0); % deg -> rad
 
     % Initial deputy orbit element differences
-doe.e = 1e-3;
-doe.i = deg2rad(0.1);
-doe.RAAN = deg2rad(0.1);
+doe.de = 1e-3;
+doe.di = deg2rad(0.1);
+doe.dRAAN = deg2rad(0.1);
 
     % Initial deputy orbit elements
 oe_d = oe_c;
-oe_d.e = oe_c.e + doe.e;
-oe_d.i = oe_c.i + doe.i;
-oe_d.RAAN = oe_c.RAAN + doe.RAAN;
+oe_d.e = oe_c.e + doe.de;
+oe_d.i = oe_c.i + doe.di;
+oe_d.RAAN = oe_c.RAAN + doe.dRAAN;
 
     % ode45 settings
 opt = odeset('RelTol',1e-12,'AbsTol',1e-12);
