@@ -60,7 +60,7 @@ X0_d = [cart_d.rVec; cart_d.vVec];
 
 X0 = [X0_c; X0_d];
 
-    % Define tspan to output at specified times 0s, 1000s, and 4848s
+    % Define tspan to output at specified times 0s, 1600s, and 7800s
 tspan = 0:10:28000;
 
     % Run controller

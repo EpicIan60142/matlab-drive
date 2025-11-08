@@ -35,6 +35,10 @@ oe_d.RAAN = oe_c.RAAN + doe.dRAAN;
     % Desired orbit element differences
 doe_r.da = 0;
 doe_r.de = 5e-4;
+doe_r.di = 0;
+doe_r.dRAAN = 0;
+doe_r.dargPeri = 0;
+doe_r.dM0 = 0;
 
     % Controller parameters
 kConst.P11 = 0.004;
@@ -54,8 +58,8 @@ X0_d = [cart_d.rVec; cart_d.vVec];
 
 X0 = [X0_c; X0_d];
 
-    % Define tspan to output at specified times 0s, 1000s, and 4848s
-tspan = 0:10:30000;
+    % Define tspan to output at specified times 0s, 15000s, and 30000s
+tspan = 0:10:78000;
 
     % Run controller
 [t, X] = ode45(@(t,X)OEAltFeedbackControlElems(t,X,doe_r,kConst,pConst), tspan, X0, opt);
@@ -75,7 +79,7 @@ end
 markerSize = 30;
 figure; axis equal
 hold on; grid on;
-title("OE Difference Relative Motion Control")
+title("OE Difference Alternate Relative Motion Control")
 scatter3(X_d_Hill(1,1), X_d_Hill(1,2), X_d_Hill(1,3), markerSize, 'g', 'filled');
 plot3(X_d_Hill(:,1), X_d_Hill(:,2), X_d_Hill(:,3), 'b-')
 scatter3(X_d_Hill(end,1), X_d_Hill(end,2), X_d_Hill(end,3), markerSize, 'r', 'filled')
@@ -86,7 +90,7 @@ legend("Start", "Trajectory", "End")%, "Chief")
 
     % Report
 fprintf("rho0 = [%.3e, %.3e, %.3e]\n", X_d_Hill(t==0, 1:3));
-fprintf("rho1600 = [%.3e, %.3e, %.3e]\n", X_d_Hill(t==15000, 1:3));
-fprintf("rho7800 = [%.3e, %.3e, %.3e]\n", X_d_Hill(t==30000, 1:3));
+fprintf("rho15000 = [%.3e, %.3e, %.3e]\n", X_d_Hill(t==15000, 1:3));
+fprintf("rho30000 = [%.3e, %.3e, %.3e]\n", X_d_Hill(t==30000, 1:3));
 
 

@@ -44,13 +44,7 @@ oe_d = convCart2ClassicOE(cart);
 rDeputy = cart.rVec;
 vDeputy = cart.vVec;
 
-% Calculate DCMs
-rHat = rChief/norm(rChief);
-hHat = cross(rChief, vChief)/norm(cross(rChief, vChief));
-thetaHat = cross(hHat, rHat);
-
-NHc = [rHat, thetaHat, hHat];
-
+% Calculate DCM
 rHat = rDeputy/norm(rDeputy);
 hHat = cross(rDeputy, vDeputy)/norm(cross(rDeputy, vDeputy));
 thetaHat = cross(hHat, rHat);
@@ -77,9 +71,6 @@ try doe_r.da;
     doe = [doe; oe_d.a/r_e - oe_r.a/r_e];
     A_d = [A_d; 0]; 
     A_r = [A_r; 0];
-catch
-    %oe_r.a = oe_d.a;
-    %B = [B; zeros(1,3)];
 end
 
 try doe_r.de;
@@ -89,9 +80,6 @@ try doe_r.de;
     doe = [doe; oe_d.e - oe_r.e];
     A_d = [A_d; 0]; 
     A_r = [A_r; 0];
-catch
-    %oe_r.e = oe_d.e;
-    %B = [B; zeros(1,3)];
 end
 
 try doe_r.di;
@@ -101,9 +89,6 @@ try doe_r.di;
     doe = [doe; oe_d.i - oe_r.i];
     A_d = [A_d; 0]; 
     A_r = [A_r; 0];
-catch
-    %oe_r.i = oe_d.i;
-    %B = [B; zeros(1,3)];
 end
 
 try doe_r.dRAAN;
@@ -113,9 +98,6 @@ try doe_r.dRAAN;
     doe = [doe; oe_d.RAAN - oe_r.RAAN];
     A_d = [A_d; 0]; 
     A_r = [A_r; 0];
-catch
-    %oe_r.RAAN = oe_d.RAAN;
-    %B = [B; zeros(1,3)];
 end
 
 try doe_r.dargPeri;
@@ -125,9 +107,6 @@ try doe_r.dargPeri;
     doe = [doe; oe_d.argPeri - oe_r.argPeri];
     A_d = [A_d; 0]; 
     A_r = [A_r; 0];
-catch
-    %oe_r.argPeri = oe_d.argPeri;
-    %B = [B; zeros(1,3)];
 end
 
 try doe_r.dM0;
@@ -145,52 +124,34 @@ try doe_r.dM0;
         n_r = sqrt(pConst.mu/(oe_d.a^3));
     end
     A_r = [A_r; n_r];
-catch
-    %oe_r.f = oe_d.f;
-    %B = [B; zeros(1,3)];
 end
-
-% Calculate orbit element difference vector and A matrices
-%doe = [oe_d.a - oe_r.a; oe_d.e - oe_r.e; oe_d.i - oe_r.i; oe_d.RAAN - oe_r.RAAN; oe_d.argPeri - oe_r.argPeri; oe_d.f - oe_r.f];
 
 % Assign gains
 P = [];
 try kConst.P11Amp;
     %P = blkdiag(P, kConst.P11Off + kConst.P11Amp*cos(oe_d.f/2)^kConst.P11Exp);
     P = blkdiag(P, kConst.P11Off + kConst.P11Amp*sin(oe_d.f)^kConst.P11Exp);
-catch
-    %P = blkdiag(P, 0);
 end
 
 try kConst.P22Amp;
     %P = blkdiag(P, kConst.P22Off + kConst.P22Amp*cos(oe_d.f)^kConst.P22Exp);
     P = blkdiag(P, kConst.P22Off + kConst.P22Amp*sin(oe_d.f)^kConst.P22Exp);
-catch
-    %P = blkdiag(P,0);
 end
 
 try kConst.P33Amp;
     P = blkdiag(P, kConst.P33Off + kConst.P33Amp*cos(oe_d.f + oe_d.argPeri)^kConst.P33Exp);
-catch
-    %P = blkdiag(P,0);
 end
 
 try kConst.P44Amp;
     P = blkdiag(P, kConst.P44Off + kConst.P44Amp*sin(oe_d.f + oe_d.argPeri)^kConst.P44Exp);
-catch
-    %P = blkdiag(P,0);
 end
 
 try kConst.P55Amp;
     P = blkdiag(P, kConst.P55Off + kConst.P55Amp*sin(oe_d.f)^kConst.P55Exp);
-catch
-    %P = blkdiag(P,0);
 end
 
 try kConst.P66Amp;
     P = blkdiag(P, kConst.P66Off + kConst.P66Amp*sin(oe_d.f)^kConst.P66Exp);
-catch
-    %P = blkdiag(P,0);
 end
 
 % Calculate control effort and convert to inertial frame
