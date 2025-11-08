@@ -12,9 +12,7 @@ function dX = OEAltFeedbackControlElems(t, X, doe_r, kConst, pConst)
 %                If a field is missing, it is ignored and assumed not
 %                desirable to control.
 %       - kConst: Structure of control gains with the following fields:
-%                 - P11Off, P11Amp, P11Exp
-%                 - P22Off, P22Amp, P22Exp
-%                 - etc. up to P66
+%                 - P11, P22, P33: control gains
 %       - pConst: Planetary constants vector containing mu for the
 %                 celestial body of interest
 %   Outputs:
