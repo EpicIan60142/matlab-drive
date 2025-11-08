@@ -47,28 +47,21 @@ thetaHat = cross(hHat, rHat);
 NHd = [rHat, thetaHat, hHat];
 
 % Calculate reference elements
-oe_r.mu = pConst.mu;
 oe_r.a = oe_c.a + doe_r.da;
-oe_r.e = oe_d.e;
-oe_r.i = oe_d.i;
-oe_r.RAAN = oe_d.RAAN;
-oe_r.argPeri = oe_d.argPeri;
-oe_r.f = convE2f(convM2E(convf2E(oe_d.f, oe_d.e), oe_d.e, false), oe_r.e);
 
 % Assign B matrix
-cart = convClassicOE2Cart(oe_r);
-r = norm(cart.rVec);
-h = norm(cross(cart.rVec, cart.vVec));
-p = oe_r.a*(1-oe_r.e^2);
-eta = sqrt(1-oe_r.e^2);
+r = norm(rDeputy);
+h = norm(cross(rDeputy, vDeputy));
+p = oe_d.a*(1-oe_d.e^2);
+eta = sqrt(1-oe_d.e^2);
 
 B = [
-        (2*oe_r.a*oe_r.e*sin(oe_r.f))/(h),              (2*oe_r.a^2*p)/(h*r),                0;
-        (p*sin(oe_r.f))/h,                              ((p+r)*cos(oe_r.f) + r*oe_r.e)/h,    0;
-        0,                                              0,                                   (r*cos(oe_r.argPeri + oe_r.f))/h;
-        0                                               0,                                   (r*sin(oe_r.argPeri + oe_r.f))/(h*sin(oe_r.i));
-        -(p*cos(oe_r.f))/h,                             ((p+r)*sin(oe_r.f))/(h*oe_r.e),      -(r*sin(oe_r.argPeri + oe_r.f)*cos(oe_r.i))/(h*sin(oe_r.i));
-        (eta*(p*cos(oe_r.f)-2*r*oe_r.e))/(h*oe_r.e),    -(eta*(p+r)*sin(oe_r.f))/(h*oe_r.e), 0
+        (2*oe_d.a*oe_d.e*sin(oe_d.f))/(h),              (2*oe_d.a^2*p)/(h*r),                0;
+        (p*sin(oe_d.f))/h,                              ((p+r)*cos(oe_d.f) + r*oe_d.e)/h,    0;
+        0,                                              0,                                   (r*cos(oe_d.argPeri + oe_d.f))/h;
+        0                                               0,                                   (r*sin(oe_d.argPeri + oe_d.f))/(h*sin(oe_d.i));
+        -(p*cos(oe_d.f))/h,                             ((p+r)*sin(oe_d.f))/(h*oe_d.e),      -(r*sin(oe_d.argPeri + oe_d.f)*cos(oe_d.i))/(h*sin(oe_d.i));
+        (eta*(p*cos(oe_d.f)-2*r*oe_d.e))/(h*oe_d.e),    -(eta*(p+r)*sin(oe_d.f))/(h*oe_d.e), 0
     ];
 
 % Assign gains
@@ -76,7 +69,7 @@ K = kConst.K;
 
 % Calculate control effort and convert to inertial frame
 da = oe_d.a - oe_r.a;
-u = -K*B'*[da; zeros(5,1)];
+u = -K*B(1,:)'*da;
 
 u = NHd*u;
 

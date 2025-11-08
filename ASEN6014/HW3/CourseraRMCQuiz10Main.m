@@ -77,8 +77,9 @@ scatter3(X_d_Hill(1,1), X_d_Hill(1,2), X_d_Hill(1,3), markerSize, 'g', 'filled')
 plot3(X_d_Hill(:,1), X_d_Hill(:,2), X_d_Hill(:,3), 'b-')
 scatter3(X_d_Hill(end,1), X_d_Hill(end,2), X_d_Hill(end,3), markerSize, 'r', 'filled')
 % scatter3(0,0,0,markerSize,'k','*')
+xlim([-7, 7]); ylim([-30, 5]); zlim([-2, 2])
 xlabel("Radial [km]"); ylabel("Along-Track [km]"); zlabel("Cross-Track [km]")
-view([30,35]);
+view([180+30,35]);
 legend("Start", "Trajectory", "End")%, "Chief")
 
     % Report
