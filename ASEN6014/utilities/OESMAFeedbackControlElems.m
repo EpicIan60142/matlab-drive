@@ -56,7 +56,7 @@ p = oe_d.a*(1-oe_d.e^2);
 eta = sqrt(1-oe_d.e^2);
 
 B = [
-        (2*oe_d.a*oe_d.e*sin(oe_d.f))/(h),              (2*oe_d.a^2*p)/(h*r),                0;
+        (2*oe_d.a^2*oe_d.e*sin(oe_d.f))/(h),              (2*oe_d.a^2*p)/(h*r),                0;
         (p*sin(oe_d.f))/h,                              ((p+r)*cos(oe_d.f) + r*oe_d.e)/h,    0;
         0,                                              0,                                   (r*cos(oe_d.argPeri + oe_d.f))/h;
         0                                               0,                                   (r*sin(oe_d.argPeri + oe_d.f))/(h*sin(oe_d.i));
