@@ -64,7 +64,7 @@ X0 = [X0_c; X0_d];
 tspan = 0:10:28000;
 
     % Run controller
-[t, X] = ode45(@(t,X)OEFeedbackControlElems(t,X,doe_r,kConst,pConst), tspan, X0, opt);
+[t, X] = ode45(@(t,X)OEFeedbackControlElems(t,X,doe_r,kConst,pConst,false), tspan, X0, opt);
 
 %% Plot and report results
     % Extract states
