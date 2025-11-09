@@ -1,4 +1,4 @@
-function dX = OEFeedbackControlElems(t, X, doe_r, kConst, pConst)
+function [dX, u, doe, oe_d, oe_c] = OEFeedbackControlElems(t, X, doe_r, kConst, pConst, J2Dist)
 % Function that implements an orbit element feedback control law for 
 % relative motion between a chief and deputy spacecraft, with desired 
 % motion specified with orbit element differences.
@@ -17,9 +17,14 @@ function dX = OEFeedbackControlElems(t, X, doe_r, kConst, pConst)
 %                 - etc. up to P66
 %       - pConst: Planetary constants vector containing mu for the
 %                 celestial body of interest
+%       - J2Dist: Boolean for whether to apply J2 dynamics or not
 %   Outputs:
 %       - dX: Rate of change vector as follows:
 %             [dX_c; dX_d]
+%       - u: Control effort for the given time and state
+%       - doe: Controller orbit element difference vector at the given time
+%       - oe_d: Deputy orbit elements for the given time and state
+%       - oe_c: Chief orbit elements for the given time and state
 %
 %   By: Ian Faber, 11/06/2025
 
@@ -128,29 +133,29 @@ end
 
 % Assign gains
 P = [];
-try kConst.P11Amp;
-    %P = blkdiag(P, kConst.P11Off + kConst.P11Amp*cos(oe_d.f/2)^kConst.P11Exp);
-    P = blkdiag(P, kConst.P11Off + kConst.P11Amp*sin(oe_d.f)^kConst.P11Exp);
+try kConst.P11Amp; doe_r.da;
+    P = blkdiag(P, kConst.P11Off + kConst.P11Amp*cos(oe_d.f/2)^kConst.P11Exp);
+    % P = blkdiag(P, kConst.P11Off + kConst.P11Amp*sin(oe_d.f)^kConst.P11Exp);
 end
 
-try kConst.P22Amp;
-    %P = blkdiag(P, kConst.P22Off + kConst.P22Amp*cos(oe_d.f)^kConst.P22Exp);
-    P = blkdiag(P, kConst.P22Off + kConst.P22Amp*sin(oe_d.f)^kConst.P22Exp);
+try kConst.P22Amp; doe_r.de;
+    P = blkdiag(P, kConst.P22Off + kConst.P22Amp*cos(oe_d.f)^kConst.P22Exp);
+    % P = blkdiag(P, kConst.P22Off + kConst.P22Amp*sin(oe_d.f)^kConst.P22Exp);
 end
 
-try kConst.P33Amp;
+try kConst.P33Amp; doe_r.di;
     P = blkdiag(P, kConst.P33Off + kConst.P33Amp*cos(oe_d.f + oe_d.argPeri)^kConst.P33Exp);
 end
 
-try kConst.P44Amp;
+try kConst.P44Amp; doe_r.dRAAN;
     P = blkdiag(P, kConst.P44Off + kConst.P44Amp*sin(oe_d.f + oe_d.argPeri)^kConst.P44Exp);
 end
 
-try kConst.P55Amp;
+try kConst.P55Amp; doe_r.dargPeri;
     P = blkdiag(P, kConst.P55Off + kConst.P55Amp*sin(oe_d.f)^kConst.P55Exp);
 end
 
-try kConst.P66Amp;
+try kConst.P66Amp; doe_r.dM0;
     P = blkdiag(P, kConst.P66Off + kConst.P66Amp*sin(oe_d.f)^kConst.P66Exp);
 end
 
@@ -160,10 +165,11 @@ u = B\(-((A_d - A_r) + P*doe));
 u = NHd*u;
 
 % Assign output
-fChief = orbitEOM(t, X_c, pConst, struct(), false(1,2));
+disturb = [J2Dist, false];
+fChief = orbitEOM(t, X_c, pConst, struct(), disturb);
 fChief = fChief(4:6);
 
-fDeputy = orbitEOM(t, X_d, pConst, struct(), false(1,2));
+fDeputy = orbitEOM(t, X_d, pConst, struct(), disturb);
 fDeputy = fDeputy(4:6);
 
 dX_c = [X_c(4:6); fChief];

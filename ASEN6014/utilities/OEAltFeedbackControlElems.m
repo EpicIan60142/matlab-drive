@@ -1,4 +1,4 @@
-function dX = OEAltFeedbackControlElems(t, X, doe_r, kConst, pConst)
+function [dX, u, doe, oe_d, oe_c] = OEAltFeedbackControlElems(t, X, doe_r, kConst, pConst, J2Dist)
 % Function that implements an alternate orbit element feedback control law 
 % for relative motion between a chief and deputy spacecraft, with desired 
 % motion specified with orbit element differences.
@@ -15,9 +15,14 @@ function dX = OEAltFeedbackControlElems(t, X, doe_r, kConst, pConst)
 %                 - P11, P22, P33: control gains
 %       - pConst: Planetary constants vector containing mu for the
 %                 celestial body of interest
+%       - J2Dist: Boolean for whether to apply J2 dynamics or not
 %   Outputs:
 %       - dX: Rate of change vector as follows:
 %             [dX_c; dX_d]
+%       - u: Control effort for the given time and state
+%       - doe: Controller orbit element difference vector at the given time
+%       - oe_d: Deputy orbit elements for the given time and state
+%       - oe_c: Chief orbit elements for the given time and state
 %
 %   By: Ian Faber, 11/06/2025
 
@@ -107,15 +112,21 @@ end
 P = diag([kConst.P11, kConst.P22, kConst.P33]);
 
 % Calculate control effort and convert to inertial frame
-u = -P*B'*doe;
+if oe_d.e > 0.999
+    u = zeros(3,1);
+    t
+else
+    u = -P*B'*doe;
 
-u = NHd*u;
+    u = NHd*u;
+end
 
 % Assign output
-fChief = orbitEOM(t, X_c, pConst, struct(), false(1,2));
+disturb = [J2Dist, false];
+fChief = orbitEOM(t, X_c, pConst, struct(), disturb);
 fChief = fChief(4:6);
 
-fDeputy = orbitEOM(t, X_d, pConst, struct(), false(1,2));
+fDeputy = orbitEOM(t, X_d, pConst, struct(), disturb);
 fDeputy = fDeputy(4:6);
 
 dX_c = [X_c(4:6); fChief];
