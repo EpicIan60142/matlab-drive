@@ -56,6 +56,12 @@ end
 if(nargin > 3)
     axes(varargin{1});
 end
+
+if nargin > 4
+    label = varargin{2};
+else
+    label = false;
+end
 cax = newplot;
 next = lower(get(cax,'NextPlot'));
 hold_state = ishold;
@@ -153,14 +159,16 @@ q = scatter(xx,yy,20,svs,'filled');%,'.k','MarkerSize',4);
 colormap(gca,'cool')
 c = colorbar; c.Label.String = "PRN";
 
-%{
+
 % Place satellite PRN numbers with satellite position 
-for i = 1:length(svs)
-    if(svs(i)~=0)
-        text(xx(i)+3,yy(i),int2str(svs(i)));
+if label
+    for i = 1:length(svs)
+        if(svs(i)~=0)
+            text(xx(i)+3,yy(i),int2str(svs(i)));
+        end
     end
 end
-%}
+
 
 if nargout > 0
 	eval(['hpol = gca;']);
