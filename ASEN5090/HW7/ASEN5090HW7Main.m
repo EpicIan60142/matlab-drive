@@ -103,8 +103,6 @@ for k = 1:length(tSample)
     CA_PRN3(k) = value;
 end
 
-first10 = CA(1:10)
-
 CA_PRN3 = convPRNZeroOne2PosNeg(CA_PRN3);
 
     % Create doppler shift and code delay test values, then populate phases
@@ -126,40 +124,147 @@ for k = 1:length(tSample)
 end
 fprintf("S_2 = %.4f + %.4fj\n\n", real(S_2), imag(S_2));
 
-%% Part 3: Create a search grid in delay and doppler to find PRN 3
-delay = 0:1023;
-doppler = -20e3:500:20e3;
-PRN = 3;
+%% Part 3-4: Create a search grid in delay and doppler to find specified PRN
+    % Define search space
+delay = 0:(1023*(Fs/fCA)); % Want to delay for the right number of samples to see all 1023 chips
+doppler = -10e3:500:10e3;
 
-[DOP, TAU] = meshgrid(doppler, delay);
+    % Make grid for plotting
+[DOP, TAU] = meshgrid(doppler, delay*(fCA/Fs));
 
-S = zeros(length(delay), length(doppler));
-
-fprintf("Searching for PRN %.0f:\n", PRN);
-for k = 1:length(delay)
-    if ~mod(k-1,100) && k ~= 1
-        fprintf("\tDelay = %.0f\n", delay(k)) % Print progress every 100 delays
+    % Loop over 3 different PRNs
+PRNs = [3, 31, 26];
+for PRN = PRNs
+        % Generate new CA code
+    CA = generatePRN(G1, G2, PRN, 1023);
+    
+        % Convert code to time domain
+            % Populate time for C/A code itself
+    tCA = zeros(1, length(CA));
+    for k = 0:length(CA)
+        tCA(k+1) = (1/fCA)*k;
     end
-    for kk = 1:length(doppler)
-        theta = 2*pi*(fIF + doppler(kk)).*tSample;
-        for t = 1:length(tSample)
-            S(k,kk) = S(k,kk) + s_R(t + delay(k))*CA_PRN3(t)*exp(-1j*theta(t));
+    
+                % Find code repeat period
+    tRepeat = length(CA)/fCA;
+    
+                % Map code to sample times
+    timeIdx = 1;
+    value = CA(timeIdx);
+    CA_PRN = zeros(1,length(tSample));
+    for k = 1:length(tSample)
+        if tSample(k) >= tCA(timeIdx)
+            value = CA(timeIdx);
+            timeIdx = mod(timeIdx + 1, length(CA));
+                % If the code repeats, increment the current time by the repeat
+                % period
+            if timeIdx == 0
+                timeIdx = 1;
+                tCA = tCA + tRepeat;
+            end
         end
-        S(k,kk) = norm(S(k,kk));
+        CA_PRN(k) = value;
     end
+    
+    CA_PRN = convPRNZeroOne2PosNeg(CA_PRN);
+
+        % Initialize S matrix
+    S = zeros(length(delay), length(doppler));
+    
+        % Start searching
+    fprintf("Searching for PRN %.0f with 1 ms integration time:\n", PRN);
+    for k = 1:length(delay)
+        if ~mod(k-1,500)
+            fprintf("\tDelay = %.0f/%.0f samples\n", delay(k), delay(end)) % Print progress
+        end
+        for kk = 1:length(doppler)
+            theta = 2*pi*(fIF + doppler(kk)).*tSample;
+            signal = s_R(delay(k)+1:delay(k) + length(tSample));
+            S(k,kk) = sum(signal.*CA_PRN.*exp(-1j*theta));
+            S(k,kk) = norm(S(k,kk));
+        end
+    end
+    
+    [maxAmp, maxIdx] = max(S, [], 'all');
+    S = S/maxAmp;   
+    
+    fprintf("\nMax S for PRN %.0f found at %.0f samples (%.3f chips), %.0f Hz doppler\n\n", PRN, TAU(maxIdx)*(Fs/fCA), TAU(maxIdx), DOP(maxIdx));
+    
+    fig = figure;
+    hold on; grid on;
+    title(sprintf("Search Grid Results for PRN %.0f, 1 ms integration time", PRN))
+    res = surf(DOP, TAU, S, 'EdgeColor', 'none');
+    datatip(res, 'DataIndex', maxIdx);
+    xlabel("Doppler Shift [Hz]"); ylabel("Delay [Chips]"); zlabel("$\frac{|S(f,\tau)|}{|S_{max}|}$", 'interpreter', 'latex')
+    view([30 35]); colormap('cool'); drawnow;
 end
 
-[maxAmp, maxIdx] = max(S, [], 'all');
-S = S/maxAmp;
+%% Part 5. Increase integration time to 2 ms and repeat part 3-4
+    % New end time
+tEnd = 2e-3;
+tSample = 0:dTs:tEnd-dTs;
 
-fig = figure;
-hold on; grid on;
-title("Search Grid Results for PRN 3, 1 ms integration time")
-res = surf(DOP, TAU, S, 'EdgeColor', 'none');
-datatip(res, 'DataIndex', maxIdx);
-xlabel("Doppler Shift [Hz]"); ylabel("Delay [Chips]"); zlabel("$\frac{|S(f,\tau)|}{|S_{max}|}$", 'interpreter', 'latex')
-view([30 35]); colormap('cool')
+for PRN = PRNs
+        % Generate new CA code
+    CA = generatePRN(G1, G2, PRN, 1023);
+    
+        % Convert code to time domain
+            % Populate time for C/A code itself
+    tCA = zeros(1, length(CA));
+    for k = 0:length(CA)
+        tCA(k+1) = (1/fCA)*k;
+    end
+    
+                % Find code repeat period
+    tRepeat = length(CA)/fCA;
+    
+                % Map code to sample times
+    timeIdx = 1;
+    value = CA(timeIdx);
+    CA_PRN = zeros(1,length(tSample));
+    for k = 1:length(tSample)
+        if tSample(k) >= tCA(timeIdx)
+            value = CA(timeIdx);
+            timeIdx = mod(timeIdx + 1, length(CA));
+                % If the code repeats, increment the current time by the repeat
+                % period
+            if timeIdx == 0
+                timeIdx = 1;
+                tCA = tCA + tRepeat;
+            end
+        end
+        CA_PRN(k) = value;
+    end
+    
+    CA_PRN = convPRNZeroOne2PosNeg(CA_PRN);
 
-
-
-
+        % Initialize S matrix
+    S = zeros(length(delay), length(doppler));
+    
+        % Start searching
+    fprintf("Searching for PRN %.0f with 2 ms integration time:\n", PRN);
+    for k = 1:length(delay)
+        if ~mod(k-1,500)
+            fprintf("\tDelay = %.0f/%.0f samples\n", delay(k), delay(end)) % Print progress
+        end
+        for kk = 1:length(doppler)
+            theta = 2*pi*(fIF + doppler(kk)).*tSample;
+            signal = s_R(delay(k)+1:delay(k) + length(tSample));
+            S(k,kk) = sum(signal.*CA_PRN.*exp(-1j*theta));
+            S(k,kk) = norm(S(k,kk));
+        end
+    end
+    
+    [maxAmp, maxIdx] = max(S, [], 'all');
+    S = S/maxAmp;   
+    
+    fprintf("\nMax S for PRN %.0f found at %.0f samples (%.3f chips), %.0f Hz doppler\n\n", PRN, TAU(maxIdx)*(Fs/fCA), TAU(maxIdx), DOP(maxIdx));
+    
+    fig = figure;
+    hold on; grid on;
+    title(sprintf("Search Grid Results for PRN %.0f, 2 ms integration time", PRN))
+    res = surf(DOP, TAU, S, 'EdgeColor', 'none');
+    datatip(res, 'DataIndex', maxIdx);
+    xlabel("Doppler Shift [Hz]"); ylabel("Delay [Chips]"); zlabel("$\frac{|S(f,\tau)|}{|S_{max}|}$", 'interpreter', 'latex')
+    view([30 35]); colormap('cool'); drawnow;
+end
