@@ -50,11 +50,11 @@ beta = coeffs.beta;
 n = sqrt(pConst.mu/(a^3));
 
 x_r = A0*cos(n*t + alpha) + xOff;
-y_r = -2*A0*sin(n*t + beta) - 1.5*n*t*xOff + yOff;
+y_r = -2*A0*sin(n*t + alpha) - 1.5*n*t*xOff + yOff;
 z_r = B0*cos(n*t + beta);
 
 xDot_r = -A0*n*sin(n*t + alpha);
-yDot_r = -2*A0*n*cos(n*t + beta) - 1.5*n*xOff;
+yDot_r = -2*A0*n*cos(n*t + alpha) - 1.5*n*xOff;
 zDot_r = -B0*n*sin(n*t + beta);
 
 X_r_Hill = [x_r; y_r; z_r; xDot_r; yDot_r; zDot_r];
