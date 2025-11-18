@@ -19,7 +19,7 @@ M_c = deg2rad(20); % deg -> rad
 f_c = convE2f(convM2E(M_c, oe_c0.e, false), oe_c0.e);
 oe_c0.f = f_c;
 
-%     % Desired deputy orbit element differences - from slide 57
+    % Desired deputy orbit element differences - from slide 57
 doe_r.da = -0.00192995; % km
 doe_r.de = 0.000576727; 
 doe_r.di = deg2rad(0.006);
@@ -67,12 +67,12 @@ X0_d = [cart_d.rVec; cart_d.vVec];
 X0 = [X0_c; X0_d];
 
     % Define tspan for multiple orbits
-nOrbits = 4;
+nOrbits = 6;
 T = 2*pi*sqrt((oe_c0.a)^3/pConst.mu);
 tspan = 0:1:nOrbits*T;
 
     % Run controller
-[t, X, u, doe, oe_d, oe_c] = impulsiveFeedbackControl(X0, doe_r, tspan, pConst, opt);
+[t, X, u, doe, oe_d] = impulsiveFeedbackControl(X0, doe_r, tspan, pConst, opt);
 % [t, X] = ode15s(@(t,X)impulsiveFeedbackControl(t,X,doe_r,M_d,pConst), tspan, X0, opt);
 % [~, u, doe, oe_d, oe_c] = cellfun(@(t,X)impulsiveFeedbackControl(t,X.',doe_r,M_d,pConst), num2cell(t), num2cell(X,2), 'uni', 0);
 % u = cellfun(@(x)x',u,'uni',0);
@@ -80,7 +80,7 @@ tspan = 0:1:nOrbits*T;
 tMan = cell2mat(oe_d(:,2));
 tMan = [tMan; t(end)];
 oe_d = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_d(:,1), 'uni', 0);
-oe_c = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_c(:,1), 'uni', 0);
+% oe_c = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_c(:,1), 'uni', 0);
 
 
 %% Plot results
@@ -92,8 +92,8 @@ X_d = X(:,7:12);
 doe = [doe; doe(end,:)];
 oe_d = cell2mat(oe_d);
 oe_d = [oe_d; oe_d(end,:)];
-oe_c = cell2mat(oe_c);
-oe_c = [oe_c; oe_c(end,:)];
+% oe_c = cell2mat(oe_c);
+% oe_c = [oe_c; oe_c(end,:)];
 
     % Convert to Hill Frame
 X_d_Hill = zeros(size(X_d));
@@ -175,7 +175,7 @@ nt = nexttile; ax = [ax; nt];
 linkaxes(ax, 'x');
 
 figure; tl = tiledlayout('flow'); %ax = [];
-title(tl, "Difference in Actual and Desired Deputy Elements vs. Time")
+title(tl, "Difference in Desired and Actual Deputy Elements vs. Time")
 try doe_r.da;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
