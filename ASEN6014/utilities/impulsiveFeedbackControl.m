@@ -50,7 +50,7 @@ while t(end) <= tspan(end)
     M_c = convE2M(convf2E(oe_c_k.f, oe_c_k.e), oe_c_k.e);
     if M_c < 0
         M_c = M_c + 2*pi;
-        t_p = t(end) - (0 - M_c)/n;
+        t_p = t(end) - (0 - M_c)/n; % Time of periapsis
         M_c = M_c - 2*pi;
     else
         t_p = t(end) - (0 - M_c)/n;
@@ -61,14 +61,14 @@ while t(end) <= tspan(end)
     cart.vVec = X_d(4:6);
     oe_d_k = convCart2ClassicOE(cart);
     oe_d = [oe_d; {oe_d_k}, t(end)];
-    n = sqrt(pConst.mu/(oe_d_k.a^3));
+    n = sqrt(pConst.mu/(oe_c_k.a^3));
     M_d = convE2M(convf2E(oe_d_k.f, oe_d_k.e), oe_d_k.e);
     
     rHat = cart.rVec/norm(cart.rVec);
     hHat = cross(cart.rVec, cart.vVec)/norm(cross(cart.rVec, cart.vVec));
     thetaHat = cross(hHat, rHat);
     
-    NH = [rHat, thetaHat, hHat];
+    NH = [rHat, thetaHat, hHat]; % DCM to inertial from deputy coords
     
         % Desired
     oe_r.mu = pConst.mu;
@@ -86,6 +86,7 @@ while t(end) <= tspan(end)
     doe_k = [oe_d_k.a - oe_r.a; oe_d_k.e - oe_r.e; oe_d_k.i - oe_r.i; 
              oe_d_k.RAAN - oe_r.RAAN; oe_d_k.argPeri - oe_r.argPeri; M_d - M_r];
     doe = [doe; doe_k'];
+    doe_k = -doe_k; % want to correct for existing errors
 
     % Calculate control effort
         % Calculate theta for orbit plane change
@@ -99,7 +100,7 @@ while t(end) <= tspan(end)
     dv_h = (h/r)*sqrt(doe_k(3)^2 + (sin(oe_c_k.i)^2)*doe_k(4)^2);
     phi = acos(1-((dv_h^2)/(2*v^2)));
     gamma = pi - ((pi-phi)/2);
-    if M_c > 0
+    if M_c > 0 % We are before apoapsis, need to add velocity in +o_h direction
         sign = 1;
     else
         sign = -1;
@@ -156,9 +157,9 @@ while t(end) <= tspan(end)
     switch sortIdx(1)
         case 1 % Periapsis maneuver was first
             u_k = dV_p;
-        case 2
+        case 2 % Apoapsis maneuver was first
             u_k = dV_a;
-        case 3
+        case 3 % Plane change maneuver was first
             u_k = dV_h;
     end
 
@@ -166,9 +167,18 @@ while t(end) <= tspan(end)
     X = [X; [X(end,1:6), X(end,7:9), (X(end,10:12)' + NH*u_k)']];
     u = [u; u_k'];
 
+    cart.rVec = X(end,7:9)';
+    cart.vVec = X(end,10:12)';
+    oe_d_k = convCart2ClassicOE(cart);
+    oe_d = [oe_d; {oe_d_k}, t(end)];
+
+    doe_k = [oe_d_k.a - oe_r.a; oe_d_k.e - oe_r.e; oe_d_k.i - oe_r.i; 
+             oe_d_k.RAAN - oe_r.RAAN; oe_d_k.argPeri - oe_r.argPeri; M_d - M_r];
+    doe = [doe; doe_k'];
+
     % Integrate EOM to the second maneuver time
     tspan_k = t(end):dt:sortTimes(2);
-    [t_k, X_k] = ode45(@(t,X)multiSatOrbitEOM(t, X, pConst, [struct(); struct()], false(1,2)), tspan_k, [X_c; X_d], opt);
+    [t_k, X_k] = ode45(@(t,X)multiSatOrbitEOM(t, X, pConst, [struct(); struct()], false(1,2)), tspan_k, X(end,:)', opt);
 
     t = [t; t_k];
     X = [X; X_k];
@@ -176,7 +186,7 @@ while t(end) <= tspan(end)
 
     % Apply second maneuver
     switch sortIdx(2)
-        case 1 % Periapsis maneuver was first
+        case 1 % Periapsis maneuver was second
             u_k = dV_p;
         case 2
             u_k = dV_a;
@@ -188,10 +198,19 @@ while t(end) <= tspan(end)
     X = [X; [X(end,1:6), X(end,7:9), (X(end,10:12)' + NH*u_k)']];
     u = [u; u_k'];
 
+    cart.rVec = X(end,7:9)';
+    cart.vVec = X(end,10:12)';
+    oe_d_k = convCart2ClassicOE(cart);
+    oe_d = [oe_d; {oe_d_k}, t(end)];
+
+    doe_k = [oe_d_k.a - oe_r.a; oe_d_k.e - oe_r.e; oe_d_k.i - oe_r.i; 
+             oe_d_k.RAAN - oe_r.RAAN; oe_d_k.argPeri - oe_r.argPeri; M_d - M_r];
+    doe = [doe; doe_k'];
+
     % Integrate EOM to the third maneuver, if it's valid
     if sortTimes(3) < 9e9
         tspan_k = t(end):dt:sortTimes(3);
-        [t_k, X_k] = ode45(@(t,X)multiSatOrbitEOM(t, X, pConst, [struct(); struct()], false(1,2)), tspan_k, [X_c; X_d], opt);
+        [t_k, X_k] = ode45(@(t,X)multiSatOrbitEOM(t, X, pConst, [struct(); struct()], false(1,2)), tspan_k, X(end,:)', opt);
     
         t = [t; t_k];
         X = [X; X_k];
@@ -199,7 +218,7 @@ while t(end) <= tspan(end)
     
         % Apply third maneuver
         switch sortIdx(3)
-            case 1 % Periapsis maneuver was first
+            case 1 % Periapsis maneuver was third
                 u_k = dV_p;
             case 2
                 u_k = dV_a;
@@ -210,6 +229,15 @@ while t(end) <= tspan(end)
         t = [t; t(end)];
         X = [X; [X(end,1:6), X(end,7:9), (X(end,10:12)' + NH*u_k)']];
         u = [u; u_k'];
+
+        cart.rVec = X(end,7:9)';
+        cart.vVec = X(end,10:12)';
+        oe_d_k = convCart2ClassicOE(cart);
+        oe_d = [oe_d; {oe_d_k}, t(end)];
+
+        doe_k = [oe_d_k.a - oe_r.a; oe_d_k.e - oe_r.e; oe_d_k.i - oe_r.i; 
+             oe_d_k.RAAN - oe_r.RAAN; oe_d_k.argPeri - oe_r.argPeri; M_d - M_r];
+        doe = [doe; doe_k'];
     end
     
 end
