@@ -25,7 +25,7 @@ doe_r.de = 0.000576727;
 doe_r.di = deg2rad(0.006);
 doe_r.dRAAN = deg2rad(0);
 doe_r.dargPeri = deg2rad(0);
-doe_r.dM0 = deg2rad(0);
+doe_r.dM0 = deg2rad(0.1);
 
 % doe_r.da = 0;
 % doe_r.de = 0.05;
@@ -69,26 +69,31 @@ X0 = [X0_c; X0_d];
     % Define tspan for multiple orbits
 nOrbits = 4;
 T = 2*pi*sqrt((oe_c0.a)^3/pConst.mu);
-tspan = 0:0.1:nOrbits*T;
+tspan = 0:1:nOrbits*T;
 
     % Run controller
-[t, X] = ode15s(@(t,X)impulsiveFeedbackControl(t,X,doe_r,M_d,pConst), tspan, X0, opt);
-
-[~, u, doe, oe_d, oe_c] = cellfun(@(t,X)impulsiveFeedbackControl(t,X.',doe_r,M_d,pConst), num2cell(t), num2cell(X,2), 'uni', 0);
-u = cellfun(@(x)x',u,'uni',0);
-doe = cellfun(@(x)x',doe,'uni',0);
-oe_d = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_d, 'uni', 0);
-oe_c = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_c, 'uni', 0);
+[t, X, u, doe, oe_d, oe_c] = impulsiveFeedbackControl(X0, doe_r, tspan, pConst, opt);
+% [t, X] = ode15s(@(t,X)impulsiveFeedbackControl(t,X,doe_r,M_d,pConst), tspan, X0, opt);
+% [~, u, doe, oe_d, oe_c] = cellfun(@(t,X)impulsiveFeedbackControl(t,X.',doe_r,M_d,pConst), num2cell(t), num2cell(X,2), 'uni', 0);
+% u = cellfun(@(x)x',u,'uni',0);
+% doe = cellfun(@(x)x',doe,'uni',0);
+tMan = cell2mat(oe_d(:,2));
+tMan = [tMan; t(end)];
+oe_d = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_d(:,1), 'uni', 0);
+oe_c = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_c(:,1), 'uni', 0);
 
 
 %% Plot results
     % Extract states and control
 X_c = X(:,1:6);
 X_d = X(:,7:12);
-u = cell2mat(u);
-doe = cell2mat(doe);
+% u = cell2mat(u);
+% doe = cell2mat(doe);
+doe = [doe; doe(end,:)];
 oe_d = cell2mat(oe_d);
+oe_d = [oe_d; oe_d(end,:)];
 oe_c = cell2mat(oe_c);
+oe_c = [oe_c; oe_c(end,:)];
 
     % Convert to Hill Frame
 X_d_Hill = zeros(size(X_d));
@@ -113,16 +118,16 @@ figure; tl = tiledlayout(3,1); ax = [];
 title(tl, "Control Effort vs. Time")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,u(:,1),'b-');
-    xlabel("Time [sec]"); ylabel("u_1 [km/s^2]");
+    stairs(t,u(:,1),'b-');
+    xlabel("Time [sec]"); ylabel("\Delta v_r [km/s]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,u(:,2),'b-');
-    xlabel("Time [sec]"); ylabel("u_2 [km/s^2]");
+    stairs(t,u(:,2),'b-');
+    xlabel("Time [sec]"); ylabel("\Delta v_\theta [km/s]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,u(:,3),'b-');
-    xlabel("Time [sec]"); ylabel("u_3 [km/s^2]");
+    stairs(t,u(:,3),'b-');
+    xlabel("Time [sec]"); ylabel("\Delta v_h [km/s]");
 linkaxes(ax, 'x');
 
 figure; tl = tiledlayout(3,1); %ax = [];
@@ -145,27 +150,27 @@ figure; tl = tiledlayout(3,2);
 title(tl, "Deputy Elements vs. Time")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,oe_d(:,1),'b-');
+    stairs(tMan,oe_d(:,1), 'b-');
     xlabel("Time [sec]"); ylabel("a_d [km]")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,oe_d(:,2),'b-');
+    stairs(tMan,oe_d(:,2),'b-');
     xlabel("Time [sec]"); ylabel("e_d")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,rad2deg(oe_d(:,3)),'b-');
+    stairs(tMan,rad2deg(oe_d(:,3)),'b-');
     xlabel("Time [sec]"); ylabel("i_d [deg]")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,rad2deg(oe_d(:,4)),'b-');
+    stairs(tMan,rad2deg(oe_d(:,4)),'b-');
     xlabel("Time [sec]"); ylabel("\Omega_d [deg]")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,rad2deg(oe_d(:,5)),'b-');
+    stairs(tMan,rad2deg(oe_d(:,5)),'b-');
     xlabel("Time [sec]"); ylabel("\omega_d [deg]")
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
-    plot(t,rad2deg(oe_d(:,6)),'b-');
+    plot(tMan,rad2deg(oe_d(:,6)),'b-');
     xlabel("Time [sec]"); ylabel("M_d [deg]")
 linkaxes(ax, 'x');
 
@@ -174,42 +179,42 @@ title(tl, "Difference in Actual and Desired Deputy Elements vs. Time")
 try doe_r.da;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
-        plot(t,doe(:,1),'b-');
+        stairs(tMan,doe(:,1),'b-');
         plot(t,zeros(size(t)), 'r--')
         xlabel("Time [sec]"); ylabel("\Delta a [km]")
 end
 try doe_r.de;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
-        plot(t,doe(:,2),'b-');
+        stairs(tMan,doe(:,2),'b-');
         plot(t,zeros(size(t)), 'r--')
         xlabel("Time [sec]"); ylabel("\Delta e")
 end
 try doe_r.di;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
-        plot(t,rad2deg(doe(:,3)),'b-');
+        stairs(tMan,rad2deg(doe(:,3)),'b-');
         plot(t,zeros(size(t)), 'r--')
         xlabel("Time [sec]"); ylabel("\Delta i [deg]")
 end
 try doe_r.dRAAN;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
-        plot(t,rad2deg(doe(:,4)),'b-');
+        stairs(tMan,rad2deg(doe(:,4)),'b-');
         plot(t,zeros(size(t)), 'r--')
         xlabel("Time [sec]"); ylabel("\Delta \Omega [deg]")
 end
 try doe_r.dargPeri;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
-        plot(t,rad2deg(doe(:,5)),'b-');
+        stairs(tMan,rad2deg(doe(:,5)),'b-');
         plot(t,zeros(size(t)), 'r--')
         xlabel("Time [sec]"); ylabel("\Delta \omega [deg]")
 end
 try doe_r.dM0;
     nt = nexttile; ax = [ax; nt];
         hold on; grid on;
-        plot(t,rad2deg(doe(:,6)),'b-');
+        plot(tMan,rad2deg(doe(:,6)),'b-');
         plot(t,zeros(size(t)), 'r--')
         xlabel("Time [sec]"); ylabel("\Delta M [deg]")
 end
