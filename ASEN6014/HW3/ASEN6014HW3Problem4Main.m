@@ -7,6 +7,8 @@ clc; clear; close all;
 %% Setup
     % Planetary constants
 pConst.mu = 398600.4415; % km^3/s^2
+pConst.Ri = 6378; % km
+pConst.J2 = 1.08264e-3;
 
     % Chief initial orbit elements
 oe_c0.mu = pConst.mu;
@@ -27,18 +29,11 @@ doe_r.dRAAN = deg2rad(0);
 doe_r.dargPeri = deg2rad(0);
 doe_r.dM0 = deg2rad(0.1);
 
-% doe_r.da = 0;
-% doe_r.de = 0.05;
-% doe_r.di = 0;
-% doe_r.dRAAN = 0;
-% doe_r.dargPeri = 0;
-% doe_r.dM0 = 0;
-
     % Initial deputy minus desired orbit element differences
-doe.da = -0.1; % km
+doe.da = 0.1; % km
 doe.de = 0;
-doe.di = deg2rad(0.05);
-doe.dRAAN = deg2rad(-0.01);
+doe.di = deg2rad(-0.05);
+doe.dRAAN = deg2rad(0.01);
 doe.dargPeri = deg2rad(0);
 doe.dM0 = deg2rad(0);
 
@@ -67,9 +62,9 @@ X0_d = [cart_d.rVec; cart_d.vVec];
 X0 = [X0_c; X0_d];
 
     % Define tspan for multiple orbits
-nOrbits = 6;
+nOrbits = 4;
 T = 2*pi*sqrt((oe_c0.a)^3/pConst.mu);
-tspan = 0:1:nOrbits*T;
+tspan = 0:10:nOrbits*T;
 
     % Run controller
 [t, X, u, doe, oe_d] = impulsiveFeedbackControl(X0, doe_r, tspan, pConst, opt);
@@ -220,7 +215,7 @@ try doe_r.dM0;
 end
 linkaxes(ax, 'x');
 
-return;
+% return;
     % Animate
 frames = 10;
 figure;
@@ -228,7 +223,7 @@ for k = 1:frames:length(t)
     clf;
     hold on; grid on; axis equal
     title(sprintf("Deputy Hill Trajectory at t = %.3f sec", t(k)));
-    cutoff = find(t >= 3*T, 1, 'first');
+    cutoff = find(t >= 2*T, 1, 'first');
     if k <= cutoff
         start = 1;
         plot3(X_d_Hill(1,1), X_d_Hill(1,2), X_d_Hill(1,3), 'g.', 'MarkerSize', markerSize);
@@ -244,7 +239,7 @@ for k = 1:frames:length(t)
        plot3(X_d_Hill(end,1), X_d_Hill(end,2), X_d_Hill(end,3), 'r.', 'MarkerSize', markerSize); 
     end
     xlabel("Radial [km]"); ylabel("Along-Track [km]"); zlabel("Cross-Track [km]");
-    view([30,35]);
+    view([30+k/frames,35]);
     drawnow;
 end
 

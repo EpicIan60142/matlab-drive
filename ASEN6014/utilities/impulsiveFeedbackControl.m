@@ -22,7 +22,7 @@ function [t_save, X_save, u_save, doe_save, oe_d_save] = impulsiveFeedbackContro
 %   By: Ian Faber, 11/18/2025
 %
 
-t_save = 0;
+t_save = tspan(1);
 X_save = X0';
 u_save = zeros(1,3);
 doe_save = [];
@@ -63,7 +63,7 @@ while t_save(end) < tspan(end)
     % Extract difference between reference and deputy elements
     doe = [oe_r.a - oe_d.a, oe_r.e - oe_d.e, oe_r.i - oe_d.i, ...
            oe_r.RAAN - oe_d.RAAN, oe_r.argPeri - oe_d.argPeri, M_r - M_d];
-    
+
     % Calculate delta V's
         % Plane change
     theta_plane = atan2(doe(4)*sin(oe_d.i), doe(3));
@@ -102,14 +102,16 @@ while t_save(end) < tspan(end)
     M_a = pi;
     
     if M_d < 0
-        M_d = M_d + 2*pi;
+        M_d_time = M_d + 2*pi;
+    else
+        M_d_time = M_d;
     end
     
     T = 2*pi/n_d;
     
-    t_plane = (M_plane - M_d)/n_d;
-    t_p = (M_p - M_d)/n_d;
-    t_a = (M_a - M_d)/n_d;
+    t_plane = (M_plane - M_d_time)/n_d;
+    t_p = (M_p - M_d_time)/n_d;
+    t_a = (M_a - M_d_time)/n_d;
     
     if t_p < 0
         t_p = t_p + T;
@@ -161,11 +163,23 @@ while t_save(end) < tspan(end)
                 u_k = dV_a;
         end
     
-        t = [t; t(end) + dt];
+        t = [t; t(end)];
         X = [X; [X(end,1:9), X(end, 10:12) + (NH*u_k)']];
         u = [u; u_k'];
     
         % Calculate resulting elements
+        cart.rVec = X(end,1:3)';
+        cart.vVec = X(end,4:6)';
+        oe_c_k = convCart2ClassicOE(cart);
+
+        oe_r_k.a = oe_c_k.a + doe_r.da;
+        oe_r_k.e = oe_c_k.e + doe_r.de;
+        oe_r_k.i = oe_c_k.i + doe_r.di;
+        oe_r_k.RAAN = oe_c_k.RAAN + doe_r.dRAAN;
+        oe_r_k.argPeri = oe_c_k.argPeri + doe_r.dargPeri;
+        M_c_k = convE2M(convf2E(oe_c_k.f, oe_c_k.e), oe_c_k.e);
+        M_r_k = M_c_k + doe_r.dM0;
+
         cart.rVec = X(end,7:9)';
         cart.vVec = X(end,10:12)';
         oe_d_k = convCart2ClassicOE(cart);
@@ -173,7 +187,7 @@ while t_save(end) < tspan(end)
         oe_d = [oe_d; {oe_d_k}, t(end)];
     
         doe_k = [oe_r.a - oe_d_k.a, oe_r.e - oe_d_k.e, oe_r.i - oe_d_k.i, ...
-                 oe_r.RAAN - oe_d_k.RAAN, oe_r.argPeri - oe_d_k.argPeri, M_r - M_d_k];
+                 oe_r.RAAN - oe_d_k.RAAN, oe_r.argPeri - oe_d_k.argPeri, M_r_k - M_d_k];
         doe = [doe; doe_k];
     end
 
