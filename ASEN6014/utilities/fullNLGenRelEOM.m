@@ -33,10 +33,17 @@ nDeputies = length(X_deputies)/nStates;
     % Calculate DCM from inertial to Hill Frame
 cart.rVec = X_chief(1:3);
 cart.vVec = X_chief(4:6);
-cart.mu = const.mu;
-oe = convCart2ClassicOE(cart);
+% cart.mu = const.mu;
+% oe = convCart2ClassicOE(cart);
+% 
+% HN = EA2DCM([oe.RAAN, oe.i, oe.argPeri + oe.f], [3,1,3]);
 
-HN = EA2DCM([oe.RAAN, oe.i, oe.argPeri + oe.f], [3,1,3]);
+rHat = cart.rVec/norm(cart.rVec);
+hHat = cross(cart.rVec, cart.vVec)/norm(cross(cart.rVec, cart.vVec));
+thetaHat = cross(hHat, rHat);
+
+NH = [rHat, thetaHat, hHat];
+HN = NH';
 
     % Calculate chief radius and its rate of change
 v_c_H = HN*cart.vVec;
