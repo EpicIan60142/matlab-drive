@@ -33,7 +33,7 @@ fig = figure(figNum); fig.WindowState = "maximized";
 
     %% Animate the problem
 movieVector = [];
-dTime = 20;
+dTime = 10;
 for k = 1:dTime:longestTime
         % Clear figure
     clf;
@@ -53,20 +53,27 @@ for k = 1:dTime:longestTime
         title("3D Race Course")
 
             % Plot intermediate rings
-        for kk = 1:length(rings)-1
-            ring = scatter3(rings(kk).X(1,k), rings(kk).X(2,k), rings(kk).X(3,k), 20, kk, 'filled');
-            normal = quiver3(rings(kk).X(1,k), rings(kk).X(2,k), rings(kk).X(3,k), rings(kk).normal(1), rings(kk).normal(2), rings(kk).normal(3), 0.1, 'filled', 'k-');
-            rings(kk).center = [rings(kk).X(1,k); rings(kk).X(2,k); rings(kk).X(3,k)];
-            plotRing(rings(kk), 'k-');
+        for kk = 1:length(rings)
+            if ~isempty(rings(kk).X)
+                ring = scatter3(rings(kk).X(k,1), rings(kk).X(k,2), rings(kk).X(k,3), 20, kk, 'filled');
+                normal = quiver3(rings(kk).X(k,1), rings(kk).X(k,2), rings(kk).X(k,3), rings(kk).normal(1), rings(kk).normal(2), rings(kk).normal(3), 0.1, 'filled', 'k-');
+                rings(kk).center = [rings(kk).X(k,1); rings(kk).X(k,2); rings(kk).X(k,3)];
+                plotRing(rings(kk), 'k-');
+            end
         end
             
             % Plot start and end rings
         startRing = rings(1);
-        startRing.center = [startRing.X(1,k); startRing.X(2,k); startRing.X(3,k)];
-        endRing = rings(end);
-        endRing.center = [endRing.X(1,k); endRing.X(2,k); endRing.X(3,k)];
+        if ~isempty(startRing.X)
+            startRing.center = [startRing.X(1,k); startRing.X(2,k); startRing.X(3,k)];
+            quiver3(startRing.X(k,1), startRing.X(k,2), startRing.X(k,3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 0.1, 'filled', 'k-')
+        end
         cubeStart = plotRing(startRing, 'g-'); cubeStart.LineWidth = 2;
-        quiver3(startRing.X(1,k), startRing.X(2,k), startRing.X(3,k), startRing.normal(1), startRing.normal(2), startRing.normal(3), 0.1, 'filled', 'k-')
+        
+        endRing = rings(end);
+        if ~isempty(endRing.X)
+            endRing.center = [endRing.X(1,k); endRing.X(2,k); endRing.X(3,k)];
+        end
         cubeEnd = plotRing(endRing, 'r-');
         
             % Plot course origin
@@ -74,14 +81,23 @@ for k = 1:dTime:longestTime
     
             % Plot trajectories
         for kk = 1:length(rings)
-            trajAx = plot3(rings(kk).X(1,1:k), rings(kk).X(2,1:k), rings(kk).X(3,1:k), 'b-');
-            trajLabels = sprintf("Ring trajectory");
+            if ~isempty(rings(kk).X)
+                T = 180*60;
+                cutoff = find(rings(kk).t > T, 1, 'first');
+                if k < cutoff
+                    start = 1;
+                else
+                    start = floor(k - cutoff);
+                end
+                trajAx = plot3(rings(kk).X(start:k,1), rings(kk).X(start:k,2), rings(kk).X(start:k,3), 'b-');
+                trajLabels = sprintf("Ring trajectory");
+            end
         end
 
             % Labels, colorbar, and view angle
         xlabel("Radial [km]"); ylabel("Along-Track [km]"); zlabel("Cross-Track [km]"); 
         cBar = colorbar; cBar.Label.String = "Ring Number"; colormap("cool"); cBar.Location = 'westoutside';
-        view(-30, 25)
+        view(-30 + k/25, 25)
 
         % Make legend
     lgnd = legend([cubeStart, ring, cubeEnd, courseCenter, trajAx], ["Start Ring", "Course Ring", "End Ring", "Course Origin", trajLabels], 'location', 'layout');

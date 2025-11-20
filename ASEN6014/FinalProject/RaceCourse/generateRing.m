@@ -81,6 +81,10 @@ ring.Cd = 1.2;
     % Trajectory fields
 ring.X = [];
 ring.t = [];
+ring.u = [];
+ring.X_r = [];
+ring.oe = [];
+ring.oe_r = [];
 
 %% Assign params structure
 ring.params = struct("a", a, "b", b, "theta", rad2deg(thetaNew), "phi", rad2deg(phiNew), ...

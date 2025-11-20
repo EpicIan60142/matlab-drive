@@ -94,7 +94,8 @@ for k = 1:l
         Cd = 1.2;
 
             % Create ring
-        init = struct("center", center, "normal", normal, "S", S, "NR", NR, "A", A, "m", m, "Cd", Cd, "X", [], "t", []); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
+        init = struct("center", center, "normal", normal, "S", S, "NR", NR, "A", A, "m", m, "Cd", Cd, ...
+                      "X", [], "t", [], "u", [], "X_r", [], "oe", [], "oe_r", []); % Start first ring at the smallest allowed distance along the +y axis as the largest allowed ellipse
         init.params = struct("a", a, "b", b, "theta", rad2deg(theta), "phi", rad2deg(phi), ...
                              "d", 0, "normalPrime", normalPrime, "normalDPrime", normalDPrime, "lastRing", init);
 
