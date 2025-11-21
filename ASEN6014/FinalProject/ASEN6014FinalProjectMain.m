@@ -78,8 +78,8 @@ rings(1).params.lastRing = startRing;
 rings = [startRing; rings];
 
         % End ring
-endRing = generateRing(min(semiMaj), min(semiMin), 0, 0, min(interRingDist), rings(end));
-endRing.m = 1;
+endRing = generateRing(5*max(semiMaj), 5*max(semiMin), 0, 0, min(interRingDist), rings(end));
+endRing.m = 100;
 rings = [rings; endRing];
 
     % Calculate race course origin and move center to be 0,0
@@ -279,7 +279,7 @@ drawnow;
     % Animate ring
 % animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
 
-%% Task 2a: Design and implement a deployment sequence from lead-follower to race course formation
+%% Task 2: Design and implement a deployment sequence from lead-follower to race course formation
     % Clear reused parameters
 clear doe_r oe_d X_d0
 
@@ -340,8 +340,8 @@ for k = 1:length(sortDist)
     cart_d = convClassicOE2Cart(oe_d);
     % rings(sortDist(k,2)).X0 = convDeputyN2H(X_c0, [cart_d.rVec; cart_d.vVec], pConst);
     rings(sortDist(k,2)).X0 = [cart_d.rVec; cart_d.vVec];
-    rings(sortDist(k,2)).X = convDeputyN2H(X_c0, rings(sortDist(k,2)).X0, pConst)';
-    rings(sortDist(k,2)).t = 0;
+    % rings(sortDist(k,2)).X = convDeputyN2H(X_c0, rings(sortDist(k,2)).X0, pConst)';
+    % rings(sortDist(k,2)).t = 0;
 
         % Assign initial lead follower desired elements
     rings(sortDist(k,2)).doe_r = doe_r;
@@ -362,8 +362,8 @@ oe_d.f = convE2f(convM2E(M_r, oe_d.e, false), oe_d.e);
 cart_d = convClassicOE2Cart(oe_d);
 % rings(1).X0 = convDeputyN2H(X_c0, [cart_d.rVec; cart_d.vVec], pConst);
 rings(1).X0 = [cart_d.rVec; cart_d.vVec];
-rings(1).X = convDeputyN2H(X_c0, rings(1).X0, pConst)';
-rings(1).t = 0;
+% rings(1).X = convDeputyN2H(X_c0, rings(1).X0, pConst)';
+% rings(1).t = 0;
 rings(1).doe_r = doe_r;
 deployOrder = [deployOrder; 1];
 
@@ -377,8 +377,8 @@ oe_d.f = convE2f(convM2E(M_r, oe_d.e, false), oe_d.e);
 cart_d = convClassicOE2Cart(oe_d);
 % rings(end).X0 = convDeputyN2H(X_c0, [cart_d.rVec; cart_d.vVec], pConst);
 rings(end).X0 = [cart_d.rVec; cart_d.vVec];
-rings(end).X = convDeputyN2H(X_c0, rings(end).X0, pConst)';
-rings(end).t = 0;
+% rings(end).X = convDeputyN2H(X_c0, rings(end).X0, pConst)';
+% rings(end).t = 0;
 rings(end).doe_r = doe_r;
 deployOrder = [deployOrder; length(rings)];
 
@@ -386,25 +386,25 @@ deployOrder = [deployOrder; length(rings)];
 deployOrder = flip(deployOrder);
 
     % Command the rings to deploy
+fprintf("Deploying race course...\n");
 deployDelay = 500;
 for k = 1:length(deployOrder)
         % Get the ring to deploy
     ringIdx = deployOrder(k);
 
-    fprintf("Deploying ring %.0f!\n",deployOrder(k));
+    fprintf("\tDeploying ring %.0f! (%.0f/%.0f)\n",deployOrder(k),k,length(deployOrder));
 
         % Propagate controller
             % Result reporting time interval
     dt = 10;
             % Define deployment time for this ring
-    tspan = (k-1)*deployDelay:dt:2*T;
+    tspan = k*deployDelay:dt:3*T;
             % Start with orbit element control until deployment time
     if tspan(1) ~= 0 
         tspan_elem = 0:dt:tspan(1);
         cart_c = convClassicOE2Cart(oe_c);
         X_c0 = [cart_c.rVec; cart_c.vVec];
-        [t_elem, X_elem] = ode45(@(t,X)leadFollowerFeedbackControl(t,X,rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), tspan_elem, [X_c0; rings(ringIdx).X0], opt);
-        
+        [t_elem, X_elem] = ode45(@(t,X)leadFollowerFeedbackControl(t, X, rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), tspan_elem, [X_c0; rings(ringIdx).X0], opt);
         [~, u_elem, doe_elem, oe_d_elem, oe_c_elem, oe_r_elem] = cellfun(@(t,X)leadFollowerFeedbackControl(t, X.', rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), num2cell(t_elem), num2cell(X_elem,2), 'uni', 0);
         u_elem = cellfun(@(x)x', u_elem, 'UniformOutput', false);
         u_elem = cell2mat(u_elem);
@@ -460,18 +460,110 @@ for k = 1:length(deployOrder)
     rings(ringIdx).oe_r = [rings(ringIdx).oe_r; NaN(length(t), 6)];
 end
 
+fprintf("\nRace course deployed, let's race!!!\n\n")
+
+%     % Plot trajectories
+% titleText = sprintf("Race Course Ring Deployment");
+% xLabel = sprintf("Radial [km]"); yLabel = sprintf("Along-Track [km]"); zLabel = sprintf("Cross-Track [km]");
+% trajStyle = "b-"; trajLabel = sprintf("Ring Trajectory");
+% plotCourse(rings, 6, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel);
+% 
+%     % Animate deployment
+% animateRings(rings, true, videoFolder + "RingDeployment.mp4", 7, "");
+
+%% Task 3: Design and implement a stowing sequence from the race course to lead-follower formation
+    % Stowing order is in reverse of deployment order
+stowOrder = flip(deployOrder);
+
+    % Capture the initial state of the chief after formation control
+X_c0_form = X(end,1:6)';
+
+    % Command the rings to stow
+fprintf("Stowing race course...\n");
+stowDelay = 1000;
+for k = 1:length(stowOrder)
+        % Get the ring to deploy
+    ringIdx = stowOrder(k);
+
+    fprintf("\tStowing ring %.0f! (%.0f/%.0f)\n",stowOrder(k),k,length(stowOrder));
+
+        % Propagate controller
+            % Result reporting time interval
+    dt = 10;
+            % Define deployment time for this ring
+    if k == 1
+        oldTSpan = tspan;
+    end
+
+    tspan = (oldTSpan(end) + k*stowDelay):dt:(oldTSpan(end) + 7*T);
+            % Start with race course formation control until stowing time
+    if tspan(1) ~= oldTSpan(end)
+        tspan_course = oldTSpan(end):dt:tspan(1);
+        X_c0 = X_c0_form;
+        rings(ringIdx).X0 = convDeputyH2N(X_c0, rings(ringIdx).X(end,:)', pConst);
+        [t_course, X_course] = ode15s(@(t,X)ringFormationFeedbackControl(t, X, rings(ringIdx).center, kConst_course, pConst, rings(ringIdx)), tspan_course, [X_c0; rings(ringIdx).X0], opt);
+        [~, u_course] = cellfun(@(t,X)ringFormationFeedbackControl(t, X.', rings(ringIdx).center, kConst_course, pConst, rings(ringIdx)), num2cell(t_course), num2cell(X_course,2), 'uni', 0);
+        u_course = cellfun(@(x)x', u_course, 'UniformOutput', false);
+        u_course = cell2mat(u_course);
+        
+            % Convert deputy from Inertial frame to Hill frame
+        X_elem_Hill = [];
+        for kk = 1:length(t_course)
+            X_elem_Hill = [X_elem_Hill; convDeputyN2H(X_course(kk, 1:6)', X_course(kk, 7:12)', pConst)'];
+        end
+        
+            % Assign trajectory arrays
+        rings(ringIdx).X = [rings(ringIdx).X; X_elem_Hill];
+        rings(ringIdx).t = [rings(ringIdx).t; t_course];
+        rings(ringIdx).u = [rings(ringIdx).u; u_course];
+        rings(ringIdx).X_r = [rings(ringIdx).X_r; repmat([rings(ringIdx).center; zeros(3,1)]', length(t_course), 1)]; % Not controlling Hill coords
+        rings(ringIdx).oe = [rings(ringIdx).oe; NaN(length(t_course), 6)]; % Not controlling orbit elements
+        rings(ringIdx).oe_r = [rings(ringIdx).oe_r; NaN(length(t_course), 6)];
+    end
+
+            % Run lead follower control after stow time starts
+    if tspan(1) ~= oldTSpan(end)
+        X_c0 = X_course(end,1:6)';
+    else
+        X_c0 = X_c0_form;
+    end
+    rings(ringIdx).X0 = convDeputyH2N(X_c0, rings(ringIdx).X(end,:)', pConst);
+    [t, X] = ode45(@(t,X)leadFollowerFeedbackControl(t, X, rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), tspan, [X_c0; rings(ringIdx).X0], opt);
+    [~, u, doe, oe_d, oe_c, oe_r] = cellfun(@(t,X)leadFollowerFeedbackControl(t, X.', rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), num2cell(t), num2cell(X,2), 'uni', 0);
+    u = cellfun(@(x)x', u, 'UniformOutput', false);
+    u = cell2mat(u);
+    doe = cellfun(@(x)x',doe,'uni',0);
+    doe = cell2mat(doe);
+    oe_d = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_d, 'uni', 0);
+    oe_d = cell2mat(oe_d);
+    oe_r = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_r, 'uni', 0);
+    oe_r = cell2mat(oe_r);
+    
+        % Convert deputy from Inertial frame to Hill frame
+    X_Hill = [];
+    for k = 1:length(t)
+        X_Hill = [X_Hill; convDeputyN2H(X(k, 1:6)', X(k, 7:12)', pConst)'];
+    end
+    
+        % Assign trajectory
+    rings(ringIdx).X = [rings(ringIdx).X; X_Hill];
+    rings(ringIdx).t = [rings(ringIdx).t; t];
+    rings(ringIdx).u = [rings(ringIdx).u; u];
+    rings(ringIdx).X_r = [rings(ringIdx).X_r; NaN(length(t), 6)]; % Not controlling Hill coordinates
+    rings(ringIdx).oe = [rings(ringIdx).oe; oe_d];
+    rings(ringIdx).oe_r = [rings(ringIdx).oe_r; oe_r];
+end
+
+fprintf("\n\nRace Course stowed, come back soon!!!\n\n");
+
     % Plot trajectories
-titleText = sprintf("Race Course Ring Deployment");
+titleText = sprintf("Race Course Ring Deployment and Stowing");
 xLabel = sprintf("Radial [km]"); yLabel = sprintf("Along-Track [km]"); zLabel = sprintf("Cross-Track [km]");
 trajStyle = "b-"; trajLabel = sprintf("Ring Trajectory");
 plotCourse(rings, 6, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel);
 
     % Animate deployment
-animateRings(rings, true, videoFolder + "RingDeployment.mp4", 7, "");
-
-
-
-
+animateRings(rings, true, videoFolder + "RingDeploymentAndStowing.mp4", 8, "");
 
 
 

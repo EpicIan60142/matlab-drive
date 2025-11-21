@@ -34,7 +34,8 @@ fig = figure(figNum); fig.WindowState = "maximized";
     %% Animate the problem
 movieVector = [];
 dTime = 10;
-for k = 1:dTime:longestTime
+animVec = 1:dTime:longestTime;
+for k = animVec
         % Clear figure
     clf;
 
@@ -74,7 +75,7 @@ for k = 1:dTime:longestTime
         if ~isempty(endRing.X)
             endRing.center = [endRing.X(k,1); endRing.X(k,2); endRing.X(k,3)];
         end
-        cubeEnd = plotRing(endRing, 'r-');
+        cubeEnd = plotRing(endRing, 'r-'); cubeEnd.LineWidth = 2;
         
             % Plot course origin
         courseCenter = scatter3(0, 0, 0, 20, 'k', 'filled', 'h');
@@ -97,7 +98,7 @@ for k = 1:dTime:longestTime
             % Labels, colorbar, and view angle
         xlabel("Radial [km]"); ylabel("Along-Track [km]"); zlabel("Cross-Track [km]"); 
         cBar = colorbar; cBar.Label.String = "Ring Number"; colormap("cool"); cBar.Location = 'westoutside';
-        view(-30 + k/25, 25)
+        view(45 + k*(360/longestTime), 25)
 
         % Make legend
     lgnd = legend([cubeStart, ring, cubeEnd, courseCenter, trajAx], ["Start Ring", "Course Ring", "End Ring", "Course Origin", trajLabels], 'location', 'layout');
