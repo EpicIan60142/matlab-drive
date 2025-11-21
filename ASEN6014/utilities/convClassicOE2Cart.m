@@ -45,9 +45,9 @@ cart.rVec = PN'*[x; y; 0];
 h = sqrt(mu*p);
 
 cart.vVec = -(mu/h)*[
-                            cos(RAAN)*(sin(theta) + e*sin(argPeri)) + sin(RAAN)*(cos(theta) + e*cos(argPeri))*cos(i);
-                            sin(RAAN)*(sin(theta) + e*sin(argPeri)) - cos(RAAN)*(cos(theta) + e*cos(argPeri))*cos(i);
-                            -(cos(theta) + e*cos(argPeri))*sin(i)
-                       ];
+                        cos(RAAN)*(sin(theta) + e*sin(argPeri)) + sin(RAAN)*(cos(theta) + e*cos(argPeri))*cos(i);
+                        sin(RAAN)*(sin(theta) + e*sin(argPeri)) - cos(RAAN)*(cos(theta) + e*cos(argPeri))*cos(i);
+                        -(cos(theta) + e*cos(argPeri))*sin(i)
+                    ];
 
 end

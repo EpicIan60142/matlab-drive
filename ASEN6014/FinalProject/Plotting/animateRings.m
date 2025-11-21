@@ -65,14 +65,14 @@ for k = 1:dTime:longestTime
             % Plot start and end rings
         startRing = rings(1);
         if ~isempty(startRing.X)
-            startRing.center = [startRing.X(1,k); startRing.X(2,k); startRing.X(3,k)];
+            startRing.center = [startRing.X(k,1); startRing.X(k,2); startRing.X(k,3)];
             quiver3(startRing.X(k,1), startRing.X(k,2), startRing.X(k,3), startRing.normal(1), startRing.normal(2), startRing.normal(3), 0.1, 'filled', 'k-')
         end
         cubeStart = plotRing(startRing, 'g-'); cubeStart.LineWidth = 2;
         
         endRing = rings(end);
         if ~isempty(endRing.X)
-            endRing.center = [endRing.X(1,k); endRing.X(2,k); endRing.X(3,k)];
+            endRing.center = [endRing.X(k,1); endRing.X(k,2); endRing.X(k,3)];
         end
         cubeEnd = plotRing(endRing, 'r-');
         

@@ -55,6 +55,7 @@ opt = odeset('AbsTol', 1e-12, 'RelTol', 1e-12);
 
     % Video saving
 videoFolder = "Videos/";
+
 %% Task 0: Generate a desired race course formation
     % Determine if a random course is made
 randomCourse = false;
@@ -273,5 +274,206 @@ nt = nexttile; ax = [ax; nt];
     xlabel("Time [sec]"); ylabel("\Delta M_d [deg]");
 linkaxes(ax, 'x');
 
+drawnow;
+
     % Animate ring
-animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
+% animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
+
+%% Task 2a: Design and implement a deployment sequence from lead-follower to race course formation
+    % Clear reused parameters
+clear doe_r oe_d X_d0
+
+    % Clear the example ring trajectory
+rings(ringIdx).t = [];
+rings(ringIdx).X = [];
+rings(ringIdx).u = [];
+rings(ringIdx).X_r = [];
+rings(ringIdx).oe = [];
+rings(ringIdx).oe_r = [];
+
+    % Sort the intermediate rings by increasing goal distance from the origin
+distances = [];
+for k = 2:length(rings)-1
+    distances = [distances; [norm(rings(k).center), k]];
+end
+
+[sortDist, sortIdx] = sort(distances);
+sortDist(:,2) = distances(sortIdx(:,1), 2);
+sortIdx(:,2) = [];
+
+    % Assign initial mean anomalies
+minDM0 = 9e9;
+maxDM0 = 0;
+numPos = 0; % Number of rings starting with a positive dM0
+numNeg = 0; % Number of rings starting with a negative dM0
+deployOrder = [];
+for k = 1:length(sortDist)
+        % Define desired orbit element differences for this ring
+    doe_r.da = 0;
+    doe_r.de = 0;
+    doe_r.di = 0;
+    doe_r.dRAAN = 0;
+    doe_r.dargPeri = 0;
+    if mod(k,2) % Fan out rings to each side of the origin at the start
+        doe_r.dM0 = deg2rad(k*1e-4 + 0.5e-4);
+        numPos = numPos + 1;
+    else
+        doe_r.dM0 = deg2rad(k*-1e-4 + 0.5e-4);
+        numNeg = numNeg + 1;
+    end
+
+    if doe_r.dM0 > maxDM0
+        maxDM0 = doe_r.dM0;
+    end
+
+    if doe_r.dM0 < minDM0
+        minDM0 = doe_r.dM0;
+    end
+
+    oe_d = oe_c;
+    M_c = convE2M(convf2E(oe_c.f, oe_c.e), oe_c.e);
+    M_r = M_c + doe_r.dM0;
+    oe_d.f = convE2f(convM2E(M_r, oe_d.e, false), oe_d.e);
+    
+        % Assign resulting cartesian state as the initial inertial state of
+        % the ring
+    cart_d = convClassicOE2Cart(oe_d);
+    % rings(sortDist(k,2)).X0 = convDeputyN2H(X_c0, [cart_d.rVec; cart_d.vVec], pConst);
+    rings(sortDist(k,2)).X0 = [cart_d.rVec; cart_d.vVec];
+    rings(sortDist(k,2)).X = convDeputyN2H(X_c0, rings(sortDist(k,2)).X0, pConst)';
+    rings(sortDist(k,2)).t = 0;
+
+        % Assign initial lead follower desired elements
+    rings(sortDist(k,2)).doe_r = doe_r;
+
+        % Assign deployment order
+    deployOrder = [deployOrder; sortDist(k,2)];
+end
+
+    % Assign start and end ring starting positions at the extremes of the
+    % lead-follower configuration
+        % Start ring - position on negative along-track side
+doe_r.dM0 = minDM0 - 2*deg2rad(2e-4);
+numNeg = numNeg + 1;
+oe_d = oe_c;
+M_c = convE2M(convf2E(oe_c.f, oe_c.e), oe_c.e);
+M_r = M_c + doe_r.dM0;
+oe_d.f = convE2f(convM2E(M_r, oe_d.e, false), oe_d.e);
+cart_d = convClassicOE2Cart(oe_d);
+% rings(1).X0 = convDeputyN2H(X_c0, [cart_d.rVec; cart_d.vVec], pConst);
+rings(1).X0 = [cart_d.rVec; cart_d.vVec];
+rings(1).X = convDeputyN2H(X_c0, rings(1).X0, pConst)';
+rings(1).t = 0;
+rings(1).doe_r = doe_r;
+deployOrder = [deployOrder; 1];
+
+        % End ring - position on positive along-track axis
+doe_r.dM0 = maxDM0 + 2*deg2rad(2e-4);
+numPos = numPos + 1;
+oe_d = oe_c;
+M_c = convE2M(convf2E(oe_c.f, oe_c.e), oe_c.e);
+M_r = M_c + doe_r.dM0;
+oe_d.f = convE2f(convM2E(M_r, oe_d.e, false), oe_d.e);
+cart_d = convClassicOE2Cart(oe_d);
+% rings(end).X0 = convDeputyN2H(X_c0, [cart_d.rVec; cart_d.vVec], pConst);
+rings(end).X0 = [cart_d.rVec; cart_d.vVec];
+rings(end).X = convDeputyN2H(X_c0, rings(end).X0, pConst)';
+rings(end).t = 0;
+rings(end).doe_r = doe_r;
+deployOrder = [deployOrder; length(rings)];
+
+    % Flip order to deploy the last added first
+deployOrder = flip(deployOrder);
+
+    % Command the rings to deploy
+deployDelay = 500;
+for k = 1:length(deployOrder)
+        % Get the ring to deploy
+    ringIdx = deployOrder(k);
+
+    fprintf("Deploying ring %.0f!\n",deployOrder(k));
+
+        % Propagate controller
+            % Result reporting time interval
+    dt = 10;
+            % Define deployment time for this ring
+    tspan = (k-1)*deployDelay:dt:2*T;
+            % Start with orbit element control until deployment time
+    if tspan(1) ~= 0 
+        tspan_elem = 0:dt:tspan(1);
+        cart_c = convClassicOE2Cart(oe_c);
+        X_c0 = [cart_c.rVec; cart_c.vVec];
+        [t_elem, X_elem] = ode45(@(t,X)leadFollowerFeedbackControl(t,X,rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), tspan_elem, [X_c0; rings(ringIdx).X0], opt);
+        
+        [~, u_elem, doe_elem, oe_d_elem, oe_c_elem, oe_r_elem] = cellfun(@(t,X)leadFollowerFeedbackControl(t, X.', rings(ringIdx).doe_r, kConst_lead, pConst, rings(ringIdx)), num2cell(t_elem), num2cell(X_elem,2), 'uni', 0);
+        u_elem = cellfun(@(x)x', u_elem, 'UniformOutput', false);
+        u_elem = cell2mat(u_elem);
+        doe_elem = cellfun(@(x)x',doe_elem,'uni',0);
+        doe_elem = cell2mat(doe_elem);
+        oe_d_elem = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_d_elem, 'uni', 0);
+        oe_d_elem = cell2mat(oe_d_elem);
+        % oe_c_test = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_c_test, 'uni', 0);
+        % oe_c_test = cell2mat(oe_c_test);
+        oe_r_elem = cellfun(@(x)[x.a; x.e; x.i; x.RAAN; x.argPeri; convE2M(convf2E(x.f,x.e),x.e)]', oe_r_elem, 'uni', 0);
+        oe_r_elem = cell2mat(oe_r_elem);
+
+            % Convert deputy from Inertial frame to Hill frame
+        X_elem_Hill = [];
+        for kk = 1:length(t_elem)
+            X_elem_Hill = [X_elem_Hill; convDeputyN2H(X_elem(kk, 1:6)', X_elem(kk, 7:12)', pConst)'];
+        end
+        
+            % Assign trajectory arrays
+        rings(ringIdx).X = [rings(ringIdx).X; X_elem_Hill];
+        rings(ringIdx).t = [rings(ringIdx).t; t_elem];
+        rings(ringIdx).u = [rings(ringIdx).u; u_elem];
+        rings(ringIdx).X_r = [rings(ringIdx).X_r; NaN(length(t_elem), 6)]; % Not controlling Hill coords
+        rings(ringIdx).oe = [rings(ringIdx).oe; oe_d_elem];
+        rings(ringIdx).oe_r = [rings(ringIdx).oe_r; oe_r_elem];
+    end
+
+            % Run formation control after deployment time starts
+    if tspan(1) ~= 0
+        oe_c0 = oe_c_elem{end};
+        oe_c0.mu = pConst.mu;
+        cart_c0 = convClassicOE2Cart(oe_c0);
+        X_c0 = [cart_c0.rVec; cart_c0.vVec];
+        rings(ringIdx).X0 = convDeputyH2N(X_c0, rings(ringIdx).X(end,:)', pConst);
+    end
+    [t, X] = ode23t(@(t,X)ringFormationFeedbackControl(t, X, rings(ringIdx).center, kConst_course, pConst, rings(ringIdx)), tspan, [X_c0; rings(ringIdx).X0], opt);
+    [~, u] = cellfun(@(t,X)ringFormationFeedbackControl(t, X.', rings(ringIdx).center, kConst_course, pConst, rings(ringIdx)), num2cell(t), num2cell(X,2), 'uni', 0);
+    u = cellfun(@(x)x', u, 'UniformOutput', false);
+    u = cell2mat(u);
+    
+        % Convert deputy from Inertial frame to Hill frame
+    X_Hill = [];
+    for k = 1:length(t)
+        X_Hill = [X_Hill; convDeputyN2H(X(k, 1:6)', X(k, 7:12)', pConst)'];
+    end
+    
+        % Assign trajectory
+    rings(ringIdx).X = [rings(ringIdx).X; X_Hill];
+    rings(ringIdx).t = [rings(ringIdx).t; t];
+    rings(ringIdx).u = [rings(ringIdx).u; u];
+    rings(ringIdx).X_r = [rings(ringIdx).X_r; repmat([rings(ringIdx).center; zeros(3,1)]', length(t), 1)];
+    rings(ringIdx).oe = [rings(ringIdx).oe; NaN(length(t), 6)]; % Not controlling orbit elements
+    rings(ringIdx).oe_r = [rings(ringIdx).oe_r; NaN(length(t), 6)];
+end
+
+    % Plot trajectories
+titleText = sprintf("Race Course Ring Deployment");
+xLabel = sprintf("Radial [km]"); yLabel = sprintf("Along-Track [km]"); zLabel = sprintf("Cross-Track [km]");
+trajStyle = "b-"; trajLabel = sprintf("Ring Trajectory");
+plotCourse(rings, 6, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel);
+
+    % Animate deployment
+animateRings(rings, true, videoFolder + "RingDeployment.mp4", 7, "");
+
+
+
+
+
+
+
+
+
