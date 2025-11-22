@@ -68,7 +68,7 @@ for k = 1:l
             % Initial ring size
         a = max(semiMaj);
         b = max(semiMin);
-        S = diag([a, b]);
+        S = diag([a^2, b^2]);
 
             % Initial ring angles
         theta = pi/2;
