@@ -66,11 +66,12 @@ switch choice
         %% Generate race course
             % Set rng seed for race course generation
         if ~randomCourse
-            % seed = 2*69420; % cool options: 0, 2, 3, 4
-            seed = 3;
+            seed = 2*69420; % cool options: 0, 2, 3, 4
             rng(seed);
         else
-            rng("shuffle");
+            % rng("shuffle");
+            seed = 3;
+            rng(seed);
         end
         
             % Make course

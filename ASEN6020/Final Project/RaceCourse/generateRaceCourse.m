@@ -36,8 +36,11 @@ elAng = courseParams.elAng;
 numRings = courseParams.numRings;
 
 %% Choose number of rings to make
-l = randi(numRings, 1);
-
+if length(numRings) < 2
+    l = numRings;
+else
+    l = randi(numRings, 1);
+end
 %% Set up rings output
 rings = [];
 
