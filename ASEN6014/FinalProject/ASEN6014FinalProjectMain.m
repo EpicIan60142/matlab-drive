@@ -398,7 +398,7 @@ for k = 1:length(deployOrder)
             % Result reporting time interval
     dt = 10;
             % Define deployment time for this ring
-    tspan = k*deployDelay:dt:3*T;
+    tspan = (1*T + k*deployDelay):dt:3*T;
             % Start with orbit element control until deployment time
     if tspan(1) ~= 0 
         tspan_elem = 0:dt:tspan(1);
@@ -556,11 +556,149 @@ end
 
 fprintf("\n\nRace Course stowed, come back soon!!!\n\n");
 
+%% Task 4: Plot full deployment - sustain - stow sequence
     % Plot trajectories
 titleText = sprintf("Race Course Ring Deployment and Stowing");
 xLabel = sprintf("Radial [km]"); yLabel = sprintf("Along-Track [km]"); zLabel = sprintf("Cross-Track [km]");
 trajStyle = "b-"; trajLabel = sprintf("Ring Trajectory");
 plotCourse(rings, 6, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel);
+
+    % Plot control effort
+markerSize = 5; colorStyle = 'cool';
+figure; tl = tiledlayout(3,1); ax = [];
+title(tl, "Race Course Control Effort vs. Time");
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        a = scatter(rings(k).t, abs(rings(k).u(:,1)), markerSize, k*ones(size(rings(k).t)), 'filled');
+    end
+    set(gca, 'yscale', 'log'); colormap(colorStyle); 
+    xlabel("Time [sec]"); ylabel("u_r [km/s^2]");
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        a = scatter(rings(k).t, abs(rings(k).u(:,2)), markerSize, k*ones(size(rings(k).t)), 'filled');
+    end
+    set(gca, 'yscale', 'log'); colormap(colorStyle);
+    cbar = colorbar; cbar.Label.String = "Ring number"; cbar.Location = 'eastoutside';
+    xlabel("Time [sec]"); ylabel("u_\theta [km/s^2]");
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        a = scatter(rings(k).t, abs(rings(k).u(:,3)), markerSize, k*ones(size(rings(k).t)), 'filled');
+    end
+    set(gca, 'yscale', 'log'); colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("u_h [km/s^2]");
+linkaxes(ax, 'x');
+
+    % Plot ring trajectory
+figure; tl = tiledlayout(3,2);
+title(tl, "Race Course Ring Trajectory vs. Time")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).X(:,1), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, rings(k).X_r(:,1), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("x [km]")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).X(:,4), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, rings(k).X_r(:,4), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("xDot [km/s]");
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).X(:,2), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, rings(k).X_r(:,2), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("y [km]")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        ring = scatter(rings(k).t, rings(k).X(:,1), markerSize, k*ones(size(rings(k).t)), 'filled');
+        ref = plot(rings(k).t, rings(k).X_r(:,1), 'r--');
+    end
+    cbar = colorbar; cbar.Label.String = "Ring number"; cbar.Location = 'eastoutside';
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("yDot [km/s]");
+    legend([ring, ref], ["Trajectory", "Reference"], 'location', 'eastoutside')
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).X(:,3), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, rings(k).X_r(:,3), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("z [km]")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on; grid minor;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).X(:,6), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, rings(k).X_r(:,6), 'r--');
+    end
+    xlabel("Time [sec]"); ylabel("zDot [km/s]");
+linkaxes(ax, 'x');
+
+    % Plot ring elements
+figure; tl = tiledlayout(3,2);
+title(tl, "Race Course Ring Orbit Element Differences vs. Time")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).oe(:,1) - rings(k).oe_r(:,1), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, 0*rings(k).oe_r(:,1), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("\Delta a_d [km]")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).oe(:,2) - rings(k).oe_r(:,2), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, 0*rings(k).oe_r(:,2), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("\Delta e_d");
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).oe(:,3) - rings(k).oe_r(:,3), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, 0*rings(k).oe_r(:,3), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("\Delta i_d [deg]")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    for k = 1:length(rings)
+        ring = scatter(rings(k).t, rings(k).oe(:,4) - rings(k).oe_r(:,4), markerSize, k*ones(size(rings(k).t)), 'filled');
+        ref = plot(rings(k).t, 0*rings(k).oe_r(:,4), 'r--');
+    end
+    cbar = colorbar; cbar.Label.String = "Ring number"; cbar.Location = 'eastoutside';
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("\Delta \Omega_d [deg]");
+    legend([ring, ref], ["Trajectory", "Reference"], 'location', 'eastoutside')
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).oe(:,5) - rings(k).oe_r(:,5), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, 0*rings(k).oe_r(:,5), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("\Delta \omega_d [deg]")
+nt = nexttile; ax = [ax; nt];
+    hold on; grid on;
+    for k = 1:length(rings)
+        scatter(rings(k).t, rings(k).oe(:,6) - rings(k).oe_r(:,6), markerSize, k*ones(size(rings(k).t)), 'filled');
+        plot(rings(k).t, 0*rings(k).oe_r(:,6), 'r--');
+    end
+    colormap(colorStyle);
+    xlabel("Time [sec]"); ylabel("\Delta M_d [deg]");
+linkaxes(ax, 'x');
 
     % Animate deployment
 animateRings(rings, true, videoFolder + "RingDeploymentAndStowing.mp4", 8, "");
