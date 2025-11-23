@@ -95,6 +95,12 @@ for k = 1:length(rings)
     rings(k).params.lastRing.center = rings(k).params.lastRing.center - newOrigin;
 end
 
+titleText = sprintf("Generated Race Course");
+xLabel = sprintf("Radial [km]"); yLabel = sprintf("Along-Track [km]"); zLabel = sprintf("Cross-Track [km]");
+plotCourse(rings, 420, titleText, xLabel, yLabel, zLabel, [], []);
+
+return
+
 %% Task 1a: Design and implement a race course formation feedback control law
     % Define gains, goal is to go from lead-follower to end position within
     % 10 minutes
@@ -283,8 +289,8 @@ linkaxes(ax, 'x');
 
 drawnow;
 
-    % Animate ring
-animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
+%     % Animate ring
+% animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
 
 %% Task 2: Design and implement a deployment sequence from lead-follower to race course formation
     % Clear reused parameters
