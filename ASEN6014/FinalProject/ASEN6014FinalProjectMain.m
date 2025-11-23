@@ -284,7 +284,7 @@ linkaxes(ax, 'x');
 drawnow;
 
     % Animate ring
-% animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
+animateRings(rings, true, videoFolder + "ControllerTest.mp4", 5, "");
 
 %% Task 2: Design and implement a deployment sequence from lead-follower to race course formation
     % Clear reused parameters
@@ -568,7 +568,7 @@ fprintf("\n\nRace Course stowed, come back soon!!!\n\n");
 titleText = sprintf("Race Course Ring Deployment and Stowing");
 xLabel = sprintf("Radial [km]"); yLabel = sprintf("Along-Track [km]"); zLabel = sprintf("Cross-Track [km]");
 trajStyle = "b-"; trajLabel = sprintf("Ring Trajectory");
-plotCourse(rings, 6, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel);
+plotCourse(rings, 8, titleText, xLabel, yLabel, zLabel, trajStyle, trajLabel);
 
     % Plot control effort
 markerSize = 5; colorStyle = 'cool';
@@ -708,4 +708,4 @@ nt = nexttile; ax = [ax; nt];
 linkaxes(ax, 'x');
 
     % Animate deployment
-animateRings(rings, true, videoFolder + "RingDeploymentAndStowing.mp4", 9, "");
+animateRings(rings, true, videoFolder + "RingDeploymentAndStowing.mp4", 12, "");
