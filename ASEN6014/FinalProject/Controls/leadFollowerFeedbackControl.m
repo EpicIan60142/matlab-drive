@@ -36,9 +36,6 @@ cart.vVec = X_c(4:6);
 cart.mu = pConst.mu;
 oe_c = convCart2ClassicOE(cart);
 
-rChief = cart.rVec;
-vChief = cart.vVec;
-
 cart.rVec = X_d(1:3);
 cart.vVec = X_d(4:6);
 cart.mu = pConst.mu;
@@ -110,13 +107,15 @@ try doe_r.dM0;
 end
 
 % Assign gains
-P = diag([kConst.P11, kConst.P22, kConst.P33]);
+% P = diag([kConst.P11, kConst.P22, kConst.P33]);
+K = diag([kConst.K11, kConst.K22, kConst.K33, kConst.K44, kConst.K55, kConst.K66]);
 
 % Calculate control effort and convert to inertial frame
 if oe_d.e > 0.999
     u = zeros(3,1);
 else
-    u = -P*B'*doe;
+    % u = -P*B'*doe;
+    u = -B'*K*doe;
 
     u = NHd*u;
 end

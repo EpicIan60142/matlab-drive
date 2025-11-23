@@ -143,6 +143,13 @@ kConst_lead.P11 = 4e-3;
 kConst_lead.P22 = 8e-3;
 kConst_lead.P33 = 4e-3;
 
+kConst_lead.K11 = 8e-3;
+kConst_lead.K22 = 4e-3;
+kConst_lead.K33 = 8e-3;
+kConst_lead.K44 = 8e-3;
+kConst_lead.K55 = 4e-3;
+kConst_lead.K66 = 4e-3;
+
     % Add another orbit of time
 tspan_test = (0:10:3*T) + t_test(end); % Want rings to stow within two orbits
 
@@ -621,8 +628,8 @@ nt = nexttile; ax = [ax; nt];
 nt = nexttile; ax = [ax; nt];
     hold on; grid on; grid minor;
     for k = 1:length(rings)
-        ring = scatter(rings(k).t, rings(k).X(:,1), markerSize, k*ones(size(rings(k).t)), 'filled');
-        ref = plot(rings(k).t, rings(k).X_r(:,1), 'r--');
+        ring = scatter(rings(k).t, rings(k).X(:,5), markerSize, k*ones(size(rings(k).t)), 'filled');
+        ref = plot(rings(k).t, rings(k).X_r(:,5), 'r--');
     end
     cbar = colorbar; cbar.Label.String = "Ring number"; cbar.Location = 'eastoutside';
     colormap(colorStyle);
@@ -701,9 +708,4 @@ nt = nexttile; ax = [ax; nt];
 linkaxes(ax, 'x');
 
     % Animate deployment
-animateRings(rings, true, videoFolder + "RingDeploymentAndStowing.mp4", 8, "");
-
-
-
-
-
+animateRings(rings, true, videoFolder + "RingDeploymentAndStowing.mp4", 9, "");
