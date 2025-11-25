@@ -61,7 +61,7 @@ fig.WindowState = "maximized";
             % Plot cubesat starting positions
         cubeAx = []; cubeLabels = [];
         for k = 1:length(cubesats)
-            cubeAx = [cubeAx, plot3(cubesats(k).X(1,1), cubesats(k).X(1,2), cubesats(k).X(1,3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k', 'MarkerSize', 5)];
+            cubeAx = [cubeAx, plot3(cubesats(k).X0(1), cubesats(k).X0(2), cubesats(k).X0(3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k', 'MarkerSize', 5)];
             cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
         end
     end

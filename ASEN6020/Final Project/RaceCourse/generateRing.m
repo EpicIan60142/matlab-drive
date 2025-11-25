@@ -42,7 +42,7 @@ function ring = generateRing(a, b, dTheta, dPhi, d, lastRing)
 %
 
 %% Create ellipse size matrix
-ring.S = diag([a, b]);
+ring.S = diag([a^2, b^2]);
 
 %% Generate new ring normal vector and center
     % Normal vector

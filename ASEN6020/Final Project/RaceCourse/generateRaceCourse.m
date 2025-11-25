@@ -36,8 +36,11 @@ elAng = courseParams.elAng;
 numRings = courseParams.numRings;
 
 %% Choose number of rings to make
-l = randi(numRings, 1);
-
+if length(numRings) < 2
+    l = numRings;
+else
+    l = randi(numRings, 1);
+end
 %% Set up rings output
 rings = [];
 
@@ -68,7 +71,7 @@ for k = 1:l
             % Initial ring size
         a = max(semiMaj);
         b = max(semiMin);
-        S = diag([a, b]);
+        S = diag([a^2, b^2]);
 
             % Initial ring angles
         theta = pi/2;

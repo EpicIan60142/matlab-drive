@@ -49,7 +49,7 @@ switch choice
         elevationAngle = deg2rad([-90, 90]); % deg -> rad
         
             % Define number of rings range
-        numRings = [15, 25];
+        numRings = 13;%[15, 25];
         
             % Define course origin orbit
         T = 180*60; % 180 minute circular orbit
@@ -69,7 +69,9 @@ switch choice
             seed = 2*69420; % cool options: 0, 2, 3, 4
             rng(seed);
         else
-            rng("shuffle");
+            % rng("shuffle");
+            seed = 3;
+            rng(seed);
         end
         
             % Make course
@@ -77,12 +79,12 @@ switch choice
         
             % Define CubeSat starting ring as the maximum distance behind the start
             % ring at a 3 sigma covariance of 5x the largest semi-major/minor axis
-        startRing = generateRing(50*max(semiMaj), 50*max(semiMin), 0, 0, -max(interRingDist), rings(1));
+        startRing = generateRing(5*max(semiMaj), 5*max(semiMin), 0, 0, -max(interRingDist), rings(1));
         rings(1).params.lastRing = startRing;
 
             % Define CubeSat ending ring as the minimum distance after the last 
             % ring at a covariance corresponding to the smallest possible ring
-        endRing = generateRing(min(semiMaj),min(semiMin),0,0,min(interRingDist),rings(end));
+        endRing = generateRing(5*max(semiMaj),5*max(semiMin),0,0,min(interRingDist),rings(end));
         rings = [rings; endRing];
         
             % Move race course so origin is the mean of all ring centers
