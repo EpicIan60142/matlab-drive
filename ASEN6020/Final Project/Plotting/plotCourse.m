@@ -55,6 +55,7 @@ fig.WindowState = "maximized";
         cubeAx = []; cubeLabels = [];
         for k = 1:length(cubesats)
             cubeAx = [cubeAx, plot3(cubesats(k).X(end,1), cubesats(k).X(end,2), cubesats(k).X(end,3), 'Color', cubesats(k).color, 'Marker', cubesats(k).marker, 'MarkerFaceColor', 'k', 'MarkerSize', 5)];
+            plot3(cubesats(k).X(:,1), cubesats(k).X(:,2), cubesats(k).X(:,3), 'Color', cubesats(k).color)
             cubeLabels = [cubeLabels, sprintf("CubeSat %s", cubesats(k).name)];
         end
     else
