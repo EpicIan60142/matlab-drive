@@ -15,10 +15,10 @@ file = fopen("RaceCourse.yml",'w');
 
 %% Populate YAML file
     % Course header
-fprintf(file, "Map:\n");
+fprintf(file, "Course:\n");
 
     % World dimensions
-fprintf(file, "\tDimensions:\n");
+fprintf(file, "  Dimensions:\n");
 
 fig = plotCourse(startRing,rings,endRing,cubesats,1,"Race Course","Radial [m]","Along-Track [m]","Cross-Track [m]",true);
 
@@ -29,50 +29,55 @@ lims(3,:) = 1.1*fig.Children(3).ZLim;
 
 for k = 1:3
     for kk = 1:2
-        fprintf(file,"\t\t- %.3f\n",lims(k,kk));
+        fprintf(file,"    - %.3f\n",lims(k,kk));
     end
 end
 
     % Rings
 rings = [startRing; rings; endRing];
-fprintf(file, "\tRings:\n");
+fprintf(file, "  Rings:\n");
 for k = 1:length(rings)
-    fprintf(file, "\t\t- ring%.0f\n",k-1);
+    fprintf(file, "    - ring%.0f\n",k-1);
         % Ring center
     for kk = 1:3
-        fprintf(file, "\t\t\t- %.3f\n", rings(k).center(kk));
+        fprintf(file, "      - %.3f\n", rings(k).center(kk));
     end
         % Ring normal vector
     for kk = 1:3
-        fprintf(file, "\t\t\t- %.3f\n", rings(k).normal(kk));
+        fprintf(file, "      - %.3f\n", rings(k).normal(kk));
     end
         % Ring semi-major and semi-minor axes
     for kk = 1:2
-        fprintf(file, "\t\t\t- %.3f\n", rings(k).S(kk,kk));
+        fprintf(file, "      - %.3f\n", rings(k).S(kk,kk));
     end
         % DCM to Inertial from Ring frame
     for kk = 1:3
         for idx = 1:3
-            fprintf(file, "\t\t\t- %.3f\n", rings(k).NR(kk, idx));
+            fprintf(file, "      - %.3f\n", rings(k).NR(kk, idx));
         end
     end
 end
 
     % Cubesats header
-fprintf(file, "Agents:\n");
+fprintf(file, "Cubesats:\n");
 
     % Cubesats
 for k = 1:length(cubesats)
-    fprintf(file, "\tagent%.0f\n", k-1);
+    fprintf(file, "  sat%.0f:\n", k-1);
         % Cubesat dynamics
-    fprintf(file, "\t\tModel: CubesatCWH\n");
+    fprintf(file, "    Model: CubesatCWH\n");
+        % Cubesat name, marker, and color
+    fprintf(file, "    Name: %s\n", cubesats(k).name);
+    fprintf(file, "    Marker: %s\n", cubesats(k).marker);
+    col = split(cubesats(k).color, '#');
+    fprintf(file, "    Color: %s\n", col(2));
         % Start state
-    fprintf(file, "\t\tStart:\n");
+    fprintf(file, "    Start:\n");
     for kk = 1:6
-        fprintf(file, "\t\t\t- %.3f\n", cubesats(k).X0(kk));
+        fprintf(file, "      - %.3f\n", cubesats(k).X0(kk));
     end
         % Max control
-    fprintf(file, "\t\tuMax: %.3f\n", cubesats(k).uMax);
+    fprintf(file, "    uMax: %.3f\n", cubesats(k).uMax);
 end
 
 fclose(file);
