@@ -33,11 +33,16 @@ for k = 1:3
     end
 end
 
+    % Course origin dynamics
+T = 180*60; % 3 hour orbit
+n = 2*pi/T;
+fprintf(file, "  MeanMotion: %.3e\n", n);
+
     % Rings
 rings = [startRing; rings; endRing];
 fprintf(file, "  Rings:\n");
 for k = 1:length(rings)
-    fprintf(file, "    - ring%.0f\n",k-1);
+    fprintf(file, "    ring%.0f:\n",k-1);
         % Ring center
     for kk = 1:3
         fprintf(file, "      - %.3f\n", rings(k).center(kk));
@@ -74,7 +79,7 @@ for k = 1:length(cubesats)
         % Start state
     fprintf(file, "    Start:\n");
     for kk = 1:6
-        fprintf(file, "      - %.3f\n", cubesats(k).X0(kk));
+        fprintf(file, "      - %.3f\n", cubesats(k).X(1,kk));
     end
         % Max control
     fprintf(file, "    uMax: %.3f\n", cubesats(k).uMax);
