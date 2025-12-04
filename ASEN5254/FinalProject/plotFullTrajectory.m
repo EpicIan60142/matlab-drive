@@ -33,7 +33,7 @@ velIdx = [];
 for k = 1:length(rings)
     XRings = [XRings; rings(k).center'];
     normalRings = [normalRings; rings(k).normal'];
-    velIdx = [velIdx; find(cubesat.t == tRings(k), 1, 'first')];
+    velIdx = [velIdx; find(cubesat.t >= tRings(k), 1, 'first')];
 end
 
     %% Position
@@ -72,26 +72,26 @@ nt = nexttile; ax = [ax; nt];
     xlabel("Time [sec]"); ylabel("Zdot [m/s]");
 
     %% Control
-uLim = vecnorm(u,2,2);
+% uLim = vecnorm(u,2,2);
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(t, u(:,1), 'Color', color);
-    plot(t, uLim, 'k--');
-    plot(t, -uLim, 'k--');
+    % plot(t, uLim, 'k--');
+    % plot(t, -uLim, 'k--');
     xlabel("Time [sec]");
     ylabel("u_x [m/s^2]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(t, u(:,2), 'Color', color);
-    plot(t, uLim, 'k--');
-    plot(t, -uLim, 'k--');
+    % plot(t, uLim, 'k--');
+    % plot(t, -uLim, 'k--');
     xlabel("Time [sec]");
     ylabel("u_y [m/s^2]");
 nt = nexttile; ax = [ax; nt];
     hold on; grid on;
     plot(t, u(:,3), 'Color', color);
-    plot(t, uLim, 'k--');
-    plot(t, -uLim, 'k--');
+    % plot(t, uLim, 'k--');
+    % plot(t, -uLim, 'k--');
     xlabel("Time [sec]");
     ylabel("u_z [m/s^2]");
 
