@@ -10,6 +10,8 @@ load("Run_05-May-2025_215651_Scenario2.mat");
 
 % Read in solutions
 for k = 1:4
+    fprintf("Looking at Cubesat %s\n", cubesats(k).name);
+
     if k == 1
         solution = readmatrix("Eeny.txt");
         tSeg_1 = cumsum([0, 165.20, 88.95, 172.75, 206.50, 156.65, 129.30, 89.90, 136.50, 104.00, 128.85, 123.05, 78.35, 81.50, 34.45, 170.10, 143.05, 151.85, 87.80, 160.50, 188.05, 79.35, 153.20, 104.80, 71.90, 49.20]);
@@ -36,11 +38,22 @@ for k = 1:4
     cubesats(k).t_PVT = cubesats(k).t;
     cubesats(k).tSeg_PVT = cubesats(k).tSeg;
     cubesats(k).u_PVT = cubesats(k).u;
+    cubesats(k).cost_PVT = cubesats(k).cost;
     cubesats(k).X_SST = solution(:,1:6);
     cubesats(k).t_SST = cumsum(solution(:,end));
     cubesats(k).tSeg_SST = tSeg;
     cubesats(k).u_SST = solution(:,7:9);
-    
+    cubesats(k).cost_SST = [];
+    for kk = 1:length(rings)
+        idx = find(cubesats(k).t_SST >= cubesats(k).tSeg_SST(2,kk), 1, 'first');
+        dist = norm(cubesats(k).X_SST(idx, 1:3)' - rings(kk).center);
+        time = cubesats(k).tSeg_SST(2,kk) - cubesats(k).tSeg_SST(1,kk);
+        cubesats(k).cost_SST = [cubesats(k).cost_SST, [dist + time; cubesats(k).cost_PVT(2,kk)]];
+    end
+
+    fprintf("\tTotal cost for Cubesat %s: %.3f, Time taken: %.3f sec, Accuracy: %.3f m\n", cubesats(k).name, sum(cubesats(k).cost_SST(1,:)), cubesats(k).t_SST(end), sum(cubesats(k).cost_SST(1,:)) - cubesats(k).t_SST(end));
+    fprintf("\tMinimum possible cost: %.3f\n", sum(cubesats(k).cost_SST(2,:)));
+
     cubesats(k).X = cubesats(k).X_SST;
     cubesats(k).t = cubesats(k).t_SST;
     cubesats(k).tSeg = cubesats(k).tSeg_SST;
@@ -54,6 +67,8 @@ fig = plotCourse(startRing, rings, endRing, cubesats, 1, "Race Course", "Radial 
 for k = 1:4
     plotFullTrajectory(cubesats(k), rings, k+1, sprintf("Cubesat %s Trajectory", cubesats(k).name));
 end
+
+return;
 
 %% Animate race
 animateRun(cubesats, rings, true, "RaceCourse_SST.mp4");
